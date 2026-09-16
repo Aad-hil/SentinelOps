@@ -26,16 +26,6 @@ class FakeBedrockClient:
 
 
 def test_bedrock_embedding_provider_builds_expected_request():
-    client = FakeBedrockClient([0.1, 0.2, 0.3])
-    provider = BedrockEmbeddingProvider(
-        region_name="ap-south-1",
-        model_id="test-model",
-        dimensions=3,
-        client=client,
-    )
-
-    # Dimensions outside the Titan-supported set are rejected by the provider,
-    # so use the default-supported size for this request-shape test instead.
     client = FakeBedrockClient([0.1] * 1024)
     provider = BedrockEmbeddingProvider(
         region_name="ap-south-1",

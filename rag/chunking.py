@@ -16,6 +16,7 @@ class DocumentChunk:
 
 
 _HEADING_RE = re.compile(r"^#{1,6}\s+.+$")
+_DEFAULT_CHUNK_OVERLAP = 120
 
 
 def _split_markdown_sections(content: str) -> list[str]:
@@ -97,19 +98,23 @@ def chunk_document(
     document: Document,
     *,
     chunk_size: int = 900,
-    chunk_overlap: int = 120,
+    chunk_overlap: int | None = None,
 ) -> list[DocumentChunk]:
     """Create deterministic Markdown-aware chunks from a source document."""
 
     if chunk_size <= 0:
         raise ValueError("chunk_size must be greater than zero")
-    if chunk_overlap < 0:
-        raise ValueError("chunk_overlap cannot be negative")
 
-    # A small test/custom chunk size can legitimately be smaller than the
-    # default overlap. In that case, use the largest valid overlap instead of
-    # failing an otherwise valid chunking request.
-    effective_overlap = min(chunk_overlap, max(0, chunk_size - 1))
+    # When overlap is omitted, adapt the project default to the requested
+    # chunk size. An explicitly supplied overlap must still be valid.
+    if chunk_overlap is None:
+        effective_overlap = min(_DEFAULT_CHUNK_OVERLAP, max(0, chunk_size - 1))
+    else:
+        if chunk_overlap < 0:
+            raise ValueError("chunk_overlap cannot be negative")
+        if chunk_overlap >= chunk_size:
+            raise ValueError("chunk_overlap must be smaller than chunk_size")
+        effective_overlap = chunk_overlap
 
     sections = _split_markdown_sections(document.content)
     chunks: list[DocumentChunk] = []
@@ -148,7 +153,7 @@ def chunk_documents(
     documents: list[Document],
     *,
     chunk_size: int = 900,
-    chunk_overlap: int = 120,
+    chunk_overlap: int | None = None,
 ) -> list[DocumentChunk]:
     """Chunk a collection of documents while preserving source order."""
 

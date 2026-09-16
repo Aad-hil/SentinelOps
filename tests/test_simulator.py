@@ -1,3 +1,4 @@
+from simulator.evidence import build_evidence_bundle
 from simulator.generator import (
     generate_incident_002_deployments,
     generate_incident_002_logs,
@@ -9,7 +10,12 @@ from simulator.generator import (
     generate_incident_traces,
 )
 from simulator.incidents import INCIDENT_001, INCIDENT_002
-from simulator.scenarios import build_incident_001, build_incident_002
+from simulator.scenarios import (
+    build_incident_001,
+    build_incident_001_evidence,
+    build_incident_002,
+    build_incident_002_evidence,
+)
 
 
 def test_incident_definition():
@@ -134,3 +140,40 @@ def test_incident_002_scenario():
     assert len(scenario.deployments) == 3
     assert len(scenario.traces) == 24
     assert "deployment" in scenario.ground_truth.trigger.lower()
+
+
+def test_evidence_bundle_excludes_ground_truth():
+    scenario = build_incident_002()
+    evidence = build_incident_002_evidence()
+
+    assert evidence.incident == scenario.incident
+    assert evidence.logs == scenario.logs
+    assert evidence.metrics == scenario.metrics
+    assert evidence.deployments == scenario.deployments
+    assert evidence.traces == scenario.traces
+    assert not hasattr(evidence, "ground_truth")
+
+
+def test_evidence_builder_does_not_accept_ground_truth():
+    scenario = build_incident_001()
+
+    evidence = build_evidence_bundle(
+        incident=scenario.incident,
+        logs=scenario.logs,
+        metrics=scenario.metrics,
+        deployments=scenario.deployments,
+        traces=scenario.traces,
+    )
+
+    assert evidence.incident.incident_id == "INC-001"
+    assert not hasattr(evidence, "ground_truth")
+
+
+def test_incident_001_evidence_builder():
+    evidence = build_incident_001_evidence()
+
+    assert evidence.incident.incident_id == "INC-001"
+    assert len(evidence.logs) == 14
+    assert len(evidence.metrics) == 48
+    assert len(evidence.deployments) == 3
+    assert len(evidence.traces) == 24

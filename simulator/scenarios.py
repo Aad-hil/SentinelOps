@@ -1,3 +1,4 @@
+from simulator.evidence import EvidenceBundle, build_evidence_bundle
 from simulator.generator import (
     generate_incident_002_deployments,
     generate_incident_002_logs,
@@ -44,4 +45,30 @@ def build_incident_002() -> IncidentScenario:
         deployments=tuple(generate_incident_002_deployments(incident.detected_at)),
         traces=tuple(generate_incident_002_traces(incident.detected_at)),
         ground_truth=INCIDENT_002_GROUND_TRUTH,
+    )
+
+
+def build_incident_001_evidence() -> EvidenceBundle:
+    """Build agent-facing evidence for INC-001 without ground truth."""
+
+    scenario = build_incident_001()
+    return build_evidence_bundle(
+        incident=scenario.incident,
+        logs=scenario.logs,
+        metrics=scenario.metrics,
+        deployments=scenario.deployments,
+        traces=scenario.traces,
+    )
+
+
+def build_incident_002_evidence() -> EvidenceBundle:
+    """Build agent-facing evidence for INC-002 without ground truth."""
+
+    scenario = build_incident_002()
+    return build_evidence_bundle(
+        incident=scenario.incident,
+        logs=scenario.logs,
+        metrics=scenario.metrics,
+        deployments=scenario.deployments,
+        traces=scenario.traces,
     )

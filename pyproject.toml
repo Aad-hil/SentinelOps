@@ -19,3 +19,28 @@ dev = [
     "pytest-cov>=6.0",
     "ruff>=0.8",
 ]
+
+[tool.setuptools.packages.find]
+include = [
+    "app*",
+    "simulator*",
+    "agents*",
+    "tools*",
+    "rag*",
+    "memory*",
+    "graph*",
+    "evaluation*",
+    "observability*",
+]
+
+[tool.pytest.ini_options]
+pythonpath = [
+    "."
+]
+testpaths = [
+    "tests"
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"

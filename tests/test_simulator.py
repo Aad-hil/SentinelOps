@@ -1,11 +1,15 @@
 from simulator.generator import (
+    generate_incident_002_deployments,
+    generate_incident_002_logs,
+    generate_incident_002_metrics,
+    generate_incident_002_traces,
     generate_incident_deployments,
     generate_incident_logs,
     generate_incident_metrics,
     generate_incident_traces,
 )
-from simulator.incidents import INCIDENT_001
-from simulator.scenarios import build_incident_001
+from simulator.incidents import INCIDENT_001, INCIDENT_002
+from simulator.scenarios import build_incident_001, build_incident_002
 
 
 def test_incident_definition():
@@ -77,3 +81,56 @@ def test_incident_scenario():
     assert len(scenario.deployments) == 3
     assert len(scenario.traces) == 24
     assert "Database connection pool exhaustion" in scenario.ground_truth.root_cause
+
+
+def test_incident_002_definition():
+    assert INCIDENT_002.incident_id == "INC-002"
+    assert INCIDENT_002.service == "github-web"
+    assert INCIDENT_002.severity == "HIGH"
+    assert INCIDENT_002.started_at < INCIDENT_002.detected_at
+
+
+def test_incident_002_evidence():
+    logs = generate_incident_002_logs(INCIDENT_002.detected_at)
+    metrics = generate_incident_002_metrics(INCIDENT_002.detected_at)
+    deployments = generate_incident_002_deployments(INCIDENT_002.detected_at)
+    traces = generate_incident_002_traces(INCIDENT_002.detected_at)
+
+    assert len(logs) == 12
+    assert len(metrics) == 48
+    assert len(deployments) == 3
+    assert len(traces) == 24
+
+    query_metrics = [
+        metric for metric in metrics if metric.metric_name == "db_query_latency_ms"
+    ]
+    db_cpu = [
+        metric for metric in metrics if metric.metric_name == "db_primary_cpu_percent"
+    ]
+    error_rates = [
+        metric
+        for metric in metrics
+        if metric.metric_name == "update_request_error_rate_percent"
+    ]
+
+    assert query_metrics[0].value < query_metrics[-1].value
+    assert db_cpu[0].value < db_cpu[-1].value
+    assert max(metric.value for metric in error_rates) == 6.85
+
+    rollback = next(
+        deployment
+        for deployment in deployments
+        if deployment.changes.get("action") == "rollback"
+    )
+    assert rollback.timestamp > INCIDENT_002.detected_at
+
+
+def test_incident_002_scenario():
+    scenario = build_incident_002()
+
+    assert scenario.incident.incident_id == "INC-002"
+    assert len(scenario.logs) == 12
+    assert len(scenario.metrics) == 48
+    assert len(scenario.deployments) == 3
+    assert len(scenario.traces) == 24
+    assert "deployment" in scenario.ground_truth.trigger.lower()

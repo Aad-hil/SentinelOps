@@ -56,7 +56,9 @@ INCIDENT_002_GROUND_TRUTH = GroundTruth(
     contributing_factors=(
         "The query created excessive load on the primary database.",
         "Database saturation caused elevated request failures.",
-        "The problematic query was identified using internal tooling "
-        "and dashboards.",
+        (
+            "The problematic query was identified using internal tooling "
+            "and dashboards."
+        ),
     ),
 )

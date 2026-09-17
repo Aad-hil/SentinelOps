@@ -34,18 +34,14 @@ def test_investigation_plan_includes_critic_after_root_cause():
 
     result = graph.invoke({"evidence": evidence})
 
-    assert result["plan"] == [
+    expected_plan = [
         "telemetry",
         "knowledge",
         "deployment",
         "root_cause",
         "critic",
+        "adjudication",
     ]
-    assert result["completed_tasks"] == [
-        "telemetry",
-        "knowledge",
-        "deployment",
-        "root_cause",
-        "critic",
-    ]
+    assert result["plan"] == expected_plan
+    assert result["completed_tasks"] == expected_plan
     assert result["investigation_status"] == "complete"

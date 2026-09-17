@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from graph.investigation import build_investigation_graph
+from graph.investigation import _build_historical_memory_node
 
 
 class FakeHistoricalRepository:
@@ -44,15 +44,10 @@ def make_state():
 
 def test_historical_memory_node_populates_state_without_becoming_live_evidence():
     repository = FakeHistoricalRepository()
-    graph = build_investigation_graph(incident_memory_repository=repository)
-
-    # Execute only the graph node directly so this test does not need the full simulator bundle.
-    node = graph.get_graph().nodes["historical_memory"]
-    update = node.data.invoke(make_state())
+    node = _build_historical_memory_node(repository)
+    update = node(make_state())
 
     assert [match.incident_id for match in update["historical_incidents"]] == ["INC-002"]
     assert update["historical_incidents"][0].score == 0.81
     assert "historical memory retrieved 1" in update["messages"][0].lower()
-    assert update["historical_incidents"][0].incident_id not in {
-        "INC-001"
-    }
+    assert repository.queries[0][1] == 3

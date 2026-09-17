@@ -11,6 +11,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from evaluation.retrieval_metrics import (
+    duplicate_source_count,
     mean_reciprocal_rank,
     recall_at_k,
     unique_source_count,
@@ -25,6 +26,7 @@ def summarize(
     ranked_sources: list[list[str]],
     relevant_sets: list[set[str]],
     unique_counts: list[int],
+    duplicate_counts: list[int],
     *,
     label: str,
 ) -> None:
@@ -33,11 +35,14 @@ def summarize(
         for sources, relevant in zip(ranked_sources, relevant_sets, strict=True)
     ]
     mrr = mean_reciprocal_rank(ranked_sources, relevant_sets)
+    regressions = sum(recall < 1.0 for recall in recalls)
 
     print(f"=== {label} Summary ===")
     print(f"Recall@5:           {sum(recalls) / len(recalls):.3f}")
     print(f"MRR:                {mrr:.3f}")
     print(f"Avg unique sources: {sum(unique_counts) / len(unique_counts):.2f}")
+    print(f"Avg duplicate chunks: {sum(duplicate_counts) / len(duplicate_counts):.2f}")
+    print(f"Queries below full recall: {regressions}/{len(recalls)}")
 
 
 def print_results(label: str, results: list, relevant: set[str]) -> None:
@@ -62,6 +67,9 @@ def main() -> None:
     baseline_unique: list[int] = []
     reranked_unique: list[int] = []
     diversified_unique: list[int] = []
+    baseline_duplicates: list[int] = []
+    reranked_duplicates: list[int] = []
+    diversified_duplicates: list[int] = []
 
     print(
         f"Evaluating {len(cases)} queries: baseline top_k={top_k}, "
@@ -92,10 +100,16 @@ def main() -> None:
         reranked_sources.append(reranked_source_list)
         diversified_sources.append(diversified_source_list)
         relevant_sets.append(relevant)
+
         baseline_unique.append(unique_source_count(baseline_source_list, top_k))
         reranked_unique.append(unique_source_count(reranked_source_list, top_k))
         diversified_unique.append(
             unique_source_count(diversified_source_list, top_k)
+        )
+        baseline_duplicates.append(duplicate_source_count(baseline_source_list, top_k))
+        reranked_duplicates.append(duplicate_source_count(reranked_source_list, top_k))
+        diversified_duplicates.append(
+            duplicate_source_count(diversified_source_list, top_k)
         )
 
         baseline_recall = recall_at_k(baseline_source_list, relevant, top_k)
@@ -118,6 +132,7 @@ def main() -> None:
         baseline_sources,
         relevant_sets,
         baseline_unique,
+        baseline_duplicates,
         label="Baseline",
     )
     print()
@@ -125,6 +140,7 @@ def main() -> None:
         reranked_sources,
         relevant_sets,
         reranked_unique,
+        reranked_duplicates,
         label="Reranked",
     )
     print()
@@ -132,6 +148,7 @@ def main() -> None:
         diversified_sources,
         relevant_sets,
         diversified_unique,
+        diversified_duplicates,
         label="Reranked + diversified",
     )
 

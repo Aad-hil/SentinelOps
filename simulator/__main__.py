@@ -4,6 +4,7 @@ from graph.investigation import build_investigation_graph
 from memory.checkpoint import create_checkpointer
 from memory.persistence import persist_completed_investigation
 from memory.postgres import PostgresIncidentMemoryRepository
+from memory.semantic import QdrantIncidentMemoryRepository
 from simulator.scenarios import build_incident_001_evidence, build_incident_002_evidence
 
 _SCENARIOS = {
@@ -26,8 +27,12 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def run_investigation(incident_id: str, repository=None):
-    """Run one incident and persist its completed long-term memory."""
+def run_investigation(
+    incident_id: str,
+    repository=None,
+    semantic_repository=None,
+):
+    """Run one incident and optionally persist its long-term memory."""
     try:
         evidence = _SCENARIOS[incident_id]()
     except KeyError as exc:
@@ -44,7 +49,11 @@ def run_investigation(incident_id: str, repository=None):
     state = graph.invoke(initial_state, config=config)
 
     if repository is not None:
-        persist_completed_investigation(state, repository)
+        persist_completed_investigation(
+            state,
+            repository,
+            semantic_repository=semantic_repository,
+        )
 
     return state
 
@@ -105,9 +114,15 @@ def _print_report(state: dict) -> None:
 def main() -> int:
     args = build_parser().parse_args()
     repository = PostgresIncidentMemoryRepository()
-    state = run_investigation(args.incident_id, repository=repository)
+    semantic_repository = QdrantIncidentMemoryRepository()
+    state = run_investigation(
+        args.incident_id,
+        repository=repository,
+        semantic_repository=semantic_repository,
+    )
     _print_report(state)
     print(f"\nLong-term memory: saved {args.incident_id} to PostgreSQL")
+    print("Semantic memory: indexed in Qdrant")
     return 0
 
 

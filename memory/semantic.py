@@ -67,7 +67,12 @@ class QdrantIncidentMemoryRepository:
             collection_name=self.collection_name,
             points=[
                 models.PointStruct(
-                    id=str(uuid.uuid5(uuid.NAMESPACE_URL, f"sentinelops:{memory.incident_id}")),
+                    id=str(
+                        uuid.uuid5(
+                            uuid.NAMESPACE_URL,
+                            f"sentinelops:{memory.incident_id}",
+                        )
+                    ),
                     vector=embedding,
                     payload={
                         "incident_id": memory.incident_id,

@@ -10,6 +10,7 @@ from agents.root_cause import run_root_cause_agent
 from agents.supervisor import run_supervisor
 from agents.telemetry import run_telemetry_agent
 from graph.state import InvestigationState
+from memory.retrieval import retrieve_historical_incidents
 
 
 def _route_after_supervisor(state: InvestigationState) -> str:
@@ -17,9 +18,41 @@ def _route_after_supervisor(state: InvestigationState) -> str:
     return state.get("next_agent", "complete")
 
 
-def build_investigation_graph(checkpointer: Any = None):
-    """Build the investigation graph with optional short-term state memory."""
+def _build_historical_memory_node(repository: Any):
+    """Create a graph node that retrieves prior incidents without checkpointing the client."""
+    def retrieve_history(state: InvestigationState) -> dict[str, Any]:
+        if repository is None:
+            return {
+                "historical_incidents": [],
+                "messages": list(state.get("messages", [])) + [
+                    "Historical incident retrieval is not configured."
+                ],
+            }
+
+        query = f"{state['evidence'].incident.title}. {state['evidence'].incident.description}"
+        matches = retrieve_historical_incidents(
+            repository,
+            query,
+            limit=3,
+            exclude_incident_id=state["incident_id"],
+        )
+        return {
+            "historical_incidents": matches,
+            "messages": list(state.get("messages", [])) + [
+                f"Historical memory retrieved {len(matches)} relevant prior incidents."
+            ],
+        }
+
+    return retrieve_history
+
+
+def build_investigation_graph(
+    checkpointer: Any = None,
+    incident_memory_repository: Any = None,
+):
+    """Build the investigation graph with optional short-term and historical memory."""
     graph = StateGraph(InvestigationState)
+    graph.add_node("historical_memory", _build_historical_memory_node(incident_memory_repository))
     graph.add_node("supervisor", run_supervisor)
     graph.add_node("telemetry", run_telemetry_agent)
     graph.add_node("knowledge", run_knowledge_agent)
@@ -28,7 +61,8 @@ def build_investigation_graph(checkpointer: Any = None):
     graph.add_node("critic", run_critic_agent)
     graph.add_node("adjudication", run_adjudication_agent)
 
-    graph.add_edge(START, "supervisor")
+    graph.add_edge(START, "historical_memory")
+    graph.add_edge("historical_memory", "supervisor")
     graph.add_conditional_edges(
         "supervisor",
         _route_after_supervisor,

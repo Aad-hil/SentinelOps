@@ -1,10 +1,14 @@
-"""Tests for local cross-encoder reranking."""
+"""Tests for local cross-encoder reranking and diversification."""
 
 from dataclasses import dataclass
 
 import pytest
 
-from rag.reranking import LocalCrossEncoderReranker, rerank_results
+from rag.reranking import (
+    LocalCrossEncoderReranker,
+    diversify_results,
+    rerank_results,
+)
 from rag.retrieval import RetrievalResult
 
 
@@ -28,12 +32,12 @@ class FakeReranker:
         return self.scores
 
 
-def result(source: str, content: str) -> RetrievalResult:
+def result(source: str, content: str, chunk_id: str = "0") -> RetrievalResult:
     return RetrievalResult(
         content=content,
         source=source,
         category="runbook",
-        chunk_id=f"{source}:0",
+        chunk_id=f"{source}:{chunk_id}",
         score=0.5,
         metadata={"path": source},
     )
@@ -69,6 +73,48 @@ def test_rerank_results_sorts_by_cross_encoder_score() -> None:
     assert reranker.queries == [
         ("database issue", ["low relevance", "high relevance", "medium relevance"])
     ]
+
+
+def test_diversify_results_limits_repeated_sources() -> None:
+    candidates = [
+        result("a.md", "a1", "1"),
+        result("a.md", "a2", "2"),
+        result("a.md", "a3", "3"),
+        result("b.md", "b1", "1"),
+        result("c.md", "c1", "1"),
+    ]
+
+    diversified = diversify_results(candidates, top_k=4, max_per_source=1)
+
+    assert [item.source for item in diversified] == ["a.md", "b.md", "c.md", "a.md"]
+
+
+def test_diversify_results_keeps_two_chunks_per_source_by_default() -> None:
+    candidates = [
+        result("a.md", "a1", "1"),
+        result("a.md", "a2", "2"),
+        result("a.md", "a3", "3"),
+        result("b.md", "b1", "1"),
+        result("c.md", "c1", "1"),
+    ]
+
+    diversified = diversify_results(candidates, top_k=5)
+
+    assert [item.source for item in diversified] == [
+        "a.md",
+        "a.md",
+        "b.md",
+        "c.md",
+        "a.md",
+    ]
+
+
+def test_diversify_results_rejects_invalid_inputs() -> None:
+    with pytest.raises(ValueError, match="greater than zero"):
+        diversify_results([], top_k=0)
+
+    with pytest.raises(ValueError, match="greater than zero"):
+        diversify_results([], max_per_source=0)
 
 
 def test_rerank_results_rejects_invalid_inputs() -> None:

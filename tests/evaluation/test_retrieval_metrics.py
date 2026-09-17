@@ -3,6 +3,7 @@
 import pytest
 
 from evaluation.retrieval_metrics import (
+    duplicate_source_count,
     mean_reciprocal_rank,
     recall_at_k,
     unique_source_count,
@@ -40,3 +41,18 @@ def test_mean_reciprocal_rank_rejects_mismatched_inputs() -> None:
 def test_unique_source_count_ignores_duplicate_chunks() -> None:
     sources = ["a.md", "a.md", "b.md", "c.md"]
     assert unique_source_count(sources, 3) == 2
+
+
+def test_duplicate_source_count_counts_repeated_chunks() -> None:
+    sources = ["a.md", "a.md", "b.md", "c.md", "c.md"]
+    assert duplicate_source_count(sources, 5) == 2
+
+
+def test_duplicate_source_count_uses_only_top_k() -> None:
+    sources = ["a.md", "b.md", "b.md"]
+    assert duplicate_source_count(sources, 2) == 0
+
+
+def test_duplicate_source_count_rejects_invalid_k() -> None:
+    with pytest.raises(ValueError, match="greater than zero"):
+        duplicate_source_count(["a.md"], 0)

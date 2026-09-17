@@ -47,3 +47,11 @@ def unique_source_count(retrieved_sources: Sequence[str], k: int) -> int:
     if k <= 0:
         raise ValueError("k must be greater than zero")
     return len(set(retrieved_sources[:k]))
+
+
+def duplicate_source_count(retrieved_sources: Sequence[str], k: int) -> int:
+    """Count duplicate chunks caused by repeated source documents in top-k."""
+    if k <= 0:
+        raise ValueError("k must be greater than zero")
+    top_results = retrieved_sources[:k]
+    return len(top_results) - len(set(top_results))

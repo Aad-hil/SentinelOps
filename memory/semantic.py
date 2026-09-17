@@ -38,7 +38,8 @@ class QdrantIncidentMemoryRepository:
         self.collection_name = collection_name or os.getenv(
             "QDRANT_INCIDENT_COLLECTION", DEFAULT_COLLECTION
         )
-        self.client = client or QdrantClient(url or os.getenv("QDRANT_URL", DEFAULT_URL))
+        qdrant_url = url or os.getenv("QDRANT_URL", DEFAULT_URL)
+        self.client = client or QdrantClient(qdrant_url)
         self.dimension = self.embedding_provider.dimension
 
     def initialize(self) -> None:
@@ -63,16 +64,17 @@ class QdrantIncidentMemoryRepository:
             )
 
         self.initialize()
+        point_id = str(
+            uuid.uuid5(
+                uuid.NAMESPACE_URL,
+                f"sentinelops:{memory.incident_id}",
+            )
+        )
         self.client.upsert(
             collection_name=self.collection_name,
             points=[
                 models.PointStruct(
-                    id=str(
-                        uuid.uuid5(
-                            uuid.NAMESPACE_URL,
-                            f"sentinelops:{memory.incident_id}",
-                        )
-                    ),
+                    id=point_id,
                     vector=embedding,
                     payload={
                         "incident_id": memory.incident_id,

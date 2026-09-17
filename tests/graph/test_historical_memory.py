@@ -50,4 +50,5 @@ def test_historical_memory_node_populates_state_without_becoming_live_evidence()
     assert [match.incident_id for match in update["historical_incidents"]] == ["INC-002"]
     assert update["historical_incidents"][0].score == 0.81
     assert "historical memory retrieved 1" in update["messages"][0].lower()
-    assert repository.queries[0][1] == 3
+    # One extra candidate is requested so the current incident can be excluded safely.
+    assert repository.queries[0][1] == 4

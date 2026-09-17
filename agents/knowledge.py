@@ -1,40 +1,41 @@
 from graph.state import AgentFinding, InvestigationState, append_finding
-
-
-_RUNBOOK_HINTS = {
-    "database": ("database-high-cpu.md", "database-query-latency.md"),
-    "query": ("database-query-latency.md",),
-    "deploy": ("deployment-validation.md", "deployment-rollback.md"),
-    "rollback": ("deployment-rollback.md",),
-}
+from tools.knowledge import search_knowledge
 
 
 def run_knowledge_agent(state: InvestigationState) -> dict:
-    """Select relevant knowledge sources from the indexed corpus metadata.
+    """Search the knowledge corpus through the agent's RAG tool.
 
-    This first agent version deliberately does not call the LLM. It establishes
-    the multi-agent contract while reusing the RAG corpus deterministically.
+    The retriever is injected through state so tests and future graph wiring can
+    provide either a real Bedrock/Qdrant retriever or a deterministic fake.
     """
 
-    incident = state["evidence"].incident
-    query = f"{incident.title} {incident.description}".lower()
-    sources: list[str] = []
+    evidence = state["evidence"]
+    retriever = state.get("knowledge_retriever")
+    query = f"{evidence.incident.title}. {evidence.incident.description}"
 
-    for keyword, hints in _RUNBOOK_HINTS.items():
-        if keyword in query:
-            sources.extend(hints)
+    if retriever is None:
+        summary = "Knowledge Agent could not search the RAG corpus because no retriever was provided."
+        finding = AgentFinding(
+            agent="knowledge",
+            category="knowledge",
+            summary=summary,
+            evidence=(),
+            confidence=0.2,
+        )
+        return append_finding(state, finding)
 
-    sources = list(dict.fromkeys(sources))
+    results = search_knowledge(retriever, query, top_k=5)
+    sources = tuple(dict.fromkeys(result.source for result in results))
     summary = (
-        "Knowledge Agent identified relevant runbooks for the incident: "
-        + (", ".join(sources) if sources else "no deterministic runbook match")
+        "Knowledge Agent retrieved relevant knowledge sources: "
+        + (", ".join(sources) if sources else "no matching sources")
     )
 
     finding = AgentFinding(
         agent="knowledge",
         category="knowledge",
         summary=summary,
-        evidence=tuple(sources),
-        confidence=0.65 if sources else 0.35,
+        evidence=sources,
+        confidence=0.7 if results else 0.3,
     )
     return append_finding(state, finding)

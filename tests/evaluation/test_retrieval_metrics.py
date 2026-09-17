@@ -28,7 +28,8 @@ def test_mean_reciprocal_rank_uses_first_relevant_result() -> None:
         ["noise.md"],
     ]
     relevant = [{"target.md"}, {"target.md"}, {"target.md"}]
-    assert mean_reciprocal_rank(ranked, relevant) == pytest.approx((0.5 + 1.0) / 3)
+    expected = (0.5 + 1.0) / 3
+    assert mean_reciprocal_rank(ranked, relevant) == pytest.approx(expected)
 
 
 def test_mean_reciprocal_rank_rejects_mismatched_inputs() -> None:
@@ -37,4 +38,5 @@ def test_mean_reciprocal_rank_rejects_mismatched_inputs() -> None:
 
 
 def test_unique_source_count_ignores_duplicate_chunks() -> None:
-    assert unique_source_count(["a.md", "a.md", "b.md", "c.md"], 3) == 2
+    sources = ["a.md", "a.md", "b.md", "c.md"]
+    assert unique_source_count(sources, 3) == 2

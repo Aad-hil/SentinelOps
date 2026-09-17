@@ -13,7 +13,7 @@ DEFAULT_MAX_RESULTS_PER_SOURCE = 2
 
 
 class Reranker(Protocol):
-    """Interface implemented by SentinelOps reranking backends."""
+    """Interface implemented by all SentinelOps reranking backends."""
 
     def score(self, query: str, documents: Sequence[str]) -> list[float]:
         """Return one relevance score for each document."""
@@ -110,13 +110,12 @@ def diversify_results(
     top_k: int = 5,
     max_per_source: int = DEFAULT_MAX_RESULTS_PER_SOURCE,
 ) -> list[RetrievalResult]:
-    """Limit repeated chunks from one source while preserving reranker order.
+    """Limit repeated chunks from one source while preserving relevance order.
 
-    Results are considered in their existing relevance order. The first
-    ``max_per_source`` chunks from each source are retained, then a second
-    pass fills any remaining slots with skipped results. The second pass
-    prevents diversification from returning fewer than ``top_k`` results
-    when the candidate set contains too few distinct sources.
+    Results are considered in their existing relevance order. At most
+    ``max_per_source`` chunks from each source are retained. If the candidate
+    set contains too few distinct sources, fewer than ``top_k`` results may
+    be returned rather than violating the source limit.
     """
     if top_k <= 0:
         raise ValueError("top_k must be greater than zero")
@@ -126,19 +125,14 @@ def diversify_results(
         return []
 
     selected: list[RetrievalResult] = []
-    skipped: list[RetrievalResult] = []
     source_counts: dict[str, int] = defaultdict(int)
 
     for result in results:
-        if source_counts[result.source] < max_per_source:
-            selected.append(result)
-            source_counts[result.source] += 1
-            if len(selected) == top_k:
-                break
-        else:
-            skipped.append(result)
+        if source_counts[result.source] >= max_per_source:
+            continue
+        selected.append(result)
+        source_counts[result.source] += 1
+        if len(selected) == top_k:
+            break
 
-    if len(selected) < top_k:
-        selected.extend(skipped[: top_k - len(selected)])
-
-    return selected[:top_k]
+    return selected

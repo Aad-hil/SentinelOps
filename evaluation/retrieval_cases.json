@@ -66,5 +66,163 @@
       "architecture/request-flow.md",
       "runbooks/database-query-latency.md"
     ]
+  },
+  {
+    "id": "db-cpu-002",
+    "query": "Which database metrics should I inspect first when CPU remains elevated on the primary?",
+    "relevant_sources": [
+      "runbooks/database-high-cpu.md",
+      "architecture/database-topology.md"
+    ]
+  },
+  {
+    "id": "db-cpu-003",
+    "query": "What database symptoms can indicate that CPU pressure is affecting production requests?",
+    "relevant_sources": [
+      "runbooks/database-high-cpu.md",
+      "runbooks/database-query-latency.md",
+      "architecture/request-flow.md"
+    ]
+  },
+  {
+    "id": "db-query-002",
+    "query": "How should I investigate rising query latency on a production database?",
+    "relevant_sources": [
+      "runbooks/database-query-latency.md",
+      "runbooks/database-high-cpu.md",
+      "architecture/database-topology.md"
+    ]
+  },
+  {
+    "id": "db-query-003",
+    "query": "What evidence would connect a slow database query to increased resource utilization?",
+    "relevant_sources": [
+      "runbooks/database-query-latency.md",
+      "runbooks/database-high-cpu.md"
+    ]
+  },
+  {
+    "id": "deploy-002",
+    "query": "What should be checked after a deployment when application or database performance changes?",
+    "relevant_sources": [
+      "deployment/deployment-validation.md",
+      "deployment/deployment-process.md",
+      "runbooks/application-error-rate.md"
+    ]
+  },
+  {
+    "id": "deploy-003",
+    "query": "How can deployment timing help determine whether a production regression was introduced by a release?",
+    "relevant_sources": [
+      "deployment/deployment-process.md",
+      "deployment/deployment-validation.md",
+      "incidents/inc-002-summary.md"
+    ]
+  },
+  {
+    "id": "rollback-002",
+    "query": "When should a production deployment be rolled back because of database or application impact?",
+    "relevant_sources": [
+      "runbooks/deployment-rollback.md",
+      "deployment/deployment-process.md",
+      "runbooks/application-error-rate.md"
+    ]
+  },
+  {
+    "id": "rollback-003",
+    "query": "What should I verify after rolling back a problematic deployment?",
+    "relevant_sources": [
+      "runbooks/deployment-rollback.md",
+      "deployment/deployment-validation.md"
+    ]
+  },
+  {
+    "id": "traffic-002",
+    "query": "What signals distinguish a traffic spike from a database-specific performance problem?",
+    "relevant_sources": [
+      "runbooks/traffic-spike.md",
+      "runbooks/database-high-cpu.md",
+      "runbooks/database-query-latency.md"
+    ]
+  },
+  {
+    "id": "traffic-003",
+    "query": "How can increased request volume cause downstream database pressure?",
+    "relevant_sources": [
+      "runbooks/traffic-spike.md",
+      "architecture/request-flow.md",
+      "runbooks/database-high-cpu.md"
+    ]
+  },
+  {
+    "id": "cache-002",
+    "query": "What application and database symptoms should I inspect during a cache outage?",
+    "relevant_sources": [
+      "runbooks/cache-failure.md",
+      "runbooks/database-high-cpu.md",
+      "architecture/request-flow.md"
+    ]
+  },
+  {
+    "id": "cache-003",
+    "query": "How can loss of caching change the load pattern reaching a database?",
+    "relevant_sources": [
+      "runbooks/cache-failure.md",
+      "architecture/request-flow.md",
+      "runbooks/database-high-cpu.md"
+    ]
+  },
+  {
+    "id": "network-002",
+    "query": "What telemetry can help identify network latency between application and downstream services?",
+    "relevant_sources": [
+      "runbooks/network-latency.md",
+      "architecture/request-flow.md"
+    ]
+  },
+  {
+    "id": "network-003",
+    "query": "How should I investigate slow requests when database latency does not explain the delay?",
+    "relevant_sources": [
+      "runbooks/network-latency.md",
+      "architecture/request-flow.md",
+      "runbooks/database-query-latency.md"
+    ]
+  },
+  {
+    "id": "errors-002",
+    "query": "Which signals help determine whether a rising application error rate is caused by a dependency?",
+    "relevant_sources": [
+      "runbooks/application-error-rate.md",
+      "architecture/request-flow.md",
+      "architecture/github-web.md"
+    ]
+  },
+  {
+    "id": "errors-003",
+    "query": "How should I investigate elevated application request failures and correlate them with service dependencies?",
+    "relevant_sources": [
+      "runbooks/application-error-rate.md",
+      "architecture/request-flow.md"
+    ]
+  },
+  {
+    "id": "incident-002",
+    "query": "What evidence should be correlated when a deployment is followed by database saturation and elevated update errors?",
+    "relevant_sources": [
+      "incidents/inc-002-summary.md",
+      "deployment/deployment-validation.md",
+      "runbooks/database-high-cpu.md",
+      "runbooks/application-error-rate.md"
+    ]
+  },
+  {
+    "id": "architecture-001",
+    "query": "How does the production request flow connect application requests to downstream database behavior?",
+    "relevant_sources": [
+      "architecture/request-flow.md",
+      "architecture/database-topology.md",
+      "architecture/github-web.md"
+    ]
   }
 ]

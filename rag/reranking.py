@@ -1,13 +1,15 @@
-"""Local cross-encoder reranking for SentinelOps retrieval."""
+"""Local cross-encoder reranking and source diversification for retrieval."""
 
 from __future__ import annotations
 
+from collections import defaultdict
 from collections.abc import Sequence
 from typing import Any, Protocol
 
 from rag.retrieval import RetrievalResult
 
 DEFAULT_RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L6-v2"
+DEFAULT_MAX_RESULTS_PER_SOURCE = 2
 
 
 class Reranker(Protocol):
@@ -50,7 +52,10 @@ class LocalCrossEncoderReranker:
             raise ValueError("query must be a non-empty string")
         if not documents:
             return []
-        if any(not isinstance(document, str) or not document.strip() for document in documents):
+        if any(
+            not isinstance(document, str) or not document.strip()
+            for document in documents
+        ):
             raise ValueError("documents must contain only non-empty strings")
 
         pairs = [(query, document) for document in documents]
@@ -97,3 +102,43 @@ def rerank_results(
             )
         )
     return reranked
+
+
+def diversify_results(
+    results: Sequence[RetrievalResult],
+    *,
+    top_k: int = 5,
+    max_per_source: int = DEFAULT_MAX_RESULTS_PER_SOURCE,
+) -> list[RetrievalResult]:
+    """Limit repeated chunks from one source while preserving reranker order.
+
+    Results are considered in their existing relevance order. The first
+    ``max_per_source`` chunks from each source are retained, then a second
+    pass fills any remaining slots with skipped results. The second pass
+    prevents diversification from returning fewer than ``top_k`` results
+    when the candidate set contains too few distinct sources.
+    """
+    if top_k <= 0:
+        raise ValueError("top_k must be greater than zero")
+    if max_per_source <= 0:
+        raise ValueError("max_per_source must be greater than zero")
+    if not results:
+        return []
+
+    selected: list[RetrievalResult] = []
+    skipped: list[RetrievalResult] = []
+    source_counts: dict[str, int] = defaultdict(int)
+
+    for result in results:
+        if source_counts[result.source] < max_per_source:
+            selected.append(result)
+            source_counts[result.source] += 1
+            if len(selected) == top_k:
+                break
+        else:
+            skipped.append(result)
+
+    if len(selected) < top_k:
+        selected.extend(skipped[: top_k - len(selected)])
+
+    return selected[:top_k]

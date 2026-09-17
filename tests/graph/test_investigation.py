@@ -60,7 +60,7 @@ def test_agents_produce_independent_findings():
     assert findings["telemetry"].category == "telemetry"
     assert findings["knowledge"].category == "knowledge"
     assert findings["deployment"].category == "deployment"
-    assert findings["root_cause"].category == "root_cause"
+    assert findings["root_cause"].category == "hypothesis_evaluation"
     assert findings["telemetry"].summary != findings["deployment"].summary
 
 

@@ -1,17 +1,19 @@
 from graph.state import AgentFinding, InvestigationState, append_finding
+from tools.deployments import get_deployment_changes, get_recent_deployments
 
 
 def run_deployment_agent(state: InvestigationState) -> dict:
-    """Inspect deployment events independently from telemetry and knowledge."""
+    """Inspect deployment history through the agent's dedicated tools."""
 
-    deployments = state["evidence"].deployments
-    incident_time = state["evidence"].incident.detected_at
-
-    recent = [deployment for deployment in deployments if deployment.timestamp <= incident_time]
-    recent.sort(key=lambda deployment: deployment.timestamp, reverse=True)
+    evidence = state["evidence"]
+    recent = get_recent_deployments(evidence)
 
     if recent:
         deployment = recent[0]
+        changes = get_deployment_changes(evidence, deployment.version)
+        change_refs = tuple(
+            f"change:{key}={value}" for key, value in sorted((changes.changes if changes else {}).items())
+        )
         summary = (
             f"Latest deployment before detection was {deployment.version} for "
             f"{deployment.service}, following {deployment.previous_version}."
@@ -20,6 +22,7 @@ def run_deployment_agent(state: InvestigationState) -> dict:
             deployment.version,
             deployment.previous_version,
             deployment.timestamp.isoformat(),
+            *change_refs,
         )
         confidence = 0.8
     else:

@@ -1,5 +1,6 @@
 from graph.evidence import EvidenceItem
 from graph.state import AgentFinding, InvestigationState, append_agent_evidence, append_finding
+from memory.retrieval import retrieve_historical_incidents
 from tools.knowledge import search_knowledge
 
 
@@ -12,7 +13,7 @@ _RUNBOOK_HINTS = {
 
 
 def run_knowledge_agent(state: InvestigationState) -> dict:
-    """Search knowledge and publish normalized evidence."""
+    """Search current knowledge and historical incident memory."""
     evidence = state["evidence"]
     retriever = state.get("knowledge_retriever")
     query = f"{evidence.incident.title}. {evidence.incident.description}"
@@ -29,7 +30,7 @@ def run_knowledge_agent(state: InvestigationState) -> dict:
                 relevance=max(0.0, min(1.0, result.score)),
                 agent="knowledge",
             ))
-        confidence = 0.7 if results else 0.3
+        knowledge_confidence = 0.7 if results else 0.3
     else:
         lowered = query.lower()
         fallback: list[str] = []
@@ -45,19 +46,46 @@ def run_knowledge_agent(state: InvestigationState) -> dict:
                 relevance=0.65,
                 agent="knowledge",
             ))
-        confidence = 0.65 if sources else 0.35
+        knowledge_confidence = 0.65 if sources else 0.35
 
+    historical = []
+    historical_repository = state.get("incident_memory_repository")
+    if historical_repository is not None:
+        historical = retrieve_historical_incidents(
+            historical_repository,
+            query,
+            limit=3,
+            exclude_incident_id=evidence.incident.incident_id,
+        )
+
+    historical_context = tuple(
+        f"{match.incident_id}: {match.title} (similarity={match.score:.3f})"
+        for match in historical
+    )
     summary = (
         "Knowledge Agent retrieved relevant knowledge sources: "
         + (", ".join(sources) if sources else "no matching sources")
     )
+    if historical:
+        summary += ". Historical incidents: " + "; ".join(historical_context)
+
     finding = AgentFinding(
         agent="knowledge",
-        category="knowledge",
+        category="knowledge_and_history",
         summary=summary,
-        evidence=sources,
-        confidence=confidence,
+        evidence=sources + historical_context,
+        confidence=knowledge_confidence,
     )
     result = append_finding(state, finding)
     result.update(append_agent_evidence(state, items))
+    result.update({
+        "historical_incidents": historical,
+        "messages": list(state.get("messages", [])) + [
+            (
+                f"Knowledge Agent found {len(historical)} relevant historical incidents."
+                if historical
+                else "Knowledge Agent found no relevant historical incidents."
+            )
+        ],
+    })
     return result

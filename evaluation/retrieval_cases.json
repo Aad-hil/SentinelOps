@@ -1,0 +1,70 @@
+[
+  {
+    "id": "db-cpu-001",
+    "query": "What should I investigate when a production database primary has sustained high CPU?",
+    "relevant_sources": [
+      "runbooks/database-high-cpu.md",
+      "runbooks/database-query-latency.md",
+      "architecture/database-topology.md"
+    ]
+  },
+  {
+    "id": "db-deploy-001",
+    "query": "A database became saturated immediately after a deployment. How should I investigate the regression?",
+    "relevant_sources": [
+      "deployment/deployment-validation.md",
+      "deployment/deployment-process.md",
+      "runbooks/database-high-cpu.md",
+      "incidents/inc-002-summary.md"
+    ]
+  },
+  {
+    "id": "app-errors-001",
+    "query": "How can a downstream dependency cause application request failures even when the application is healthy?",
+    "relevant_sources": [
+      "runbooks/application-error-rate.md",
+      "architecture/request-flow.md",
+      "architecture/github-web.md"
+    ]
+  },
+  {
+    "id": "rollback-001",
+    "query": "What evidence and checks are required before rolling back a production deployment?",
+    "relevant_sources": [
+      "runbooks/deployment-rollback.md",
+      "deployment/deployment-process.md"
+    ]
+  },
+  {
+    "id": "traffic-001",
+    "query": "How do I determine whether increased traffic is responsible for database load?",
+    "relevant_sources": [
+      "runbooks/traffic-spike.md",
+      "runbooks/database-high-cpu.md"
+    ]
+  },
+  {
+    "id": "cache-001",
+    "query": "How can a cache failure indirectly increase database workload, and what should I check?",
+    "relevant_sources": [
+      "runbooks/cache-failure.md"
+    ]
+  },
+  {
+    "id": "query-001",
+    "query": "Which query signals help identify an expensive database query contributing to resource pressure?",
+    "relevant_sources": [
+      "runbooks/database-query-latency.md",
+      "runbooks/database-high-cpu.md"
+    ]
+  },
+  {
+    "id": "network-001",
+    "query": "When requests are slow, how can I distinguish network latency from database workload problems?",
+    "relevant_sources": [
+      "runbooks/network-latency.md",
+      "architecture/request-flow.md",
+      "runbooks/database-query-latency.md"
+    ]
+  }
+]

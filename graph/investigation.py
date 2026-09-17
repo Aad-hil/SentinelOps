@@ -1,3 +1,5 @@
+from typing import Any
+
 from langgraph.graph import END, START, StateGraph
 
 from agents.adjudication import run_adjudication_agent
@@ -15,8 +17,8 @@ def _route_after_supervisor(state: InvestigationState) -> str:
     return state.get("next_agent", "complete")
 
 
-def build_investigation_graph():
-    """Build the evidence-collection, hypothesis-evaluation, critique, and adjudication graph."""
+def build_investigation_graph(checkpointer: Any = None):
+    """Build the investigation graph with optional short-term state memory."""
     graph = StateGraph(InvestigationState)
     graph.add_node("supervisor", run_supervisor)
     graph.add_node("telemetry", run_telemetry_agent)
@@ -47,4 +49,4 @@ def build_investigation_graph():
     graph.add_edge("critic", "supervisor")
     graph.add_edge("adjudication", "supervisor")
 
-    return graph.compile()
+    return graph.compile(checkpointer=checkpointer)

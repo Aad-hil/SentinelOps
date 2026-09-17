@@ -42,6 +42,7 @@ def run_investigation(
         "incident_id": evidence.incident.incident_id,
         "incident_summary": evidence.incident.description,
         "evidence": evidence,
+        "incident_memory_repository": semantic_repository,
     }
     checkpointer = create_checkpointer()
     graph = build_investigation_graph(checkpointer=checkpointer)
@@ -70,6 +71,20 @@ def _print_report(state: dict) -> None:
     print("\n--- Investigation Plan ---")
     for task in state.get("plan", []):
         print(f"- {task}")
+
+    print("\n--- Historical Incidents ---")
+    historical = state.get("historical_incidents", [])
+    if not historical:
+        print("- No relevant historical incidents found.")
+    for match in historical:
+        print(
+            f"- {match.incident_id}: {match.title} "
+            f"(similarity={match.score:.3f})"
+        )
+        if match.root_cause_statement:
+            print(f"  Historical root cause: {match.root_cause_statement}")
+        if match.recovery_action:
+            print(f"  Historical recovery: {match.recovery_action}")
 
     print("\n--- Agent Findings ---")
     for finding in state.get("findings", []):

@@ -61,7 +61,7 @@ def run_knowledge_agent(state: InvestigationState) -> dict:
 
     finding = AgentFinding(
         agent="knowledge",
-        category="knowledge_and_history",
+        category="knowledge",
         summary=summary,
         evidence=sources + historical_context,
         confidence=knowledge_confidence,

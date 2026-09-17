@@ -42,10 +42,12 @@ def run_investigation(
         "incident_id": evidence.incident.incident_id,
         "incident_summary": evidence.incident.description,
         "evidence": evidence,
-        "incident_memory_repository": semantic_repository,
     }
     checkpointer = create_checkpointer()
-    graph = build_investigation_graph(checkpointer=checkpointer)
+    graph = build_investigation_graph(
+        checkpointer=checkpointer,
+        incident_memory_repository=semantic_repository,
+    )
     config = {"configurable": {"thread_id": evidence.incident.incident_id}}
     state = graph.invoke(initial_state, config=config)
 

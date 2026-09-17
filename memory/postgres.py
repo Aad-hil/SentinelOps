@@ -4,9 +4,15 @@ import os
 from collections.abc import Callable
 
 import psycopg
+from dotenv import load_dotenv
 
 from memory.models import IncidentMemory
 
+
+# Load the project's local .env when present. Existing process environment
+# variables still take precedence, so CI and production configuration remain
+# compatible with normal environment-based configuration.
+load_dotenv()
 
 CREATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS incident_memory (

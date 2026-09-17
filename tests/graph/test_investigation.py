@@ -36,18 +36,26 @@ def test_investigation_graph_collects_from_three_specialist_agents():
     )
 
     assert result["investigation_status"] == "complete"
-    assert result["plan"] == ["telemetry", "knowledge", "deployment", "root_cause"]
+    assert result["plan"] == [
+        "telemetry",
+        "knowledge",
+        "deployment",
+        "root_cause",
+        "critic",
+    ]
     assert result["completed_tasks"] == [
         "telemetry",
         "knowledge",
         "deployment",
         "root_cause",
+        "critic",
     ]
     assert [finding.agent for finding in result["findings"]] == [
         "telemetry",
         "knowledge",
         "deployment",
         "root_cause",
+        "critic",
     ]
 
 
@@ -61,6 +69,7 @@ def test_agents_produce_independent_findings():
     assert findings["knowledge"].category == "knowledge"
     assert findings["deployment"].category == "deployment"
     assert findings["root_cause"].category == "hypothesis_evaluation"
+    assert findings["critic"].category == "critique"
     assert findings["telemetry"].summary != findings["deployment"].summary
 
 

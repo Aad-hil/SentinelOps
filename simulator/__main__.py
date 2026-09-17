@@ -2,6 +2,8 @@ import argparse
 
 from graph.investigation import build_investigation_graph
 from memory.checkpoint import create_checkpointer
+from memory.persistence import persist_completed_investigation
+from memory.postgres import PostgresIncidentMemoryRepository
 from simulator.scenarios import build_incident_001_evidence, build_incident_002_evidence
 
 _SCENARIOS = {
@@ -24,8 +26,8 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def run_investigation(incident_id: str):
-    """Build evidence and run one incident in its own short-term memory thread."""
+def run_investigation(incident_id: str, repository=None):
+    """Run one incident and persist its completed long-term memory."""
     try:
         evidence = _SCENARIOS[incident_id]()
     except KeyError as exc:
@@ -39,7 +41,12 @@ def run_investigation(incident_id: str):
     checkpointer = create_checkpointer()
     graph = build_investigation_graph(checkpointer=checkpointer)
     config = {"configurable": {"thread_id": evidence.incident.incident_id}}
-    return graph.invoke(initial_state, config=config)
+    state = graph.invoke(initial_state, config=config)
+
+    if repository is not None:
+        persist_completed_investigation(state, repository)
+
+    return state
 
 
 def _print_report(state: dict) -> None:
@@ -97,8 +104,10 @@ def _print_report(state: dict) -> None:
 
 def main() -> int:
     args = build_parser().parse_args()
-    state = run_investigation(args.incident_id)
+    repository = PostgresIncidentMemoryRepository()
+    state = run_investigation(args.incident_id, repository=repository)
     _print_report(state)
+    print(f"\nLong-term memory: saved {args.incident_id} to PostgreSQL")
     return 0
 
 

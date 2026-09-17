@@ -3,7 +3,12 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from evaluation.retrieval_metrics import (
     mean_reciprocal_rank,
@@ -12,9 +17,7 @@ from evaluation.retrieval_metrics import (
 )
 from rag.retrieval import KnowledgeRetriever
 
-CASES_PATH = (
-    Path(__file__).resolve().parents[1] / "evaluation" / "retrieval_cases.json"
-)
+CASES_PATH = PROJECT_ROOT / "evaluation" / "retrieval_cases.json"
 
 
 def main() -> None:

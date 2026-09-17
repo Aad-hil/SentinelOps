@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from types import SimpleNamespace
 
 from qdrant_client import QdrantClient
 
@@ -82,7 +81,11 @@ def test_search_validates_query_and_limit():
         collection_name="test_incidents",
     )
 
-    for query, limit, expected in [("", 5, "non-empty"), ("database", 0, "greater than zero")]:
+    cases = [
+        ("", 5, "non-empty"),
+        ("database", 0, "greater than zero"),
+    ]
+    for query, limit, expected in cases:
         try:
             repository.search(query, limit=limit)
         except ValueError as exc:

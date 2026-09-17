@@ -12,7 +12,9 @@ from evaluation.retrieval_metrics import (
 )
 from rag.retrieval import KnowledgeRetriever
 
-CASES_PATH = Path(__file__).resolve().parents[1] / "evaluation" / "retrieval_cases.json"
+CASES_PATH = (
+    Path(__file__).resolve().parents[1] / "evaluation" / "retrieval_cases.json"
+)
 
 
 def main() -> None:
@@ -36,7 +38,10 @@ def main() -> None:
         recalls.append(recall_at_k(sources, relevant, top_k))
         unique_counts.append(unique_source_count(sources, top_k))
 
-        print(f"[{case['id']}] Recall@5={recalls[-1]:.3f} | unique_sources={unique_counts[-1]}")
+        print(
+            f"[{case['id']}] Recall@5={recalls[-1]:.3f} | "
+            f"unique_sources={unique_counts[-1]}"
+        )
         for rank, result in enumerate(results, start=1):
             marker = "*" if result.source in relevant else " "
             print(f"  {marker}{rank}. {result.score:.4f} | {result.source}")

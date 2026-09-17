@@ -1,6 +1,7 @@
 import argparse
 
 from graph.investigation import build_investigation_graph
+from memory.checkpoint import create_checkpointer
 from simulator.scenarios import build_incident_001_evidence, build_incident_002_evidence
 
 _SCENARIOS = {
@@ -24,7 +25,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def run_investigation(incident_id: str):
-    """Build agent-facing evidence and run the investigation graph."""
+    """Build evidence and run one incident in its own short-term memory thread."""
     try:
         evidence = _SCENARIOS[incident_id]()
     except KeyError as exc:
@@ -35,7 +36,10 @@ def run_investigation(incident_id: str):
         "incident_summary": evidence.incident.description,
         "evidence": evidence,
     }
-    return build_investigation_graph().invoke(initial_state)
+    checkpointer = create_checkpointer()
+    graph = build_investigation_graph(checkpointer=checkpointer)
+    config = {"configurable": {"thread_id": evidence.incident.incident_id}}
+    return graph.invoke(initial_state, config=config)
 
 
 def _print_report(state: dict) -> None:

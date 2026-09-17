@@ -3,6 +3,8 @@ from typing import Any, TypedDict
 
 from simulator.evidence import EvidenceBundle
 
+from graph.evidence import EvidenceItem
+
 
 @dataclass(frozen=True)
 class AgentFinding:
@@ -25,6 +27,7 @@ class InvestigationState(TypedDict, total=False):
     plan: list[str]
     completed_tasks: list[str]
     findings: list[AgentFinding]
+    evidence_items: list[EvidenceItem]
     messages: list[str]
     next_agent: str
     investigation_status: str
@@ -35,9 +38,20 @@ def append_finding(
     finding: AgentFinding,
 ) -> dict[str, Any]:
     """Return a state update containing one additional finding."""
-
     findings = list(state.get("findings", []))
     findings.append(finding)
     completed = list(state.get("completed_tasks", []))
     completed.append(finding.agent)
     return {"findings": findings, "completed_tasks": completed}
+
+
+def append_agent_evidence(
+    state: InvestigationState,
+    items: list[EvidenceItem] | tuple[EvidenceItem, ...],
+) -> dict[str, Any]:
+    """Return a state update containing new normalized evidence."""
+    existing = list(state.get("evidence_items", []))
+    for item in items:
+        if item not in existing:
+            existing.append(item)
+    return {"evidence_items": existing}

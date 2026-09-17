@@ -75,7 +75,7 @@ def test_rerank_results_sorts_by_cross_encoder_score() -> None:
     ]
 
 
-def test_diversify_results_limits_repeated_sources() -> None:
+def test_diversify_results_strictly_limits_repeated_sources() -> None:
     candidates = [
         result("a.md", "a1", "1"),
         result("a.md", "a2", "2"),
@@ -86,7 +86,22 @@ def test_diversify_results_limits_repeated_sources() -> None:
 
     diversified = diversify_results(candidates, top_k=4, max_per_source=1)
 
-    assert [item.source for item in diversified] == ["a.md", "b.md", "c.md", "a.md"]
+    assert [item.source for item in diversified] == ["a.md", "b.md", "c.md"]
+    assert max(item.source for item in diversified) == "c.md"
+    assert len({item.source for item in diversified}) == len(diversified)
+
+
+def test_diversify_results_returns_fewer_than_top_k_when_limit_requires_it() -> None:
+    candidates = [
+        result("a.md", "a1", "1"),
+        result("a.md", "a2", "2"),
+        result("a.md", "a3", "3"),
+    ]
+
+    diversified = diversify_results(candidates, top_k=5, max_per_source=2)
+
+    assert [item.source for item in diversified] == ["a.md", "a.md"]
+    assert len(diversified) == 2
 
 
 def test_diversify_results_keeps_two_chunks_per_source_by_default() -> None:
@@ -105,8 +120,8 @@ def test_diversify_results_keeps_two_chunks_per_source_by_default() -> None:
         "a.md",
         "b.md",
         "c.md",
-        "a.md",
     ]
+    assert sum(item.source == "a.md" for item in diversified) == 2
 
 
 def test_diversify_results_rejects_invalid_inputs() -> None:

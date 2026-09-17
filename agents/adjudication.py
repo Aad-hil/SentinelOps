@@ -26,6 +26,10 @@ def _has(items: list[EvidenceItem], *terms: str) -> bool:
     return any(all(term.lower() in _text(item) for term in terms) for item in items)
 
 
+def _has_any(items: list[EvidenceItem], *terms: str) -> bool:
+    return any(term.lower() in _text(item) for item in items for term in terms)
+
+
 def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], Adjudication | None]:
     """Re-score hypotheses using temporal, causal, recovery, and alternative evidence."""
     hypotheses = list(state.get("hypotheses", []))
@@ -35,7 +39,7 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
 
     temporal = _has(items, "deployment", "web-2025.01.09.3") and _has(items, "deployment", "query")
     causal = _has(items, "query_fingerprint") and _has(items, "query_path") and _has(items, "database")
-    recovery = _has(items, "rollback") and _has(items, "error rate", "baseline")
+    recovery = _has_any(items, "rollback") and _has_any(items, "error rate", "baseline", "returned toward baseline")
     traffic_direct = _has(items, "traffic") or _has(items, "request volume") or _has(items, "requests per second")
     network_direct = _has(items, "network") or _has(items, "downstream") or _has(items, "connection timeout")
 

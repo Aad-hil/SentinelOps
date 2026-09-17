@@ -28,15 +28,13 @@ class InvestigationState(TypedDict, total=False):
     completed_tasks: list[str]
     findings: list[AgentFinding]
     evidence_items: list[EvidenceItem]
+    hypotheses: list[Any]
     messages: list[str]
     next_agent: str
     investigation_status: str
 
 
-def append_finding(
-    state: InvestigationState,
-    finding: AgentFinding,
-) -> dict[str, Any]:
+def append_finding(state: InvestigationState, finding: AgentFinding) -> dict[str, Any]:
     """Return a state update containing one additional finding."""
     findings = list(state.get("findings", []))
     findings.append(finding)

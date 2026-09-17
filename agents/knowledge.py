@@ -1,6 +1,5 @@
 from graph.evidence import EvidenceItem
 from graph.state import AgentFinding, InvestigationState, append_agent_evidence, append_finding
-from memory.retrieval import retrieve_historical_incidents
 from tools.knowledge import search_knowledge
 
 
@@ -13,7 +12,7 @@ _RUNBOOK_HINTS = {
 
 
 def run_knowledge_agent(state: InvestigationState) -> dict:
-    """Search current knowledge and historical incident memory."""
+    """Search current knowledge and publish historical incident context."""
     evidence = state["evidence"]
     retriever = state.get("knowledge_retriever")
     query = f"{evidence.incident.title}. {evidence.incident.description}"
@@ -48,16 +47,7 @@ def run_knowledge_agent(state: InvestigationState) -> dict:
             ))
         knowledge_confidence = 0.65 if sources else 0.35
 
-    historical = []
-    historical_repository = state.get("incident_memory_repository")
-    if historical_repository is not None:
-        historical = retrieve_historical_incidents(
-            historical_repository,
-            query,
-            limit=3,
-            exclude_incident_id=evidence.incident.incident_id,
-        )
-
+    historical = list(state.get("historical_incidents", []))
     historical_context = tuple(
         f"{match.incident_id}: {match.title} (similarity={match.score:.3f})"
         for match in historical
@@ -78,14 +68,11 @@ def run_knowledge_agent(state: InvestigationState) -> dict:
     )
     result = append_finding(state, finding)
     result.update(append_agent_evidence(state, items))
-    result.update({
-        "historical_incidents": historical,
-        "messages": list(state.get("messages", [])) + [
-            (
-                f"Knowledge Agent found {len(historical)} relevant historical incidents."
-                if historical
-                else "Knowledge Agent found no relevant historical incidents."
-            )
-        ],
-    })
+    result["messages"] = list(state.get("messages", [])) + [
+        (
+            f"Knowledge Agent incorporated {len(historical)} relevant historical incidents."
+            if historical
+            else "Knowledge Agent found no relevant historical incidents."
+        )
+    ]
     return result

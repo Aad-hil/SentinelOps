@@ -30,6 +30,7 @@ class InvestigationState(TypedDict, total=False):
     evidence_items: list[EvidenceItem]
     hypotheses: list[Any]
     critique: Any
+    adjudication: Any
     messages: list[str]
     next_agent: str
     investigation_status: str

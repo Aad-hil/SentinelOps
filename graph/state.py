@@ -21,6 +21,7 @@ class InvestigationState(TypedDict, total=False):
     incident_id: str
     incident_summary: str
     evidence: EvidenceBundle
+    knowledge_retriever: Any
     plan: list[str]
     completed_tasks: list[str]
     findings: list[AgentFinding]

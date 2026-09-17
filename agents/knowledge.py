@@ -1,4 +1,5 @@
-from graph.state import AgentFinding, InvestigationState, append_finding
+from graph.evidence import EvidenceItem
+from graph.state import AgentFinding, InvestigationState, append_agent_evidence, append_finding
 from tools.knowledge import search_knowledge
 
 
@@ -11,20 +12,23 @@ _RUNBOOK_HINTS = {
 
 
 def run_knowledge_agent(state: InvestigationState) -> dict:
-    """Search the knowledge corpus through the agent's RAG tool.
-
-    A deterministic fallback preserves the graph's zero-dependency behavior
-    when no retriever is injected. Production wiring can inject the real
-    Bedrock/Qdrant retriever through ``knowledge_retriever``.
-    """
-
+    """Search knowledge and publish normalized evidence."""
     evidence = state["evidence"]
     retriever = state.get("knowledge_retriever")
     query = f"{evidence.incident.title}. {evidence.incident.description}"
 
+    items: list[EvidenceItem] = []
     if retriever is not None:
         results = search_knowledge(retriever, query, top_k=5)
         sources = tuple(dict.fromkeys(result.source for result in results))
+        for result in results:
+            items.append(EvidenceItem(
+                source=result.source,
+                evidence_type="knowledge",
+                observation=result.content,
+                relevance=max(0.0, min(1.0, result.score)),
+                agent="knowledge",
+            ))
         confidence = 0.7 if results else 0.3
     else:
         lowered = query.lower()
@@ -33,6 +37,14 @@ def run_knowledge_agent(state: InvestigationState) -> dict:
             if keyword in lowered:
                 fallback.extend(hints)
         sources = tuple(dict.fromkeys(fallback))
+        for source in sources:
+            items.append(EvidenceItem(
+                source=source,
+                evidence_type="knowledge_reference",
+                observation=f"Relevant knowledge source selected: {source}",
+                relevance=0.65,
+                agent="knowledge",
+            ))
         confidence = 0.65 if sources else 0.35
 
     summary = (
@@ -46,4 +58,6 @@ def run_knowledge_agent(state: InvestigationState) -> dict:
         evidence=sources,
         confidence=confidence,
     )
-    return append_finding(state, finding)
+    result = append_finding(state, finding)
+    result.update(append_agent_evidence(state, items))
+    return result

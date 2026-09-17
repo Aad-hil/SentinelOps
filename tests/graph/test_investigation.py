@@ -42,6 +42,7 @@ def test_investigation_graph_collects_from_three_specialist_agents():
         "deployment",
         "root_cause",
         "critic",
+        "adjudication",
     ]
     assert result["completed_tasks"] == [
         "telemetry",
@@ -49,6 +50,7 @@ def test_investigation_graph_collects_from_three_specialist_agents():
         "deployment",
         "root_cause",
         "critic",
+        "adjudication",
     ]
     assert [finding.agent for finding in result["findings"]] == [
         "telemetry",
@@ -56,6 +58,7 @@ def test_investigation_graph_collects_from_three_specialist_agents():
         "deployment",
         "root_cause",
         "critic",
+        "adjudication",
     ]
 
 
@@ -70,6 +73,7 @@ def test_agents_produce_independent_findings():
     assert findings["deployment"].category == "deployment"
     assert findings["root_cause"].category == "hypothesis_evaluation"
     assert findings["critic"].category == "critique"
+    assert findings["adjudication"].category == "hypothesis_adjudication"
     assert findings["telemetry"].summary != findings["deployment"].summary
 
 

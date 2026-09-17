@@ -1,4 +1,4 @@
-"""Compare baseline retrieval with local cross-encoder reranking."""
+"""Compare baseline, reranked, and diversified retrieval."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from evaluation.retrieval_metrics import (
     recall_at_k,
     unique_source_count,
 )
-from rag.reranking import LocalCrossEncoderReranker, rerank_results
+from rag.reranking import LocalCrossEncoderReranker, diversify_results, rerank_results
 from rag.retrieval import KnowledgeRetriever
 
 CASES_PATH = PROJECT_ROOT / "evaluation" / "retrieval_cases.json"
@@ -40,22 +40,32 @@ def summarize(
     print(f"Avg unique sources: {sum(unique_counts) / len(unique_counts):.2f}")
 
 
+def print_results(label: str, results: list, relevant: set[str]) -> None:
+    print(f"  {label}:")
+    for rank, result in enumerate(results, start=1):
+        marker = "*" if result.source in relevant else " "
+        print(f"   {marker}{rank}. {result.score:.4f} | {result.source}")
+
+
 def main() -> None:
     cases = json.loads(CASES_PATH.read_text(encoding="utf-8"))
     retriever = KnowledgeRetriever()
     reranker = LocalCrossEncoderReranker()
     candidate_k = 10
     top_k = 5
+    max_per_source = 2
 
     baseline_sources: list[list[str]] = []
     reranked_sources: list[list[str]] = []
+    diversified_sources: list[list[str]] = []
     relevant_sets: list[set[str]] = []
     baseline_unique: list[int] = []
     reranked_unique: list[int] = []
+    diversified_unique: list[int] = []
 
     print(
-        f"Evaluating {len(cases)} queries: "
-        f"baseline top_k={top_k}, reranking candidates={candidate_k}\n"
+        f"Evaluating {len(cases)} queries: baseline top_k={top_k}, "
+        f"reranking candidates={candidate_k}, max_per_source={max_per_source}\n"
     )
 
     for case in cases:
@@ -68,30 +78,40 @@ def main() -> None:
             reranker,
             top_k=top_k,
         )
+        diversified = diversify_results(
+            reranked,
+            top_k=top_k,
+            max_per_source=max_per_source,
+        )
 
         baseline_source_list = [result.source for result in baseline]
         reranked_source_list = [result.source for result in reranked]
+        diversified_source_list = [result.source for result in diversified]
+
         baseline_sources.append(baseline_source_list)
         reranked_sources.append(reranked_source_list)
+        diversified_sources.append(diversified_source_list)
         relevant_sets.append(relevant)
         baseline_unique.append(unique_source_count(baseline_source_list, top_k))
         reranked_unique.append(unique_source_count(reranked_source_list, top_k))
+        diversified_unique.append(
+            unique_source_count(diversified_source_list, top_k)
+        )
 
         baseline_recall = recall_at_k(baseline_source_list, relevant, top_k)
         reranked_recall = recall_at_k(reranked_source_list, relevant, top_k)
+        diversified_recall = recall_at_k(
+            diversified_source_list, relevant, top_k
+        )
 
         print(
-            f"[{case['id']}] baseline Recall@5={baseline_recall:.3f} | "
-            f"reranked Recall@5={reranked_recall:.3f}"
+            f"[{case['id']}] baseline={baseline_recall:.3f} | "
+            f"reranked={reranked_recall:.3f} | "
+            f"diversified={diversified_recall:.3f}"
         )
-        print("  Baseline:")
-        for rank, result in enumerate(baseline, start=1):
-            marker = "*" if result.source in relevant else " "
-            print(f"   {marker}{rank}. {result.score:.4f} | {result.source}")
-        print("  Reranked:")
-        for rank, result in enumerate(reranked, start=1):
-            marker = "*" if result.source in relevant else " "
-            print(f"   {marker}{rank}. {result.score:.4f} | {result.source}")
+        print_results("Baseline", baseline, relevant)
+        print_results("Reranked", reranked, relevant)
+        print_results("Reranked + diversified", diversified, relevant)
         print()
 
     summarize(
@@ -106,6 +126,13 @@ def main() -> None:
         relevant_sets,
         reranked_unique,
         label="Reranked",
+    )
+    print()
+    summarize(
+        diversified_sources,
+        relevant_sets,
+        diversified_unique,
+        label="Reranked + diversified",
     )
 
 

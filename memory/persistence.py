@@ -11,8 +11,13 @@ def persist_completed_investigation(
     repository: PostgresIncidentMemoryRepository,
     semantic_repository: QdrantIncidentMemoryRepository | None = None,
 ) -> None:
-    """Persist investigation results once analysis is complete, including approval-pending state."""
-    if state.get("investigation_status") not in {\n        "complete",\n        "awaiting_human_approval",\n        "approved_for_execution",\n        "blocked",\n    }:
+    """Persist investigation results once analysis is complete, including approval state."""
+    if state.get("investigation_status") not in {
+        "complete",
+        "awaiting_human_approval",
+        "approved_for_execution",
+        "blocked",
+    }:
         return
 
     memory = build_incident_memory(state)

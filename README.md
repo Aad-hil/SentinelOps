@@ -6,7 +6,13 @@ The system investigates simulated production incidents using telemetry, document
 
 ## Project Status
 
-🚧 Phase 0 — Foundation
+🚧 Phase 4 — Investigation, Memory & Safe Recovery
+
+Current end-to-end flow:
+
+`Historical Memory → Supervisor → Telemetry/Knowledge/Deployment → Root Cause → Critic → Adjudication → Recovery → Safety → Human Approval Checkpoint`
+
+The system can investigate synthetic incidents, retrieve historical context, produce competing root-cause hypotheses, build evidence-aware recovery plans, and stop for explicit human approval before production-changing actions. Recovery actions are not executed automatically.
 
 ## Core Goals
 
@@ -15,7 +21,8 @@ The system investigates simulated production incidents using telemetry, document
 - Evidence-backed root-cause analysis
 - Competing hypotheses and critique
 - Safe remediation planning
-- Human-in-the-loop approval
+- Deterministic safety policy and risk review
+- Human-in-the-loop approval checkpoint
 - Agent observability
 - Automated evaluation
 

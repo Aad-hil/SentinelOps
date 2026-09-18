@@ -1,7 +1,11 @@
 from types import SimpleNamespace
 
+import pytest
+
 from agents.safety import run_safety_agent
 from recovery.models import RecoveryPlan, RecoveryStep
+from safety.approval import record_human_approval
+from safety.models import SafetyDecision
 from safety.policy import classify_action_risk, evaluate_recovery_safety
 
 
@@ -17,6 +21,17 @@ def ready_plan():
             RecoveryStep("verify", "Verify health", "Confirm recovery", "low", False),
         ),
     )
+
+
+def pending_state():
+    decision = evaluate_recovery_safety(ready_plan())
+    return {
+        "investigation_status": "awaiting_human_approval",
+        "approval_required": True,
+        "approval_status": "pending",
+        "safety_decision": decision,
+        "messages": [],
+    }
 
 
 def test_safety_requires_human_approval_for_production_change():
@@ -142,3 +157,47 @@ def test_non_ready_plan_is_blocked_with_explicit_readiness_gap():
     decision = evaluate_recovery_safety(plan)
     assert decision.decision == "blocked"
     assert "recovery readiness is verification_required" in decision.evidence_gaps
+
+
+def test_approval_transitions_only_from_pending_to_approved():
+    result = record_human_approval(pending_state(), approved=True, reviewer="aadhil")
+    assert result["approval_status"] == "approved"
+    assert result["approval_required"] is False
+    assert result["investigation_status"] == "approved_for_execution"
+
+
+def test_rejection_transitions_to_blocked():
+    result = record_human_approval(pending_state(), approved=False, reviewer="aadhil")
+    assert result["approval_status"] == "rejected"
+    assert result["investigation_status"] == "blocked"
+
+
+@pytest.mark.parametrize(
+    "state",
+    [
+        {**pending_state(), "investigation_status": "complete"},
+        {**pending_state(), "investigation_status": "blocked"},
+        {**pending_state(), "investigation_status": "approved_for_execution"},
+        {**pending_state(), "approval_required": False},
+    ],
+)
+def test_invalid_approval_state_transition_is_rejected(state):
+    with pytest.raises(ValueError):
+        record_human_approval(state, approved=True, reviewer="aadhil")
+
+
+def test_approval_requires_human_review_decision():
+    state = pending_state()
+    state["safety_decision"] = SafetyDecision(
+        decision="no_approval_needed",
+        rationale="Low-risk plan.",
+        risk_level="low",
+        approval_required=False,
+    )
+    with pytest.raises(ValueError):
+        record_human_approval(state, approved=True, reviewer="aadhil")
+
+
+def test_approval_requires_reviewer():
+    with pytest.raises(ValueError, match="reviewer"):
+        record_human_approval(pending_state(), approved=True, reviewer="   ")

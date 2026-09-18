@@ -24,7 +24,7 @@ def test_graph_can_persist_short_term_state_by_thread():
     assert result["investigation_status"] == "complete"
     assert saved.values["incident_id"] == "INC-002"
     assert saved.values["investigation_status"] == "complete"
-    assert saved.values["completed_tasks"][-1] == "adjudication"
+    assert saved.values["completed_tasks"][-1] == "recovery"
 
 
 def test_checkpoint_threads_are_isolated():

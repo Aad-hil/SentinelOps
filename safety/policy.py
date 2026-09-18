@@ -3,34 +3,18 @@ from safety.models import SafetyDecision
 
 
 _RISK_ORDER = {"low": 0, "medium": 1, "high": 2}
+_MIN_RECOVERY_CONFIDENCE = 0.75
 
 _HIGH_RISK_ACTION_TERMS = (
-    "delete",
-    "drop ",
-    "truncate",
-    "destroy",
-    "purge",
-    "erase",
-    "data migration",
-    "database modification",
-    "database write",
-    "irreversible",
-    "disable authentication",
-    "disable security",
+    "delete", "drop ", "truncate", "destroy", "purge", "erase",
+    "data migration", "database modification", "database write",
+    "irreversible", "disable authentication", "disable security",
 )
 
 _MEDIUM_RISK_ACTION_TERMS = (
-    "rollback",
-    "restart",
-    "mitigation",
-    "mitigate",
-    "configuration change",
-    "config change",
-    "production rollout",
-    "production change",
-    "deploy",
-    "scale",
-    "failover",
+    "rollback", "restart", "mitigation", "mitigate", "configuration change",
+    "config change", "production rollout", "production change", "deploy",
+    "scale", "failover",
 )
 
 
@@ -44,11 +28,23 @@ def classify_action_risk(step: RecoveryStep) -> str:
     elif any(term in action for term in ("collect", "inspect", "verify", "document", "observe", "prepare")):
         inferred = "low"
     else:
-        # Unknown production actions fail closed rather than being treated as safe.
         inferred = "high"
 
     declared = step.risk if step.risk in _RISK_ORDER else "high"
     return inferred if _RISK_ORDER[inferred] > _RISK_ORDER[declared] else declared
+
+
+def _evidence_sufficiency_gaps(plan: RecoveryPlan) -> tuple[str, ...]:
+    """Return evidence-quality gaps that must be resolved before remediation review."""
+    gaps: list[str] = []
+    if plan.confidence < _MIN_RECOVERY_CONFIDENCE:
+        gaps.append(
+            f"root-cause confidence {plan.confidence:.3f} is below the "
+            f"{_MIN_RECOVERY_CONFIDENCE:.2f} recovery threshold"
+        )
+    if plan.readiness != "ready_for_review":
+        gaps.append(f"recovery readiness is {plan.readiness}")
+    return tuple(gaps)
 
 
 def evaluate_recovery_safety(plan: RecoveryPlan | None) -> SafetyDecision:
@@ -61,33 +57,25 @@ def evaluate_recovery_safety(plan: RecoveryPlan | None) -> SafetyDecision:
             approval_required=False,
         )
 
-    if plan.readiness in {"blocked", "verification_required"}:
-        gaps = tuple(
-            evidence
-            for step in plan.steps
-            for evidence in step.evidence
-        )
+    evidence_gaps = _evidence_sufficiency_gaps(plan)
+    if evidence_gaps:
         return SafetyDecision(
             decision="blocked",
             rationale=(
-                "Recovery remains blocked until the investigation resolves its evidence "
-                "gaps; production-changing actions must not proceed."
+                "Recovery is blocked because the investigation does not meet the minimum "
+                "evidence sufficiency requirements for remediation."
             ),
             risk_level="high" if plan.readiness == "blocked" else "medium",
             approval_required=False,
             blocked_steps=tuple(step.step_id for step in plan.steps if step.requires_approval),
             reviewed_steps=tuple(step.step_id for step in plan.steps if not step.requires_approval),
-            evidence_gaps=gaps,
+            evidence_gaps=evidence_gaps
+            + tuple(evidence for step in plan.steps for evidence in step.evidence),
         )
 
-    effective_risks = {
-        step.step_id: classify_action_risk(step)
-        for step in plan.steps
-    }
+    effective_risks = {step.step_id: classify_action_risk(step) for step in plan.steps}
     blocked = tuple(
-        step.step_id
-        for step in plan.steps
-        if effective_risks[step.step_id] == "high"
+        step.step_id for step in plan.steps if effective_risks[step.step_id] == "high"
     )
     reviewed = tuple(step.step_id for step in plan.steps if step.step_id not in blocked)
 
@@ -105,9 +93,7 @@ def evaluate_recovery_safety(plan: RecoveryPlan | None) -> SafetyDecision:
         )
 
     approval_required = plan.requires_approval
-    risk_level = "medium" if any(
-        risk == "medium" for risk in effective_risks.values()
-    ) else "low"
+    risk_level = "medium" if any(risk == "medium" for risk in effective_risks.values()) else "low"
 
     if approval_required:
         return SafetyDecision(

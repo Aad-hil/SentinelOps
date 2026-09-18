@@ -69,6 +69,12 @@ def run_supervisor(state: InvestigationState) -> dict:
             "investigation_status": "safety_review",
         }
 
+    if state.get("investigation_status") in {"blocked", "approved_for_execution"}:
+        return {
+            "next_agent": "complete",
+            "investigation_status": state["investigation_status"],
+        }
+
     return {
         "next_agent": "complete",
         "investigation_status": (

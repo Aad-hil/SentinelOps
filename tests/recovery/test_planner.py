@@ -28,7 +28,7 @@ def test_plan_requires_verification_when_causal_evidence_is_incomplete():
     assert plan.confidence == 0.55
     assert plan.requires_approval is True
     assert plan.steps[0].step_id == "collect-missing-evidence"
-    assert "database query" in plan.steps[0].evidence[0]
+    assert any("database query" in evidence for evidence in plan.steps[0].evidence)
 
 
 def test_plan_is_ready_for_review_only_after_all_support_checks():

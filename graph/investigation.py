@@ -1,6 +1,5 @@
 from typing import Any
 
-from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 
 from agents.adjudication import run_adjudication_agent
@@ -95,4 +94,4 @@ def build_investigation_graph(
     graph.add_edge("safety", "human_approval")
     graph.add_edge("human_approval", "supervisor")
 
-    return graph.compile(checkpointer=checkpointer or MemorySaver())
+    return graph.compile(checkpointer=checkpointer)

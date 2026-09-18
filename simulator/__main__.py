@@ -34,6 +34,8 @@ def run_investigation(
     repository=None,
     semantic_repository=None,
     approval: dict | None = None,
+    graph=None,
+    config=None,
 ):
     """Run one incident and optionally persist its long-term memory."""
     try:
@@ -46,12 +48,14 @@ def run_investigation(
         "incident_summary": evidence.incident.description,
         "evidence": evidence,
     }
-    checkpointer = create_checkpointer()
-    graph = build_investigation_graph(
-        checkpointer=checkpointer,
-        incident_memory_repository=semantic_repository,
-    )
-    config = {"configurable": {"thread_id": evidence.incident.incident_id}}
+    if graph is None:
+        checkpointer = create_checkpointer()
+        graph = build_investigation_graph(
+            checkpointer=checkpointer,
+            incident_memory_repository=semantic_repository,
+        )
+    if config is None:
+        config = {"configurable": {"thread_id": evidence.incident.incident_id}}
     state = graph.invoke(initial_state, config=config)
 
     if approval is not None and state.get("__interrupt__"):
@@ -151,10 +155,18 @@ def main() -> int:
     args = build_parser().parse_args()
     repository = PostgresIncidentMemoryRepository()
     semantic_repository = QdrantIncidentMemoryRepository()
+    checkpointer = create_checkpointer()
+    graph = build_investigation_graph(
+        checkpointer=checkpointer,
+        incident_memory_repository=semantic_repository,
+    )
+    config = {"configurable": {"thread_id": args.incident_id}}
     state = run_investigation(
         args.incident_id,
         repository=repository,
         semantic_repository=semantic_repository,
+        graph=graph,
+        config=config,
     )
     _print_report(state)
 
@@ -176,6 +188,8 @@ def main() -> int:
             repository=repository,
             semantic_repository=semantic_repository,
             approval={"approved": decision in {"y", "yes"}, "reviewer": reviewer},
+            graph=graph,
+            config=config,
         )
         _print_report(state)
 

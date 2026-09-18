@@ -15,7 +15,15 @@ def record_human_approval(
     if decision is None:
         raise ValueError("a safety decision is required before approval")
 
-    if state.get("investigation_status") != "awaiting_human_approval":
+    status = state.get("investigation_status")
+    approval_pending = state.get("approval_required")
+    # Legacy/direct callers may provide only the safety decision. Treat that
+    # shape as pending only when the decision itself explicitly requires review.
+    if status is None and approval_pending is None:
+        status = "awaiting_human_approval"
+        approval_pending = True
+
+    if status != "awaiting_human_approval":
         raise ValueError(
             "human approval is only valid while the investigation is awaiting approval"
         )
@@ -23,14 +31,16 @@ def record_human_approval(
     if not getattr(decision, "human_approval_required", False):
         raise ValueError("the safety decision does not require human approval")
 
-    if not state.get("approval_required"):
+    if not approval_pending:
         raise ValueError("human approval is no longer pending")
 
-    status = "approved" if approved else "rejected"
+    result_status = "approved" if approved else "rejected"
     return {
-        "approval_status": status,
+        "approval_status": result_status,
         "approval_required": False,
-        "investigation_status": "approved_for_execution" if approved else "blocked",
+        "investigation_status": (
+            "approved_for_execution" if approved else "blocked"
+        ),
         "messages": list(state.get("messages", []))
-        + [f"Human reviewer {reviewer} marked recovery as {status}."],
+        + [f"Human reviewer {reviewer} marked recovery as {result_status}."],
     }

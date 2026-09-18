@@ -41,6 +41,7 @@ def test_investigation_plan_includes_critic_after_root_cause():
         "root_cause",
         "critic",
         "adjudication",
+        "recovery",
     ]
     assert result["plan"] == expected_plan
     assert result["completed_tasks"] == expected_plan

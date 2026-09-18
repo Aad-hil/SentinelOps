@@ -67,3 +67,26 @@ def test_investigation_graph_emits_trace_for_each_investigation_node():
     ]
     assert all(event["status"] == "ok" for event in result["observability_events"])
     assert all(event["trace_id"] for event in result["observability_events"])
+
+
+def test_traced_node_emits_an_opentelemetry_span():
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+    from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+
+    exporter = InMemorySpanExporter()
+    provider = TracerProvider(resource=__import__("opentelemetry").sdk.resources.Resource.create({"service.name": "sentinelops-test"}))
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    tracer = provider.get_tracer("sentinelops-test")
+
+    def node(state):
+        return {"result": "ok"}
+
+    result = traced_node("otel-example", node, tracer=tracer)({"incident_id": "INC-OTEL"})
+    spans = exporter.get_finished_spans()
+
+    assert result["observability_events"][0]["status"] == "ok"
+    assert len(spans) == 1
+    assert spans[0].name == "sentinelops.node.otel-example"
+    assert spans[0].attributes["sentinelops.incident_id"] == "INC-OTEL"
+    assert spans[0].attributes["sentinelops.node"] == "otel-example"

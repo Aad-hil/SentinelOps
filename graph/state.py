@@ -39,6 +39,7 @@ class InvestigationState(TypedDict, total=False):
     safety_decision: Any
     approval_required: bool
     approval_status: str
+    observability_events: list[dict[str, Any]]
 
 
 def append_finding(state: InvestigationState, finding: AgentFinding) -> dict[str, Any]:

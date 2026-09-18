@@ -11,7 +11,7 @@ def test_run_investigation_incident_002():
     state = run_investigation("INC-002")
 
     assert state["incident_id"] == "INC-002"
-    assert state["investigation_status"] == "complete"
+    assert state["investigation_status"] == "awaiting_human_approval"
     assert state["plan"]
     assert {finding.agent for finding in state["findings"]} >= {
         "telemetry",
@@ -20,6 +20,8 @@ def test_run_investigation_incident_002():
         "root_cause",
         "critic",
         "adjudication",
+        "recovery",
+        "safety",
     }
     assert len(state["hypotheses"]) == 3
     assert state["critique"] is not None

@@ -1,5 +1,6 @@
 from typing import Any
 
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 
 from agents.adjudication import run_adjudication_agent
@@ -13,6 +14,7 @@ from agents.supervisor import run_supervisor
 from agents.telemetry import run_telemetry_agent
 from graph.state import InvestigationState
 from memory.retrieval import retrieve_historical_incidents
+from safety.human_checkpoint import run_human_approval_checkpoint
 
 
 def _route_after_supervisor(state: InvestigationState) -> str:
@@ -64,6 +66,7 @@ def build_investigation_graph(
     graph.add_node("adjudication", run_adjudication_agent)
     graph.add_node("recovery", run_recovery_agent)
     graph.add_node("safety", run_safety_agent)
+    graph.add_node("human_approval", run_human_approval_checkpoint)
 
     graph.add_edge(START, "historical_memory")
     graph.add_edge("historical_memory", "supervisor")
@@ -89,6 +92,7 @@ def build_investigation_graph(
     graph.add_edge("critic", "supervisor")
     graph.add_edge("adjudication", "supervisor")
     graph.add_edge("recovery", "supervisor")
-    graph.add_edge("safety", "supervisor")
+    graph.add_edge("safety", "human_approval")
+    graph.add_edge("human_approval", "supervisor")
 
-    return graph.compile(checkpointer=checkpointer)
+    return graph.compile(checkpointer=checkpointer or MemorySaver())

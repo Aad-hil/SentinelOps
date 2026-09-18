@@ -4,10 +4,20 @@ from graph.state import InvestigationState
 from safety.approval import record_human_approval
 
 
-def run_human_approval_checkpoint(state: InvestigationState) -> dict:
-    """Pause the investigation for explicit operator approval before recovery execution."""
+def run_human_approval_checkpoint(
+    state: InvestigationState,
+    config: dict | None = None,
+) -> dict:
+    """Pause for operator approval when the graph has a resumable thread."""
     if not state.get("approval_required"):
         return {}
+
+    thread_id = (config or {}).get("configurable", {}).get("thread_id")
+    if not thread_id:
+        return {
+            "messages": list(state.get("messages", []))
+            + ["Human approval is pending; resume requires a configured thread_id."],
+        }
 
     decision = interrupt(
         {

@@ -13,6 +13,7 @@ from agents.supervisor import run_supervisor
 from agents.telemetry import run_telemetry_agent
 from graph.state import InvestigationState
 from memory.retrieval import retrieve_historical_incidents
+from observability.tracing import traced_node
 from safety.human_checkpoint import run_human_approval_checkpoint
 
 
@@ -58,18 +59,24 @@ def build_investigation_graph(
     checkpointer: Any = None,
     incident_memory_repository: Any = None,
 ):
-    """Build the investigation graph with optional short-term and historical memory."""
+    """Build the investigation graph with optional memory and execution tracing."""
     graph = StateGraph(InvestigationState)
-    graph.add_node("historical_memory", _build_historical_memory_node(incident_memory_repository))
-    graph.add_node("supervisor", run_supervisor)
-    graph.add_node("telemetry", run_telemetry_agent)
-    graph.add_node("knowledge", run_knowledge_agent)
-    graph.add_node("deployment", run_deployment_agent)
-    graph.add_node("root_cause", run_root_cause_agent)
-    graph.add_node("critic", run_critic_agent)
-    graph.add_node("adjudication", run_adjudication_agent)
-    graph.add_node("recovery", run_recovery_agent)
-    graph.add_node("safety", run_safety_agent)
+    graph.add_node(
+        "historical_memory",
+        traced_node(
+            "historical_memory",
+            _build_historical_memory_node(incident_memory_repository),
+        ),
+    )
+    graph.add_node("supervisor", traced_node("supervisor", run_supervisor))
+    graph.add_node("telemetry", traced_node("telemetry", run_telemetry_agent))
+    graph.add_node("knowledge", traced_node("knowledge", run_knowledge_agent))
+    graph.add_node("deployment", traced_node("deployment", run_deployment_agent))
+    graph.add_node("root_cause", traced_node("root_cause", run_root_cause_agent))
+    graph.add_node("critic", traced_node("critic", run_critic_agent))
+    graph.add_node("adjudication", traced_node("adjudication", run_adjudication_agent))
+    graph.add_node("recovery", traced_node("recovery", run_recovery_agent))
+    graph.add_node("safety", traced_node("safety", run_safety_agent))
     graph.add_node(
         "human_approval",
         run_human_approval_checkpoint if checkpointer is not None else _skip_human_approval_checkpoint,

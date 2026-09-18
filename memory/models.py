@@ -16,8 +16,8 @@ class IncidentMemory:
     root_cause_confidence: float | None
     resolution_summary: str | None
     recovery_action: str | None
-    investigation_status: str
-    approval_status: str | None
+    investigation_status: str = "unknown"
+    approval_status: str | None = None
     created_at: datetime | None = None
     completed_at: datetime | None = None
 

@@ -6,7 +6,7 @@ def build_recovery_plan(state: InvestigationState) -> RecoveryPlan:
     """Build a conservative recovery recommendation from adjudication and critique."""
     adjudication = state.get("adjudication")
     critique = state.get("critique")
-    incident_id = state["incident_id"]
+    incident_id = state.get("incident_id") or state["evidence"].incident.incident_id
 
     if adjudication is None:
         return RecoveryPlan(
@@ -26,7 +26,6 @@ def build_recovery_plan(state: InvestigationState) -> RecoveryPlan:
             ),
         )
 
-    evidence = tuple(getattr(adjudication, "hypothesis_id", "" ) for _ in ())
     confidence = float(adjudication.confidence)
     hypothesis_id = adjudication.hypothesis_id
     gaps = tuple(adjudication.alternative_gaps)

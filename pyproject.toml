@@ -36,6 +36,7 @@ include = [
     "rag*",
     "memory*",
     "recovery*",
+    "safety*",
     "graph*",
     "evaluation*",
     "observability*",

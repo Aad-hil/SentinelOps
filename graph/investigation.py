@@ -49,6 +49,11 @@ def _build_historical_memory_node(repository: Any):
     return retrieve_history
 
 
+def _skip_human_approval_checkpoint(state: InvestigationState) -> dict[str, Any]:
+    """Preserve non-checkpoint graph tests and dry runs without an interrupt."""
+    return {}
+
+
 def build_investigation_graph(
     checkpointer: Any = None,
     incident_memory_repository: Any = None,
@@ -65,7 +70,10 @@ def build_investigation_graph(
     graph.add_node("adjudication", run_adjudication_agent)
     graph.add_node("recovery", run_recovery_agent)
     graph.add_node("safety", run_safety_agent)
-    graph.add_node("human_approval", run_human_approval_checkpoint)
+    graph.add_node(
+        "human_approval",
+        run_human_approval_checkpoint if checkpointer is not None else _skip_human_approval_checkpoint,
+    )
 
     graph.add_edge(START, "historical_memory")
     graph.add_edge("historical_memory", "supervisor")

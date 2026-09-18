@@ -36,6 +36,9 @@ class InvestigationState(TypedDict, total=False):
     next_agent: str
     investigation_status: str
     recovery_plan: Any
+    safety_decision: Any
+    approval_required: bool
+    approval_status: str
 
 
 def append_finding(state: InvestigationState, finding: AgentFinding) -> dict[str, Any]:

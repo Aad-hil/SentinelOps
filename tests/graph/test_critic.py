@@ -42,7 +42,8 @@ def test_investigation_plan_includes_critic_after_root_cause():
         "critic",
         "adjudication",
         "recovery",
+        "safety",
     ]
     assert result["plan"] == expected_plan
     assert result["completed_tasks"] == expected_plan
-    assert result["investigation_status"] == "complete"
+    assert result["investigation_status"] == "awaiting_human_approval"

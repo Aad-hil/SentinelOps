@@ -106,3 +106,39 @@ def test_high_risk_action_cannot_be_approved_by_the_existing_approval_flag():
     assert decision.decision == "blocked"
     assert decision.approval_required is False
     assert decision.blocked_steps == ("db-write",)
+
+
+def test_evidence_below_threshold_is_blocked_even_when_plan_claims_ready():
+    plan = RecoveryPlan(
+        incident_id="INC-006",
+        hypothesis_id="H1",
+        confidence=0.74,
+        readiness="ready_for_review",
+        rationale="Insufficient root-cause support.",
+        steps=(RecoveryStep("mitigate", "Rollback deployment", "Reduce impact", "medium", True),),
+    )
+    decision = evaluate_recovery_safety(plan)
+    assert decision.decision == "blocked"
+    assert decision.approval_required is False
+    assert decision.blocked_steps == ("mitigate",)
+    assert any("below" in gap for gap in decision.evidence_gaps)
+
+
+def test_evidence_threshold_allows_supported_plan_to_reach_review():
+    decision = evaluate_recovery_safety(ready_plan())
+    assert decision.decision == "review_required"
+    assert decision.evidence_gaps == ()
+
+
+def test_non_ready_plan_is_blocked_with_explicit_readiness_gap():
+    plan = RecoveryPlan(
+        incident_id="INC-007",
+        hypothesis_id="H1",
+        confidence=0.95,
+        readiness="verification_required",
+        rationale="Temporal/causal/recovery evidence is incomplete.",
+        steps=(RecoveryStep("prepare", "Prepare mitigation", "Reduce impact", "medium", True),),
+    )
+    decision = evaluate_recovery_safety(plan)
+    assert decision.decision == "blocked"
+    assert "recovery readiness is verification_required" in decision.evidence_gaps

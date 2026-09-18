@@ -35,7 +35,9 @@ def test_investigation_graph_collects_from_three_specialist_agents():
         }
     )
 
-    assert result["investigation_status"] == "complete"
+    assert result["investigation_status"] == "awaiting_human_approval"
+    assert result["approval_required"] is True
+    assert result["approval_status"] == "pending"
     assert result["plan"] == [
         "telemetry",
         "knowledge",
@@ -44,6 +46,7 @@ def test_investigation_graph_collects_from_three_specialist_agents():
         "critic",
         "adjudication",
         "recovery",
+        "safety",
     ]
     assert result["completed_tasks"] == [
         "telemetry",
@@ -62,6 +65,7 @@ def test_investigation_graph_collects_from_three_specialist_agents():
         "critic",
         "adjudication",
         "recovery",
+        "safety",
     ]
 
     assert result["recovery_plan"].incident_id == "INC-002"
@@ -81,6 +85,7 @@ def test_agents_produce_independent_findings():
     assert findings["critic"].category == "critique"
     assert findings["adjudication"].category == "hypothesis_adjudication"
     assert findings["recovery"].category == "recovery_planning"
+    assert findings["safety"].category == "safety_review"
     assert findings["telemetry"].summary != findings["deployment"].summary
 
 

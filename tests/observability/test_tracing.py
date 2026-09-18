@@ -70,12 +70,13 @@ def test_investigation_graph_emits_trace_for_each_investigation_node():
 
 
 def test_traced_node_emits_an_opentelemetry_span():
+    from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import SimpleSpanProcessor
     from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
     exporter = InMemorySpanExporter()
-    provider = TracerProvider(resource=__import__("opentelemetry").sdk.resources.Resource.create({"service.name": "sentinelops-test"}))
+    provider = TracerProvider(resource=Resource.create({"service.name": "sentinelops-test"}))
     provider.add_span_processor(SimpleSpanProcessor(exporter))
     tracer = provider.get_tracer("sentinelops-test")
 

@@ -91,3 +91,16 @@ def test_traced_node_emits_an_opentelemetry_span():
     assert spans[0].name == "sentinelops.node.otel-example"
     assert spans[0].attributes["sentinelops.incident_id"] == "INC-OTEL"
     assert spans[0].attributes["sentinelops.node"] == "otel-example"
+
+
+
+def test_configure_telemetry_can_enable_an_otlp_exporter(monkeypatch):
+    monkeypatch.setenv("SENTINELOPS_OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317")
+    monkeypatch.setenv("SENTINELOPS_OTEL_CONSOLE", "false")
+
+    import observability.tracing as tracing
+
+    tracing._provider_configured = False
+    tracing.configure_telemetry()
+
+    assert tracing._provider_configured is True

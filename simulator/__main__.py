@@ -138,7 +138,7 @@ def _print_report(state: dict) -> None:
             print(f"Evidence gaps: {', '.join(safety.evidence_gaps)}")
         print(f"Approval status: {state.get('approval_status', 'unknown')}")
 
-        print(f"\nNormalized evidence items: {len(state.get('evidence_items', []))}")
+    print(f"\nNormalized evidence items: {len(state.get('evidence_items', []))}")
 
 
 def main() -> int:

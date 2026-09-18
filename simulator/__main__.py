@@ -125,7 +125,20 @@ def _print_report(state: dict) -> None:
             print(f"Alternative gaps: {', '.join(adjudication.alternative_gaps)}")
         print(f"Confidence: {adjudication.confidence:.3f}")
 
-    print(f"\nNormalized evidence items: {len(state.get('evidence_items', []))}")
+    safety = state.get("safety_decision")
+    if safety is not None:
+        print("\n--- Safety Review ---")
+        print(f"Decision: {safety.decision}")
+        print(f"Risk level: {safety.risk_level}")
+        print(f"Approval required: {safety.approval_required}")
+        print(f"Rationale: {safety.rationale}")
+        if safety.blocked_steps:
+            print(f"Blocked steps: {', '.join(safety.blocked_steps)}")
+        if safety.evidence_gaps:
+            print(f"Evidence gaps: {', '.join(safety.evidence_gaps)}")
+        print(f"Approval status: {state.get('approval_status', 'unknown')}")
+
+        print(f"\nNormalized evidence items: {len(state.get('evidence_items', []))}")
 
 
 def main() -> int:

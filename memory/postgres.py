@@ -26,9 +26,17 @@ CREATE TABLE IF NOT EXISTS incident_memory (
     root_cause_confidence DOUBLE PRECISION,
     resolution_summary TEXT,
     recovery_action TEXT,
+    investigation_status TEXT NOT NULL DEFAULT 'unknown',
+    approval_status TEXT,
     created_at TIMESTAMPTZ,
     completed_at TIMESTAMPTZ
 )
+"""
+
+MIGRATE_COLUMNS_SQL = """
+ALTER TABLE incident_memory
+    ADD COLUMN IF NOT EXISTS investigation_status TEXT NOT NULL DEFAULT 'unknown',
+    ADD COLUMN IF NOT EXISTS approval_status TEXT
 """
 
 UPSERT_SQL = """
@@ -43,6 +51,8 @@ INSERT INTO incident_memory (
     root_cause_confidence,
     resolution_summary,
     recovery_action,
+    investigation_status,
+    approval_status,
     created_at,
     completed_at
 ) VALUES (
@@ -56,6 +66,8 @@ INSERT INTO incident_memory (
     %(root_cause_confidence)s,
     %(resolution_summary)s,
     %(recovery_action)s,
+    %(investigation_status)s,
+    %(approval_status)s,
     %(created_at)s,
     %(completed_at)s
 )
@@ -69,6 +81,8 @@ ON CONFLICT (incident_id) DO UPDATE SET
     root_cause_confidence = EXCLUDED.root_cause_confidence,
     resolution_summary = EXCLUDED.resolution_summary,
     recovery_action = EXCLUDED.recovery_action,
+    investigation_status = EXCLUDED.investigation_status,
+    approval_status = EXCLUDED.approval_status,
     created_at = EXCLUDED.created_at,
     completed_at = EXCLUDED.completed_at
 """
@@ -142,8 +156,10 @@ def _row_to_memory(row: tuple) -> IncidentMemory:
         root_cause_confidence=row[7],
         resolution_summary=row[8],
         recovery_action=row[9],
-        created_at=row[10],
-        completed_at=row[11],
+        investigation_status=row[10],
+        approval_status=row[11],
+        created_at=row[12],
+        completed_at=row[13],
     )
 
 
@@ -158,6 +174,7 @@ class PostgresIncidentMemoryRepository:
         with self._connect() as connection:
             with connection.cursor() as cursor:
                 cursor.execute(CREATE_TABLE_SQL)
+                cursor.execute(MIGRATE_COLUMNS_SQL)
             connection.commit()
 
     def save(self, memory: IncidentMemory) -> None:
@@ -173,6 +190,8 @@ class PostgresIncidentMemoryRepository:
             "root_cause_confidence": memory.root_cause_confidence,
             "resolution_summary": memory.resolution_summary,
             "recovery_action": memory.recovery_action,
+            "investigation_status": memory.investigation_status,
+            "approval_status": memory.approval_status,
             "created_at": memory.created_at,
             "completed_at": memory.completed_at,
         }

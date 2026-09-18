@@ -23,7 +23,8 @@ def test_human_approval_checkpoint_interrupts_and_resumes():
     assert paused["investigation_status"] == "awaiting_human_approval"
     assert paused["approval_required"] is True
     assert paused["approval_status"] == "pending"
-    assert paused["__interrupt__"]
+    snapshot = graph.get_state(config)
+    assert snapshot.interrupts
 
     completed = graph.invoke(
         Command(resume={"approved": True, "reviewer": "operator-1"}),

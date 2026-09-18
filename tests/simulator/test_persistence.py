@@ -3,12 +3,12 @@ from unittest.mock import Mock
 from simulator.__main__ import run_investigation
 
 
-def test_run_investigation_persists_completed_state():
+def test_run_investigation_persists_analysis_before_approval():
     repository = Mock()
 
     state = run_investigation("INC-002", repository=repository)
 
-    assert state["investigation_status"] == "complete"
+    assert state["investigation_status"] == "awaiting_human_approval"
     repository.initialize.assert_called_once()
     repository.save.assert_called_once()
 

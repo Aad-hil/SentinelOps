@@ -63,6 +63,7 @@ def test_investigation_graph_emits_trace_for_each_investigation_node():
         "recovery",
         "supervisor",
         "safety",
+        "supervisor",
     ]
     assert all(event["status"] == "ok" for event in result["observability_events"])
     assert all(event["trace_id"] for event in result["observability_events"])

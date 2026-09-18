@@ -56,9 +56,9 @@ def run_investigation(
         )
     if config is None:
         config = {"configurable": {"thread_id": evidence.incident.incident_id}}
-    state = graph.invoke(initial_state, config=config)
-
-    if approval is not None and state.get("__interrupt__"):
+    if approval is None:
+        state = graph.invoke(initial_state, config=config)
+    else:
         state = graph.invoke(Command(resume=approval), config=config)
 
     if repository is not None:

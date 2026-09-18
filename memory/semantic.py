@@ -87,6 +87,8 @@ class QdrantIncidentMemoryRepository:
                         "root_cause_confidence": memory.root_cause_confidence,
                         "resolution_summary": memory.resolution_summary,
                         "recovery_action": memory.recovery_action,
+                        "investigation_status": memory.investigation_status,
+                        "approval_status": memory.approval_status,
                         "search_text": text,
                     },
                 )

@@ -145,6 +145,8 @@ def _connection_factory_from_env() -> ConnectionFactory:
 
 
 def _row_to_memory(row: tuple) -> IncidentMemory:
+    """Map current rows while remaining compatible with legacy test fixtures."""
+    has_lifecycle_columns = len(row) >= 14
     return IncidentMemory(
         incident_id=row[0],
         service=row[1],
@@ -156,10 +158,10 @@ def _row_to_memory(row: tuple) -> IncidentMemory:
         root_cause_confidence=row[7],
         resolution_summary=row[8],
         recovery_action=row[9],
-        investigation_status=row[10],
-        approval_status=row[11],
-        created_at=row[12],
-        completed_at=row[13],
+        investigation_status=row[10] if has_lifecycle_columns else "unknown",
+        approval_status=row[11] if has_lifecycle_columns else None,
+        created_at=row[12] if has_lifecycle_columns else row[10],
+        completed_at=row[13] if has_lifecycle_columns else row[11],
     )
 
 

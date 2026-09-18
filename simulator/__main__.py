@@ -1,5 +1,7 @@
 import argparse
 
+from langgraph.types import Command
+
 from graph.investigation import build_investigation_graph
 from memory.checkpoint import create_checkpointer
 from memory.persistence import persist_completed_investigation
@@ -31,6 +33,7 @@ def run_investigation(
     incident_id: str,
     repository=None,
     semantic_repository=None,
+    approval: dict | None = None,
 ):
     """Run one incident and optionally persist its long-term memory."""
     try:
@@ -50,6 +53,9 @@ def run_investigation(
     )
     config = {"configurable": {"thread_id": evidence.incident.incident_id}}
     state = graph.invoke(initial_state, config=config)
+
+    if approval is not None and state.get("__interrupt__"):
+        state = graph.invoke(Command(resume=approval), config=config)
 
     if repository is not None:
         persist_completed_investigation(
@@ -151,6 +157,28 @@ def main() -> int:
         semantic_repository=semantic_repository,
     )
     _print_report(state)
+
+    if state.get("__interrupt__"):
+        print("\n=== Human Approval Required ===")
+        print("Recovery actions have NOT been executed.")
+        while True:
+            decision = input("Approve recovery plan? [y/n]: ").strip().lower()
+            if decision in {"y", "yes", "n", "no"}:
+                break
+            print("Please enter y or n.")
+        reviewer = input("Reviewer name: ").strip()
+        while not reviewer:
+            print("Reviewer name is required.")
+            reviewer = input("Reviewer name: ").strip()
+
+        state = run_investigation(
+            args.incident_id,
+            repository=repository,
+            semantic_repository=semantic_repository,
+            approval={"approved": decision in {"y", "yes"}, "reviewer": reviewer},
+        )
+        _print_report(state)
+
     print(f"\nLong-term memory: saved {args.incident_id} to PostgreSQL")
     print("Semantic memory: indexed in Qdrant")
     return 0

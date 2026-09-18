@@ -32,7 +32,7 @@ def test_human_approval_checkpoint_interrupts_and_resumes():
 
     assert completed["approval_status"] == "approved"
     assert completed["approval_required"] is False
-    assert completed["investigation_status"] == "complete"
+    assert completed["investigation_status"] == "approved_for_execution"
 
 
 def test_human_rejection_resumes_to_blocked_state():

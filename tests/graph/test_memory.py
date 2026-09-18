@@ -21,10 +21,10 @@ def test_graph_can_persist_short_term_state_by_thread():
 
     saved = graph.get_state(config)
 
-    assert result["investigation_status"] == "complete"
+    assert result["investigation_status"] == "awaiting_human_approval"
     assert saved.values["incident_id"] == "INC-002"
-    assert saved.values["investigation_status"] == "complete"
-    assert saved.values["completed_tasks"][-1] == "recovery"
+    assert saved.values["investigation_status"] == "awaiting_human_approval"
+    assert saved.values["completed_tasks"][-1] == "safety"
 
 
 def test_checkpoint_threads_are_isolated():

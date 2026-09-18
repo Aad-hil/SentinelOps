@@ -56,6 +56,7 @@ def test_investigation_graph_collects_from_three_specialist_agents():
         "critic",
         "adjudication",
         "recovery",
+        "safety",
     ]
     assert [finding.agent for finding in result["findings"]] == [
         "telemetry",

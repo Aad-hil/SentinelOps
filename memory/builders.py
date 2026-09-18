@@ -44,6 +44,8 @@ def build_incident_memory(state: InvestigationState) -> IncidentMemory:
         root_cause_confidence=(leading.confidence if leading else None),
         resolution_summary=resolution_summary,
         recovery_action=recovery_action,
+        investigation_status=state.get("investigation_status", "unknown"),
+        approval_status=state.get("approval_status"),
         created_at=incident.detected_at,
         completed_at=completed_at,
     )

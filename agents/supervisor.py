@@ -9,6 +9,7 @@ INVESTIGATION_TASKS = [
     "critic",
     "adjudication",
     "recovery",
+    "safety",
 ]
 
 
@@ -28,7 +29,7 @@ def run_supervisor(state: InvestigationState) -> dict:
     completed = set(state.get("completed_tasks", []))
     evidence_tasks = [
         task for task in INVESTIGATION_TASKS
-        if task not in {"root_cause", "critic", "adjudication", "recovery"}
+        if task not in {"root_cause", "critic", "adjudication", "recovery", "safety"}
     ]
     remaining = [task for task in evidence_tasks if task not in completed]
 
@@ -62,7 +63,17 @@ def run_supervisor(state: InvestigationState) -> dict:
             "investigation_status": "recovery_planning",
         }
 
+    if "safety" not in completed:
+        return {
+            "next_agent": "safety",
+            "investigation_status": "safety_review",
+        }
+
     return {
         "next_agent": "complete",
-        "investigation_status": "complete",
+        "investigation_status": (
+            "awaiting_human_approval"
+            if state.get("approval_required")
+            else "complete"
+        ),
     }

@@ -7,6 +7,7 @@ from agents.critic import run_critic_agent
 from agents.deployment import run_deployment_agent
 from agents.knowledge import run_knowledge_agent
 from agents.root_cause import run_root_cause_agent
+from agents.recovery import run_recovery_agent
 from agents.supervisor import run_supervisor
 from agents.telemetry import run_telemetry_agent
 from graph.state import InvestigationState
@@ -60,6 +61,7 @@ def build_investigation_graph(
     graph.add_node("root_cause", run_root_cause_agent)
     graph.add_node("critic", run_critic_agent)
     graph.add_node("adjudication", run_adjudication_agent)
+    graph.add_node("recovery", run_recovery_agent)
 
     graph.add_edge(START, "historical_memory")
     graph.add_edge("historical_memory", "supervisor")
@@ -73,6 +75,7 @@ def build_investigation_graph(
             "root_cause": "root_cause",
             "critic": "critic",
             "adjudication": "adjudication",
+            "recovery": "recovery",
             "complete": END,
         },
     )
@@ -82,5 +85,6 @@ def build_investigation_graph(
     graph.add_edge("root_cause", "supervisor")
     graph.add_edge("critic", "supervisor")
     graph.add_edge("adjudication", "supervisor")
+    graph.add_edge("recovery", "supervisor")
 
     return graph.compile(checkpointer=checkpointer)

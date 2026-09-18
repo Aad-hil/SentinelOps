@@ -1,5 +1,54 @@
-from recovery.models import RecoveryPlan
+from recovery.models import RecoveryPlan, RecoveryStep
 from safety.models import SafetyDecision
+
+
+_RISK_ORDER = {"low": 0, "medium": 1, "high": 2}
+
+_HIGH_RISK_ACTION_TERMS = (
+    "delete",
+    "drop ",
+    "truncate",
+    "destroy",
+    "purge",
+    "erase",
+    "data migration",
+    "database modification",
+    "database write",
+    "irreversible",
+    "disable authentication",
+    "disable security",
+)
+
+_MEDIUM_RISK_ACTION_TERMS = (
+    "rollback",
+    "restart",
+    "mitigation",
+    "mitigate",
+    "configuration change",
+    "config change",
+    "production rollout",
+    "production change",
+    "deploy",
+    "scale",
+    "failover",
+)
+
+
+def classify_action_risk(step: RecoveryStep) -> str:
+    """Classify an action conservatively, using the declared risk as a minimum."""
+    action = step.action.strip().lower()
+    if any(term in action for term in _HIGH_RISK_ACTION_TERMS):
+        inferred = "high"
+    elif any(term in action for term in _MEDIUM_RISK_ACTION_TERMS):
+        inferred = "medium"
+    elif any(term in action for term in ("collect", "inspect", "verify", "document", "observe", "prepare")):
+        inferred = "low"
+    else:
+        # Unknown production actions fail closed rather than being treated as safe.
+        inferred = "high"
+
+    declared = step.risk if step.risk in _RISK_ORDER else "high"
+    return inferred if _RISK_ORDER[inferred] > _RISK_ORDER[declared] else declared
 
 
 def evaluate_recovery_safety(plan: RecoveryPlan | None) -> SafetyDecision:
@@ -31,26 +80,35 @@ def evaluate_recovery_safety(plan: RecoveryPlan | None) -> SafetyDecision:
             evidence_gaps=gaps,
         )
 
+    effective_risks = {
+        step.step_id: classify_action_risk(step)
+        for step in plan.steps
+    }
     blocked = tuple(
         step.step_id
         for step in plan.steps
-        if step.requires_approval and step.risk == "high"
+        if effective_risks[step.step_id] == "high"
     )
     reviewed = tuple(step.step_id for step in plan.steps if step.step_id not in blocked)
-    approval_required = plan.requires_approval
 
     if blocked:
         return SafetyDecision(
             decision="blocked",
-            rationale="High-risk production-changing steps require a dedicated safety review before human approval.",
+            rationale=(
+                "High-risk actions are blocked by the safety boundary; they cannot become "
+                "executable merely because a recovery step requests approval."
+            ),
             risk_level="high",
             approval_required=False,
             blocked_steps=blocked,
             reviewed_steps=reviewed,
         )
 
-    risk_levels = {step.risk for step in plan.steps}
-    risk_level = "medium" if "medium" in risk_levels else "low"
+    approval_required = plan.requires_approval
+    risk_level = "medium" if any(
+        risk == "medium" for risk in effective_risks.values()
+    ) else "low"
+
     if approval_required:
         return SafetyDecision(
             decision="review_required",

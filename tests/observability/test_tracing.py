@@ -1,0 +1,68 @@
+from graph.investigation import build_investigation_graph
+from simulator.scenarios import build_incident_002_evidence
+from observability.tracing import traced_node
+
+
+def test_traced_node_records_successful_execution():
+    def node(state):
+        return {"messages": ["done"], "result": 42}
+
+    result = traced_node("example", node)({"incident_id": "INC-TEST"})
+
+    event = result["observability_events"][0]
+    assert event["incident_id"] == "INC-TEST"
+    assert event["node"] == "example"
+    assert event["status"] == "ok"
+    assert event["duration_ms"] >= 0
+    assert event["output_keys"] == ["messages", "result"]
+    assert event["trace_id"]
+
+
+def test_traced_node_preserves_existing_events():
+    def node(state):
+        return {"messages": ["next"]}
+
+    state = {
+        "incident_id": "INC-TEST",
+        "observability_events": [{"node": "previous", "status": "ok"}],
+    }
+    result = traced_node("example", node)(state)
+
+    assert len(result["observability_events"]) == 2
+    assert result["observability_events"][0]["node"] == "previous"
+    assert result["observability_events"][1]["node"] == "example"
+
+
+def test_investigation_graph_emits_trace_for_each_investigation_node():
+    evidence = build_incident_002_evidence()
+    graph = build_investigation_graph()
+    result = graph.invoke(
+        {
+            "incident_id": evidence.incident.incident_id,
+            "incident_summary": evidence.incident.description,
+            "evidence": evidence,
+        }
+    )
+
+    traced_nodes = [event["node"] for event in result["observability_events"]]
+    assert traced_nodes == [
+        "historical_memory",
+        "supervisor",
+        "telemetry",
+        "supervisor",
+        "knowledge",
+        "supervisor",
+        "deployment",
+        "supervisor",
+        "root_cause",
+        "supervisor",
+        "critic",
+        "supervisor",
+        "adjudication",
+        "supervisor",
+        "recovery",
+        "supervisor",
+        "safety",
+    ]
+    assert all(event["status"] == "ok" for event in result["observability_events"])
+    assert all(event["trace_id"] for event in result["observability_events"])

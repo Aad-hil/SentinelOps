@@ -35,6 +35,7 @@ class InvestigationState(TypedDict, total=False):
     messages: list[str]
     next_agent: str
     investigation_status: str
+    recovery_plan: Any
 
 
 def append_finding(state: InvestigationState, finding: AgentFinding) -> dict[str, Any]:

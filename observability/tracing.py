@@ -37,6 +37,14 @@ def configure_telemetry(*, console_export: bool | None = None) -> None:
     if console_export:
         provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
 
+    otlp_endpoint = os.getenv("SENTINELOPS_OTEL_EXPORTER_OTLP_ENDPOINT")
+    if otlp_endpoint:
+        provider.add_span_processor(
+            BatchSpanProcessor(
+                OTLPSpanExporter(endpoint=otlp_endpoint, insecure=True)
+            )
+        )
+
     trace.set_tracer_provider(provider)
     _provider_configured = True
 

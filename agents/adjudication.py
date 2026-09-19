@@ -80,8 +80,12 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
             if supporting_times and max(supporting_times) < incident_started:
                 confidence *= 0.8
 
-        status = "strong_candidate" if confidence >= 0.75 else (
-            "supported" if confidence >= 0.6 else "insufficient_evidence"
+        status = (
+            "strong_candidate"
+            if confidence >= 0.75 and hypothesis.causal_score >= 1.0
+            else "supported"
+            if confidence >= 0.6 and hypothesis.causal_score >= 1.0
+            else "insufficient_evidence"
         )
         adjudicated.append(
             Hypothesis(

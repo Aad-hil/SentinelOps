@@ -1,0 +1,32 @@
+[
+  {
+    "incident_id": "INC-001",
+    "title": "Checkout latency spike",
+    "ground_truth_source": "simulator/incidents.py",
+    "expected_root_cause": "Database connection pool exhaustion.",
+    "expected_trigger": "Checkout deployment checkout-v42.",
+    "expected_affected_component": "Order database connection pool.",
+    "expected_mitigation": "Increase connection pool capacity or roll back the deployment.",
+    "required_evidence": [
+      "DB_POOL_SIZE changed from 50 to 20",
+      "connection pool utilization reached 100 percent",
+      "database connection wait time increased"
+    ],
+    "expected_hypothesis_id": null
+  },
+  {
+    "incident_id": "INC-002",
+    "title": "Primary database saturation after deployment",
+    "ground_truth_source": "simulator/incidents.py",
+    "expected_root_cause": "A deployment introduced a database query that saturated a primary database server.",
+    "expected_trigger": "Production deployment introducing the problematic query.",
+    "expected_affected_component": "Primary database server.",
+    "expected_mitigation": "Identify the problematic query and roll back the deployment.",
+    "required_evidence": [
+      "deployment introduced the problematic query",
+      "query created excessive load on the primary database",
+      "database saturation caused elevated request failures"
+    ],
+    "expected_hypothesis_id": "H1"
+  }
+]

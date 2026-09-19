@@ -84,6 +84,78 @@ def _template_steps(
     )
 
 
+def _evidence_text(state: InvestigationState) -> str:
+    """Combine investigation evidence for generic recovery-signal detection."""
+    return " ".join(
+        f"{item.source} {item.observation}".lower()
+        for item in state.get("evidence_items", ())
+    )
+
+
+def _supplemental_steps(
+    state: InvestigationState,
+    existing_ids: set[str],
+    evidence: tuple[str, ...],
+) -> tuple[RecoveryStep, ...]:
+    """Add conservative actions when direct operational signals are explicit."""
+    text = _evidence_text(state)
+    steps: list[RecoveryStep] = []
+
+    def add(step: RecoveryStep) -> None:
+        if step.step_id not in existing_ids:
+            steps.append(step)
+
+    if ("migration" in text or "schema" in text) and "pause-migration" not in existing_ids:
+        add(
+            RecoveryStep(
+                step_id="pause-migration",
+                action="Pause the active database migration and validate a safe recovery point before resuming.",
+                purpose="Remove migration workload from the contention window.",
+                risk="medium",
+                requires_approval=True,
+                evidence=evidence,
+            )
+        )
+
+    if ("upgrade" in text or "major version" in text) and "rollback-upgrade" not in existing_ids:
+        add(
+            RecoveryStep(
+                step_id="rollback-upgrade",
+                action="Prepare a rollback to the previous stable data-store version for human review.",
+                purpose="Remove upgrade-associated resource contention.",
+                risk="medium",
+                requires_approval=True,
+                evidence=evidence,
+            )
+        )
+
+    if ("new data shape" in text or "expensive" in text or "write transaction" in text) and "block-expensive-pattern" not in existing_ids:
+        add(
+            RecoveryStep(
+                step_id="block-expensive-pattern",
+                action="Prepare a reversible block or reduction of the expensive database write pattern for human review.",
+                purpose="Stop the workload driving excessive database resource consumption.",
+                risk="medium",
+                requires_approval=True,
+                evidence=evidence,
+            )
+        )
+
+    if ("peak" in text or "request_rate" in text or "request rate" in text) and "throttle-load" not in existing_ids:
+        add(
+            RecoveryStep(
+                step_id="throttle-load",
+                action="Prepare request throttling to reduce database pressure during the peak-load window.",
+                purpose="Protect database capacity while recovery is validated.",
+                risk="medium",
+                requires_approval=True,
+                evidence=evidence,
+            )
+        )
+
+    return tuple(steps)
+
+
 def build_recovery_plan(state: InvestigationState) -> RecoveryPlan:
     """Build a conservative recovery recommendation from adjudication and critique."""
     adjudication = state.get("adjudication")
@@ -188,6 +260,9 @@ def build_recovery_plan(state: InvestigationState) -> RecoveryPlan:
     )
     causal_evidence = tuple(leading.causal_evidence) if leading else ()
     steps = _template_steps(hypothesis_id, causal_evidence)
+    supplemental = _supplemental_steps(state, {step.step_id for step in steps}, causal_evidence)
+    if supplemental:
+        steps = (*steps, *supplemental)
     if not steps:
         steps = (
             RecoveryStep(

@@ -1,3 +1,7 @@
+from datetime import datetime, timezone
+
+from agents.root_cause import _causal_chain
+from graph.evidence import EvidenceItem
 from graph.investigation import build_investigation_graph
 from graph.state import InvestigationState
 from simulator.scenarios import build_incident_002_evidence
@@ -56,3 +60,63 @@ def test_root_cause_agent_builds_causal_chain_for_incident_002():
     assert h1.causal_evidence
     assert h1.causal_evidence[0]
     assert h1.causal_evidence[-1]
+
+
+def test_causal_chain_handles_mixed_naive_and_aware_timestamps():
+    items = [
+        EvidenceItem(
+            source="deployment:release-1",
+            evidence_type="deployment",
+            observation="deployment introduced a change",
+            timestamp=datetime(2026, 9, 16, 14, 35),
+            relevance=1.0,
+            agent="deployment",
+        ),
+        EvidenceItem(
+            source="query:db-1",
+            evidence_type="telemetry",
+            observation="query caused database pressure",
+            timestamp=datetime(2026, 9, 16, 14, 36, tzinfo=timezone.utc),
+            relevance=1.0,
+            agent="telemetry",
+        ),
+        EvidenceItem(
+            source="metric:db-cpu",
+            evidence_type="metric",
+            observation="database CPU saturation and error rate increased",
+            timestamp=datetime(2026, 9, 16, 14, 37),
+            relevance=1.0,
+            agent="telemetry",
+        ),
+    ]
+
+    score, evidence = _causal_chain("H1", items)
+
+    assert score == 1.0
+    assert evidence == ("deployment:release-1", "query:db-1", "metric:db-cpu")
+
+
+def test_causal_chain_handles_missing_stages_without_crashing():
+    items = [
+        EvidenceItem(
+            source="deployment:release-1",
+            evidence_type="deployment",
+            observation="deployment introduced a change",
+            timestamp=datetime(2026, 9, 16, 14, 35, tzinfo=timezone.utc),
+            relevance=1.0,
+            agent="deployment",
+        ),
+        EvidenceItem(
+            source="log:error",
+            evidence_type="log",
+            observation="request returned error",
+            timestamp=datetime(2026, 9, 16, 14, 37, tzinfo=timezone.utc),
+            relevance=1.0,
+            agent="telemetry",
+        ),
+    ]
+
+    score, evidence = _causal_chain("H1", items)
+
+    assert score == 0.667
+    assert evidence == ("deployment:release-1", "log:error")

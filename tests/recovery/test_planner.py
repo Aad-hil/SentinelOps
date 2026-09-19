@@ -45,9 +45,9 @@ def test_plan_is_ready_for_review_only_after_all_support_checks():
 
     assert plan.readiness == "ready_for_review"
     assert [step.step_id for step in plan.steps] == [
-        "mitigate",
-        "verify-recovery",
-        "permanent-fix",
+        "identify-query",
+        "rollback-deployment",
+        "verify-database-recovery",
     ]
     assert plan.steps[0].requires_approval is True
     assert plan.steps[1].requires_approval is False

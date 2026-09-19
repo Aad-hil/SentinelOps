@@ -23,7 +23,7 @@ def test_run_investigation_incident_002():
         "recovery",
         "safety",
     }
-    assert len(state["hypotheses"]) == 3
+    assert len(state["hypotheses"]) == 12
     assert state["critique"] is not None
     assert state["adjudication"] is not None
     assert state["evidence_items"]

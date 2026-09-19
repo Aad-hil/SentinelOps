@@ -161,6 +161,12 @@ def generate_hypotheses(state: InvestigationState) -> list[Hypothesis]:
         contradictions = _contradictions(hypothesis_id, items)
         support_score = min(len(supporting) / 4.0, 1.0)
         causal_score, causal_evidence = _causal_chain(hypothesis_id, items)
+        if causal_evidence:
+            supporting_sources = tuple(dict.fromkeys(
+                (*[item.source for item in supporting], *causal_evidence)
+            ))
+        else:
+            supporting_sources = tuple(item.source for item in supporting)
         contradiction_penalty = min(len(contradictions) / 4.0, 0.6)
 
         # Evidence quantity remains useful, but causal structure has greater
@@ -174,7 +180,7 @@ def generate_hypotheses(state: InvestigationState) -> list[Hypothesis]:
             Hypothesis(
                 hypothesis_id=hypothesis_id,
                 statement=statement,
-                supporting_evidence=tuple(item.source for item in supporting),
+                supporting_evidence=supporting_sources,
                 contradicting_evidence=tuple(item.source for item in contradictions),
                 confidence=round(confidence, 3),
                 status="supported" if confidence >= 0.6 else "candidate",

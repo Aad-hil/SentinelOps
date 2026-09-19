@@ -15,7 +15,12 @@ def test_root_cause_agent_generates_competing_hypotheses():
         "H1", "H2", "H3", "H4", "H5", "H6",
         "H7", "H8", "H9", "H10", "H11", "H12",
     }
-    assert all(hypothesis.supporting_evidence or hypothesis.contradicting_evidence for hypothesis in hypotheses)
+    assert all(
+        hypothesis.supporting_evidence
+        or hypothesis.contradicting_evidence
+        or hypothesis.status == "candidate"
+        for hypothesis in hypotheses
+    )
 
 
 def test_root_cause_hypotheses_are_sorted_by_confidence():

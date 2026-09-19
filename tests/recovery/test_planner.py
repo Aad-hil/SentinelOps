@@ -73,7 +73,13 @@ def test_plan_uses_hypothesis_specific_recovery_actions():
         alternative_gaps=(),
     )
 
-    plan = build_recovery_plan(make_state(adjudication=adjudication))
+    hypothesis = SimpleNamespace(
+        hypothesis_id="H9",
+        causal_evidence=("telemetry-write-latency", "telemetry-query-cpu"),
+    )
+    plan = build_recovery_plan(
+        make_state(adjudication=adjudication, hypotheses=(hypothesis,))
+    )
     actions = [step.action.lower() for step in plan.steps]
 
     assert plan.readiness == "ready_for_review"

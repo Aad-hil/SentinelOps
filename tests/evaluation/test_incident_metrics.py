@@ -6,6 +6,7 @@ from evaluation.incident_metrics import (
     confidence_brier_score,
     evidence_term_coverage,
     recovery_action_contains,
+    recovery_action_concept_match,
     top1_hypothesis_accuracy,
     top_k_hypothesis_recall,
 )
@@ -50,3 +51,8 @@ def test_recovery_action_contains():
         "rollback the deployment",
     ) == 1.0
     assert recovery_action_contains(["verify recovery"], "rollback") == 0.0
+
+
+def test_recovery_action_concept_match_handles_single_concept_group():
+    actions = ["Roll back the data-store to the previous stable version."]
+    assert recovery_action_concept_match(actions, (("rollback", "stable"),)) == 1.0

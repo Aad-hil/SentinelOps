@@ -7,7 +7,7 @@ from memory.checkpoint import create_checkpointer
 from memory.persistence import persist_completed_investigation
 from memory.postgres import PostgresIncidentMemoryRepository
 from memory.semantic import QdrantIncidentMemoryRepository
-from observability.tracing import configure_telemetry
+from observability.tracing import configure_telemetry, initialize_investigation_trace
 from simulator.scenarios import build_incident_001_evidence, build_incident_002_evidence
 
 _SCENARIOS = {

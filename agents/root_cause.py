@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 
 from graph.evidence import EvidenceItem
 from graph.state import AgentFinding, InvestigationState, append_finding
@@ -77,6 +77,16 @@ def _matches_signal(item: EvidenceItem, signal: str) -> bool:
     return signal.lower() in text or normalized in text
 
 
+def _timestamp_key(item: EvidenceItem) -> datetime:
+    """Return a comparable UTC timestamp for aware or naive evidence times."""
+    timestamp = item.timestamp
+    if timestamp is None:
+        return datetime.max.replace(tzinfo=timezone.utc)
+    if timestamp.tzinfo is None:
+        return timestamp.replace(tzinfo=timezone.utc)
+    return timestamp.astimezone(timezone.utc)
+
+
 def _causal_chain(
     hypothesis_id: str,
     items: list[EvidenceItem],
@@ -100,20 +110,22 @@ def _causal_chain(
     previous = None
     selected: list[EvidenceItem] = []
     for stage in stages:
+        # Missing stages reduce causal coverage, but must not crash evaluation.
+        if not stage:
+            ordered = False
+            continue
+
         if previous is None:
-            candidate = min(stage, key=lambda item: item.timestamp or datetime.max)
+            candidate = min(stage, key=_timestamp_key)
         else:
-            later = [
-                item for item in stage
-                if item.timestamp is None or item.timestamp >= previous
-            ]
-            candidate = min(later, key=lambda item: item.timestamp or datetime.max) if later else None
+            later = [item for item in stage if _timestamp_key(item) >= previous]
+            candidate = min(later, key=_timestamp_key) if later else None
             if candidate is None:
                 ordered = False
-                break
+                continue
+
         selected.append(candidate)
-        if candidate.timestamp is not None:
-            previous = candidate.timestamp
+        previous = _timestamp_key(candidate)
 
     score = covered / len(stages)
     if ordered and covered == len(stages):

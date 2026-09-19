@@ -49,8 +49,9 @@ def test_plan_is_ready_for_review_only_after_all_support_checks():
         "rollback-deployment",
         "verify-database-recovery",
     ]
-    assert plan.steps[0].requires_approval is True
-    assert plan.steps[1].requires_approval is False
+    assert plan.steps[0].requires_approval is False
+    assert plan.steps[1].requires_approval is True
+    assert plan.steps[2].requires_approval is False
 
 
 def test_plan_is_blocked_without_adjudication():

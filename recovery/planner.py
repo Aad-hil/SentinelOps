@@ -120,16 +120,38 @@ def build_recovery_plan(state: InvestigationState) -> RecoveryPlan:
         and adjudication.recovery_support
     ):
         gap_text = "; ".join(unresolved) or "causal and recovery evidence"
-        return RecoveryPlan(
-            incident_id=incident_id,
-            hypothesis_id=hypothesis_id,
-            confidence=confidence,
-            readiness="verification_required",
-            rationale=(
-                f"Recovery action is not ready for production execution because the investigation "
-                f"has unresolved evidence gaps: {gap_text}."
-            ),
-            steps=(
+        hypotheses = tuple(state.get("hypotheses", ()))
+        leading = next(
+            (hypothesis for hypothesis in hypotheses if hypothesis.hypothesis_id == hypothesis_id),
+            None,
+        )
+        causal_evidence = tuple(leading.causal_evidence) if leading else ()
+        template_steps = _template_steps(hypothesis_id, causal_evidence)
+        if template_steps and (adjudication.causal_support or (leading and leading.causal_score >= 0.667)):
+            prepared_steps = tuple(
+                RecoveryStep(
+                    step_id=f"prepare-{step.step_id}",
+                    action=f"Prepare and validate this candidate action for human review; do not execute automatically: {step.action}",
+                    purpose=step.purpose,
+                    risk=step.risk,
+                    requires_approval=step.requires_approval,
+                    evidence=step.evidence,
+                )
+                for step in template_steps
+            )
+            steps = (
+                RecoveryStep(
+                    step_id="collect-missing-evidence",
+                    action="Collect the missing causal, temporal, and recovery evidence.",
+                    purpose="Validate the leading hypothesis before remediation.",
+                    risk="low",
+                    requires_approval=False,
+                    evidence=unresolved,
+                ),
+                *prepared_steps,
+            )
+        else:
+            steps = (
                 RecoveryStep(
                     step_id="collect-missing-evidence",
                     action="Collect the missing causal, temporal, and recovery evidence.",
@@ -145,7 +167,18 @@ def build_recovery_plan(state: InvestigationState) -> RecoveryPlan:
                     risk="medium",
                     requires_approval=True,
                 ),
+            )
+        return RecoveryPlan(
+            incident_id=incident_id,
+            hypothesis_id=hypothesis_id,
+            confidence=confidence,
+            readiness="verification_required",
+            rationale=(
+                f"Recovery action is not ready for production execution because the investigation "
+                f"has unresolved evidence gaps: {gap_text}. A hypothesis-specific mitigation is "
+                "prepared for validation where causal evidence is sufficiently specific."
             ),
+            steps=steps,
         )
 
     hypotheses = tuple(state.get("hypotheses", ()))

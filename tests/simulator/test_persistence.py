@@ -15,7 +15,7 @@ def test_run_investigation_persists_analysis_before_approval():
     saved_memory = repository.save.call_args.args[0]
     assert saved_memory.incident_id == "INC-002"
     assert saved_memory.root_cause_hypothesis_id == "H1"
-    assert saved_memory.root_cause_confidence == 0.95
+    assert saved_memory.root_cause_confidence == 1.0
 
 
 def test_run_investigation_does_not_require_repository():

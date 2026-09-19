@@ -7,6 +7,7 @@ from memory.checkpoint import create_checkpointer
 from memory.persistence import persist_completed_investigation
 from memory.postgres import PostgresIncidentMemoryRepository
 from memory.semantic import QdrantIncidentMemoryRepository
+from observability.tracing import configure_telemetry
 from simulator.scenarios import build_incident_001_evidence, build_incident_002_evidence
 
 _SCENARIOS = {
@@ -152,6 +153,7 @@ def _print_report(state: dict) -> None:
 
 
 def main() -> int:
+    configure_telemetry()
     args = build_parser().parse_args()
     repository = PostgresIncidentMemoryRepository()
     semantic_repository = QdrantIncidentMemoryRepository()

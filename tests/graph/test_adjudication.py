@@ -15,9 +15,11 @@ def test_adjudication_separates_direct_causal_evidence_from_symptoms():
     assert adjudication.temporal_support is True
     assert adjudication.causal_support is True
     assert adjudication.recovery_support is True
-    assert hypotheses[0].hypothesis_id == "H1"
-    assert hypotheses[0].confidence > hypotheses[1].confidence
-    assert hypotheses[1].status == "insufficient_evidence"
+
+    by_id = {hypothesis.hypothesis_id: hypothesis for hypothesis in hypotheses}
+    assert by_id["H1"].confidence > by_id["H2"].confidence
+    assert by_id["H2"].status == "insufficient_evidence"
+    assert by_id["H3"].status == "insufficient_evidence"
 
 
 def test_adjudication_does_not_use_ground_truth():

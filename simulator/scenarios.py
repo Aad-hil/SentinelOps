@@ -1,3 +1,4 @@
+from simulator.benchmark import build_all_benchmark_incidents, build_benchmark_incident
 from simulator.evidence import EvidenceBundle, build_evidence_bundle
 from simulator.generator import (
     generate_incident_002_deployments,
@@ -20,9 +21,7 @@ from simulator.models import IncidentScenario
 
 def build_incident_001() -> IncidentScenario:
     """Build the controlled synthetic baseline scenario."""
-
     incident = INCIDENT_001
-
     return IncidentScenario(
         incident=incident,
         logs=tuple(generate_incident_logs(incident.detected_at)),
@@ -35,9 +34,7 @@ def build_incident_001() -> IncidentScenario:
 
 def build_incident_002() -> IncidentScenario:
     """Build the synthetic reconstruction of the GitHub January 2025 incident."""
-
     incident = INCIDENT_002
-
     return IncidentScenario(
         incident=incident,
         logs=tuple(generate_incident_002_logs(incident.detected_at)),
@@ -49,8 +46,6 @@ def build_incident_002() -> IncidentScenario:
 
 
 def build_incident_001_evidence() -> EvidenceBundle:
-    """Build agent-facing evidence for INC-001 without ground truth."""
-
     scenario = build_incident_001()
     return build_evidence_bundle(
         incident=scenario.incident,
@@ -62,9 +57,19 @@ def build_incident_001_evidence() -> EvidenceBundle:
 
 
 def build_incident_002_evidence() -> EvidenceBundle:
-    """Build agent-facing evidence for INC-002 without ground truth."""
-
     scenario = build_incident_002()
+    return build_evidence_bundle(
+        incident=scenario.incident,
+        logs=scenario.logs,
+        metrics=scenario.metrics,
+        deployments=scenario.deployments,
+        traces=scenario.traces,
+    )
+
+
+def build_benchmark_evidence(incident_id: str) -> EvidenceBundle:
+    """Build agent-facing evidence for any benchmark incident."""
+    scenario = build_benchmark_incident(incident_id)
     return build_evidence_bundle(
         incident=scenario.incident,
         logs=scenario.logs,

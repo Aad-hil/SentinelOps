@@ -58,7 +58,14 @@ def run_investigation(
     if config is None:
         config = {"configurable": {"thread_id": evidence.incident.incident_id}}
     if approval is None:
-        state = graph.invoke(initial_state, config=config)
+        root_span, trace_id, parent_span_id = initialize_investigation_trace()
+        initial_state["otel_trace_id"] = trace_id
+        initial_state["otel_parent_span_id"] = parent_span_id
+        try:
+            state = graph.invoke(initial_state, config=config)
+        finally:
+            if root_span is not None:
+                root_span.end()
     else:
         state = graph.invoke(Command(resume=approval), config=config)
 

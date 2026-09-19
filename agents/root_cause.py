@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 from graph.evidence import EvidenceItem
 from graph.state import AgentFinding, InvestigationState, append_finding
@@ -14,6 +15,8 @@ class Hypothesis:
     contradicting_evidence: tuple[str, ...]
     confidence: float
     status: str = "candidate"
+    causal_score: float = 0.0
+    causal_evidence: tuple[str, ...] = ()
 
 
 # Generic causal patterns; these are not benchmark ground truth.
@@ -44,6 +47,25 @@ _HYPOTHESES = (
      ("queue", "background", "webhook", "backlog", "inefficient")),
 )
 
+# Each causal pattern is evaluated as trigger -> mechanism -> impact.
+# A hypothesis receives causal support only when evidence covers multiple
+# stages of that chain in chronological order; keyword presence alone is not
+# treated as causal proof.
+_CAUSAL_REQUIREMENTS = {
+    "H1": (("deployment", "change", "release"), ("query", "database", "db"), ("saturation", "cpu", "error")),
+    "H2": (("traffic", "request", "load", "rate"), ("overload", "capacity", "queue"), ("error", "latency", "timeout")),
+    "H3": (("network", "downstream", "dependency"), ("timeout", "latency", "failure"), ("error", "request")),
+    "H4": (("connection", "pool", "capacity"), ("exhaust", "wait", "queue"), ("error", "failure", "latency")),
+    "H5": (("query", "query change"), ("lock", "contention", "slow", "resource"), ("latency", "cpu", "error")),
+    "H6": (("schema", "migration", "alter"), ("contention", "resource", "load"), ("latency", "error", "connection")),
+    "H7": (("primary", "crash", "failure"), ("failover", "recovery", "unstable"), ("error", "outage", "health")),
+    "H8": (("configuration", "version", "permission", "migration"), ("permission", "config", "insert", "write"), ("error", "failure")),
+    "H9": (("write", "transaction"), ("expensive", "cpu", "resource"), ("latency", "timeout", "error")),
+    "H10": (("replication", "replica", "request"), ("lag", "replication"), ("stale", "unavailable", "latency")),
+    "H11": (("upgrade", "version", "data-store"), ("contention", "resource", "pressure"), ("latency", "timeout", "error")),
+    "H12": (("background", "queue", "api", "request"), ("inefficient", "query", "backlog"), ("queue", "webhook", "latency", "error")),
+}
+
 
 def _evidence_text(item: EvidenceItem) -> str:
     return (item.source + " " + item.observation).lower()
@@ -53,6 +75,51 @@ def _matches_signal(item: EvidenceItem, signal: str) -> bool:
     text = _evidence_text(item)
     normalized = signal.lower().replace("_", " ")
     return signal.lower() in text or normalized in text
+
+
+def _causal_chain(
+    hypothesis_id: str,
+    items: list[EvidenceItem],
+) -> tuple[float, tuple[str, ...]]:
+    """Measure whether evidence supports a chronological causal chain."""
+    requirements = _CAUSAL_REQUIREMENTS[hypothesis_id]
+    stages: list[list[EvidenceItem]] = []
+
+    for signals in requirements:
+        matches = [
+            item for item in items
+            if any(_matches_signal(item, signal) for signal in signals)
+        ]
+        stages.append(matches)
+
+    covered = sum(bool(stage) for stage in stages)
+    if covered == 0:
+        return 0.0, ()
+
+    ordered = True
+    previous = None
+    selected: list[EvidenceItem] = []
+    for stage in stages:
+        if previous is None:
+            candidate = min(stage, key=lambda item: item.timestamp or datetime.max)
+        else:
+            later = [
+                item for item in stage
+                if item.timestamp is None or item.timestamp >= previous
+            ]
+            candidate = min(later, key=lambda item: item.timestamp or datetime.max) if later else None
+            if candidate is None:
+                ordered = False
+                break
+        selected.append(candidate)
+        if candidate.timestamp is not None:
+            previous = candidate.timestamp
+
+    score = covered / len(stages)
+    if ordered and covered == len(stages):
+        score = 1.0
+
+    return round(score, 3), tuple(item.source for item in selected if item is not None)
 
 
 def _contradictions(hypothesis_id: str, items: list[EvidenceItem]) -> list[EvidenceItem]:
@@ -81,8 +148,15 @@ def generate_hypotheses(state: InvestigationState) -> list[Hypothesis]:
         ]
         contradictions = _contradictions(hypothesis_id, items)
         support_score = min(len(supporting) / 4.0, 1.0)
+        causal_score, causal_evidence = _causal_chain(hypothesis_id, items)
         contradiction_penalty = min(len(contradictions) / 4.0, 0.6)
-        confidence = max(0.0, min(1.0, 0.15 + support_score * 0.85 - contradiction_penalty))
+
+        # Evidence quantity remains useful, but causal structure has greater
+        # weight so a shared symptom cannot outrank a complete causal chain.
+        confidence = max(
+            0.0,
+            min(1.0, 0.10 + support_score * 0.35 + causal_score * 0.55 - contradiction_penalty),
+        )
 
         hypotheses.append(
             Hypothesis(
@@ -92,6 +166,8 @@ def generate_hypotheses(state: InvestigationState) -> list[Hypothesis]:
                 contradicting_evidence=tuple(item.source for item in contradictions),
                 confidence=round(confidence, 3),
                 status="supported" if confidence >= 0.6 else "candidate",
+                causal_score=causal_score,
+                causal_evidence=causal_evidence,
             )
         )
 
@@ -118,7 +194,7 @@ def run_root_cause_agent(state: InvestigationState) -> dict:
     result.update({
         "hypotheses": hypotheses,
         "messages": list(state.get("messages", [])) + [
-            f"Root Cause Agent evaluated {len(hypotheses)} competing hypotheses."
+            f"Root Cause Agent evaluated {len(hypotheses)} competing hypotheses with causal-chain scoring."
         ],
         "investigation_status": "hypothesis_evaluation",
     })

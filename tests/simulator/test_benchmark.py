@@ -23,7 +23,11 @@ def test_all_benchmark_incidents_are_deterministic_and_complete() -> None:
 def test_public_benchmark_scenarios_use_synthetic_timestamps() -> None:
     scenarios = build_all_benchmark_incidents()
 
-    for scenario in scenarios[1:]:
+    # INC-002 intentionally preserves its existing realistic reconstruction,
+    # including the documented 2025 incident date. New benchmark scenarios
+    # use synthetic 2026 timestamps.
+    assert scenarios[1].incident.started_at.year == 2025
+    for scenario in scenarios[2:]:
         assert scenario.incident.started_at.year == 2026
 
 

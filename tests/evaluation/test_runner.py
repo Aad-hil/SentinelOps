@@ -10,8 +10,10 @@ def test_benchmark_runner_evaluates_all_fifteen_incidents() -> None:
     assert report.incident_count == 15
     assert len(report.incidents) == 15
     assert all(item.status for item in report.incidents)
+    assert all(0.0 <= item.root_cause_concept_match <= 1.0 for item in report.incidents)
     assert all(0.0 <= item.evidence_coverage <= 1.0 for item in report.incidents)
     assert all(0.0 <= item.recovery_match <= 1.0 for item in report.incidents)
+    assert report.mean_root_cause_concept_match >= 0.0
 
 
 def test_benchmark_report_is_human_readable() -> None:
@@ -19,4 +21,5 @@ def test_benchmark_report_is_human_readable() -> None:
     output = format_report(report)
 
     assert "SentinelOps Evaluation" in output
+    assert "Mean root-cause concept match" in output
     assert "Incidents: 0" in output

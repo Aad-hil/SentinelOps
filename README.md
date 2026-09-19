@@ -42,3 +42,19 @@ Coming soon.
 ## License
 
 TBD
+
+## Optional LangSmith Tracing
+
+SentinelOps already has local OpenTelemetry tracing with Jaeger. LangSmith is an **optional secondary backend** for agent-focused debugging and evaluation.
+
+Leave these disabled unless you intentionally want to send traces to LangSmith:
+
+```env
+LANGSMITH_TRACING=false
+LANGSMITH_API_KEY=
+LANGSMITH_PROJECT=sentinelops
+```
+
+When enabled, LangGraph/LangChain tracing can be collected by LangSmith using the environment configuration. This is intentionally opt-in so the default development workflow remains local and does not require an external observability account.
+
+OpenTelemetry + local Jaeger remains the primary zero-cost observability path for SentinelOps.

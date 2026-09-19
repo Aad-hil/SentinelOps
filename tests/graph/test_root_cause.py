@@ -10,8 +10,11 @@ def test_root_cause_agent_generates_competing_hypotheses():
     result = graph.invoke({"evidence": evidence})
 
     hypotheses = result["hypotheses"]
-    assert len(hypotheses) == 3
-    assert {hypothesis.hypothesis_id for hypothesis in hypotheses} == {"H1", "H2", "H3"}
+    assert len(hypotheses) == 12
+    assert {hypothesis.hypothesis_id for hypothesis in hypotheses} == {
+        "H1", "H2", "H3", "H4", "H5", "H6",
+        "H7", "H8", "H9", "H10", "H11", "H12",
+    }
     assert all(hypothesis.supporting_evidence or hypothesis.contradicting_evidence for hypothesis in hypotheses)
 
 

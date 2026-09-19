@@ -30,32 +30,59 @@ def _has_any(items: list[EvidenceItem], *terms: str) -> bool:
     return any(term.lower() in _text(item) for item in items for term in terms)
 
 
+def _recovery_signal_support(items: list[EvidenceItem]) -> bool:
+    """Return whether evidence contains a concrete mitigation/recovery signal."""
+    signals = (
+        "mitigation",
+        "rollback",
+        "restart",
+        "revert",
+        "throttle",
+        "terminate",
+        "kill",
+        "recover",
+    )
+    return _has_any(items, *signals)
+
+
 def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], Adjudication | None]:
-    """Re-score hypotheses using temporal, causal, recovery, and alternative evidence."""
+    """Adjudicate hypotheses using causal-chain quality instead of benchmark-specific IDs."""
     hypotheses = list(state.get("hypotheses", []))
     items = list(state.get("evidence_items", []))
     if not hypotheses:
         return [], None
 
-    temporal = _has(items, "deployment", "web-2025.01.09.3") and _has(items, "deployment", "query")
-    causal = _has(items, "query_fingerprint") and _has(items, "query_path") and _has(items, "database")
-    recovery = _has_any(items, "rollback") and _has_any(items, "error rate", "baseline", "returned toward baseline")
-    traffic_direct = _has(items, "traffic") or _has(items, "request volume") or _has(items, "requests per second")
-    network_direct = _has(items, "network") or _has(items, "downstream") or _has(items, "connection timeout")
+    recovery = _recovery_signal_support(items)
+    incident_started = state.get("evidence").incident.started_at if state.get("evidence") else None
 
     adjudicated: list[Hypothesis] = []
     for hypothesis in hypotheses:
         confidence = hypothesis.confidence
-        status = hypothesis.status
-        if hypothesis.hypothesis_id == "H1":
-            confidence = min(1.0, confidence * 0.55 + (0.15 if temporal else 0.0) + (0.15 if causal else 0.0) + (0.10 if recovery else 0.0))
-            status = "strong_candidate" if confidence >= 0.75 else "supported"
-        elif hypothesis.hypothesis_id == "H2":
-            confidence = min(1.0, confidence * 0.55 + (0.25 if traffic_direct else 0.0))
-            status = "supported" if traffic_direct and confidence >= 0.6 else "insufficient_evidence"
-        elif hypothesis.hypothesis_id == "H3":
-            confidence = min(1.0, confidence * 0.55 + (0.25 if network_direct else 0.0))
-            status = "supported" if network_direct and confidence >= 0.6 else "insufficient_evidence"
+
+        # Causal-chain quality is the strongest discriminator. Evidence quantity
+        # remains represented by the hypothesis confidence, while recovery
+        # signals provide a small bonus when a concrete mitigation signal exists.
+        confidence = min(
+            1.0,
+            confidence * 0.55
+            + hypothesis.causal_score * 0.35
+            + (0.10 if recovery and hypothesis.causal_score >= 0.667 else 0.0),
+        )
+
+        # A causal chain that ends before the incident is not sufficient for
+        # production recovery, even when the lexical evidence is strong.
+        if incident_started is not None and hypothesis.causal_evidence:
+            supporting_times = [
+                item.timestamp
+                for item in items
+                if item.source in hypothesis.causal_evidence and item.timestamp is not None
+            ]
+            if supporting_times and max(supporting_times) < incident_started:
+                confidence *= 0.8
+
+        status = "strong_candidate" if confidence >= 0.75 else (
+            "supported" if confidence >= 0.6 else "insufficient_evidence"
+        )
         adjudicated.append(
             Hypothesis(
                 hypothesis_id=hypothesis.hypothesis_id,
@@ -69,25 +96,24 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
             )
         )
 
-    adjudicated.sort(key=lambda h: h.confidence, reverse=True)
+    adjudicated.sort(key=lambda h: (-h.confidence, h.hypothesis_id))
     leading = adjudicated[0]
+
     gaps: list[str] = []
-    if leading.hypothesis_id == "H1" and not recovery:
-        gaps.append("post-rollback recovery evidence")
-    if leading.hypothesis_id == "H2" and not traffic_direct:
-        gaps.append("direct request-volume evidence")
-    if leading.hypothesis_id == "H3" and not network_direct:
-        gaps.append("direct network or downstream evidence")
+    if leading.causal_score < 1.0:
+        gaps.append("complete chronological causal chain")
+    if not recovery:
+        gaps.append("concrete recovery or mitigation evidence")
 
     rationale = (
-        f"{leading.hypothesis_id} has the strongest evidence after checking temporal order, "
-        "causal linkage, recovery correlation, and alternative-hypothesis evidence."
+        f"{leading.hypothesis_id} has the strongest evidence after comparing "
+        "causal-chain coverage, evidence support, temporal ordering, and recovery signals."
     )
     adjudication = Adjudication(
         hypothesis_id=leading.hypothesis_id,
         rationale=rationale,
-        temporal_support=temporal,
-        causal_support=causal,
+        temporal_support=leading.causal_score >= 0.667,
+        causal_support=leading.causal_score >= 0.667,
         recovery_support=recovery,
         alternative_gaps=tuple(gaps),
         confidence=round(leading.confidence, 3),

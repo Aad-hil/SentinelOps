@@ -2,7 +2,11 @@
   {
     "incident_id": "INC-001",
     "title": "Checkout latency spike",
+    "source_type": "synthetic_baseline",
     "ground_truth_source": "simulator/incidents.py",
+    "source_url": null,
+    "public_facts_note": "Controlled SentinelOps scenario; not derived from a public incident.",
+    "category": "database_connection_pool",
     "expected_root_cause": "Database connection pool exhaustion.",
     "expected_trigger": "Checkout deployment checkout-v42.",
     "expected_affected_component": "Order database connection pool.",
@@ -17,7 +21,11 @@
   {
     "incident_id": "INC-002",
     "title": "Primary database saturation after deployment",
-    "ground_truth_source": "simulator/incidents.py",
+    "source_type": "github_public",
+    "ground_truth_source": "GitHub Availability Report: January 2025",
+    "source_url": "https://github.blog/news-insights/company-news/github-availability-report-january-2025/",
+    "public_facts_note": "Synthetic telemetry must reconstruct only the publicly documented incident facts; GitHub private telemetry is not included.",
+    "category": "deployment_database_query",
     "expected_root_cause": "A deployment introduced a database query that saturated a primary database server.",
     "expected_trigger": "Production deployment introducing the problematic query.",
     "expected_affected_component": "Primary database server.",
@@ -28,5 +36,252 @@
       "database saturation caused elevated request failures"
     ],
     "expected_hypothesis_id": "H1"
+  },
+  {
+    "incident_id": "INC-003",
+    "title": "Migration Tools outage from missing Docker images",
+    "source_type": "github_public",
+    "ground_truth_source": "GitHub Availability Report: February 2025",
+    "source_url": "https://github.blog/news-insights/company-news/github-availability-report-february-2025/",
+    "public_facts_note": "Synthetic reconstruction based on the public report.",
+    "category": "deployment_artifact_dependency",
+    "expected_root_cause": "A deployment of a system component caused required Docker images to be missing.",
+    "expected_trigger": "Deployment of the affected Migration Tools system component.",
+    "expected_affected_component": "Migration Tools dependency/image availability.",
+    "expected_mitigation": "Roll back to the previous stable version.",
+    "required_evidence": [
+      "deployment preceded the outage",
+      "required Docker images were missing",
+      "migration attempts failed during the incident"
+    ],
+    "expected_hypothesis_id": null
+  },
+  {
+    "incident_id": "INC-004",
+    "title": "Notification delivery delays from worker capacity",
+    "source_type": "github_public",
+    "ground_truth_source": "GitHub Availability Report: February 2025",
+    "source_url": "https://github.blog/news-insights/company-news/github-availability-report-february-2025/",
+    "public_facts_note": "Synthetic reconstruction based on the public report.",
+    "category": "queue_worker_capacity",
+    "expected_root_cause": "Worker pools were running too close to capacity at peak times, delaying queue processing.",
+    "expected_trigger": "Peak notification demand reaching worker-pool capacity.",
+    "expected_affected_component": "Notification worker pools and queue processing.",
+    "expected_mitigation": "Scale out the service and maintain a higher baseline capacity.",
+    "required_evidence": [
+      "worker-pool utilization approached capacity",
+      "notification queue processing lag increased",
+      "notification delivery delay increased during peak demand"
+    ],
+    "expected_hypothesis_id": null
+  },
+  {
+    "incident_id": "INC-005",
+    "title": "Permissions regression from incompatible database query syntax",
+    "source_type": "github_public",
+    "ground_truth_source": "GitHub Availability Report: March 2024",
+    "source_url": "https://github.blog/news-insights/company-news/github-availability-report-march-2024/",
+    "public_facts_note": "Synthetic reconstruction based on the public report.",
+    "category": "deployment_database_compatibility",
+    "expected_root_cause": "A framework upgrade introduced MySQL query syntax incompatible with the production database proxy.",
+    "expected_trigger": "Deployment of the framework upgrade.",
+    "expected_affected_component": "Permissions system and database proxy compatibility.",
+    "expected_mitigation": "Roll back the deployment and correct the affected configuration.",
+    "required_evidence": [
+      "framework upgrade preceded the failures",
+      "production proxy rejected incompatible query syntax",
+      "permissions-related services showed correlated failures"
+    ],
+    "expected_hypothesis_id": null
+  },
+  {
+    "incident_id": "INC-006",
+    "title": "Network configuration deployed to the wrong environment",
+    "source_type": "github_public",
+    "ground_truth_source": "GitHub Availability Report: March 2024",
+    "source_url": "https://github.blog/news-insights/company-news/github-availability-report-march-2024/",
+    "public_facts_note": "Synthetic reconstruction based on the public report.",
+    "category": "configuration_network",
+    "expected_root_cause": "Network configuration was inadvertently deployed to the wrong environment.",
+    "expected_trigger": "Incorrect environment targeting during a network configuration deployment.",
+    "expected_affected_component": "Network configuration affecting multiple GitHub services.",
+    "expected_mitigation": "Roll back the configuration and manually correct the invalid configuration data where required.",
+    "required_evidence": [
+      "network configuration changed in the wrong environment",
+      "multiple services showed intermittent request failures",
+      "rollback initially failed in one data center"
+    ],
+    "expected_hypothesis_id": null
+  },
+  {
+    "incident_id": "INC-007",
+    "title": "Codespaces create/start failures from dependency configuration",
+    "source_type": "github_public",
+    "ground_truth_source": "GitHub Availability Report: April 2025",
+    "source_url": "https://github.blog/news-insights/company-news/github-availability-report-april-2025/",
+    "public_facts_note": "Synthetic reconstruction based on the public report.",
+    "category": "configuration_dependency",
+    "expected_root_cause": "Manual configuration changes to an internal dependency escaped test coverage and caused Codespaces create/start failures.",
+    "expected_trigger": "Manual configuration change to an internal dependency.",
+    "expected_affected_component": "Codespaces internal dependency path.",
+    "expected_mitigation": "Revert the configuration change and restore the previous healthy state.",
+    "required_evidence": [
+      "manual dependency configuration changed",
+      "Codespaces create/start failures followed the change",
+      "monitoring detected the resulting service degradation"
+    ],
+    "expected_hypothesis_id": null
+  },
+  {
+    "incident_id": "INC-008",
+    "title": "Database resource contention during schema change",
+    "source_type": "github_public",
+    "ground_truth_source": "GitHub Availability Report: April 2025",
+    "source_url": "https://github.blog/news-insights/company-news/github-availability-report-april-2025/",
+    "public_facts_note": "Synthetic reconstruction based on the public report.",
+    "category": "database_resource_contention",
+    "expected_root_cause": "An interaction between query load and an ongoing schema change caused connection saturation and database resource contention.",
+    "expected_trigger": "Schema change occurring under query load.",
+    "expected_affected_component": "Database hosts and connection capacity.",
+    "expected_mitigation": "Complete the schema migration and revert the schema-change tooling regression to a stable version.",
+    "required_evidence": [
+      "schema change was in progress",
+      "query load increased resource utilization",
+      "connection saturation correlated with service errors"
+    ],
+    "expected_hypothesis_id": null
+  },
+  {
+    "incident_id": "INC-009",
+    "title": "Migration failures from repository-worker access removal",
+    "source_type": "github_public",
+    "ground_truth_source": "GitHub Availability Report: April 2025",
+    "source_url": "https://github.blog/news-insights/company-news/github-availability-report-april-2025/",
+    "public_facts_note": "Synthetic reconstruction based on the public report.",
+    "category": "configuration_access",
+    "expected_root_cause": "A configuration change removed access for repository migration workers.",
+    "expected_trigger": "Configuration change affecting migration-worker access.",
+    "expected_affected_component": "GitHub Migration service workers.",
+    "expected_mitigation": "Restore the required worker access and retry affected migrations.",
+    "required_evidence": [
+      "worker access configuration changed",
+      "migration failures increased after the change",
+      "restoring access returned the service to normal operation"
+    ],
+    "expected_hypothesis_id": null
+  },
+  {
+    "incident_id": "INC-010",
+    "title": "Issues attachment upload failures from CORS regression",
+    "source_type": "github_public",
+    "ground_truth_source": "GitHub Availability Report: May 2025",
+    "source_url": "https://github.blog/news-insights/company-news/github-availability-report-may-2025/",
+    "public_facts_note": "Synthetic reconstruction based on the public report.",
+    "category": "client_feature_cors",
+    "expected_root_cause": "A new feature added a custom header to client-side HTTP requests, causing CORS errors during attachment uploads.",
+    "expected_trigger": "Rollout of the feature adding the custom request header.",
+    "expected_affected_component": "Issues attachment upload path and external storage provider interaction.",
+    "expected_mitigation": "Roll back the feature flag adding the header.",
+    "required_evidence": [
+      "feature rollout preceded attachment failures",
+      "custom HTTP header was added to client requests",
+      "CORS errors occurred during attachment uploads"
+    ],
+    "expected_hypothesis_id": null
+  },
+  {
+    "incident_id": "INC-011",
+    "title": "Actions delayed starts from duplicate job assignments",
+    "source_type": "github_public",
+    "ground_truth_source": "GitHub Availability Report: May 2025",
+    "source_url": "https://github.blog/news-insights/company-news/github-availability-report-may-2025/",
+    "public_facts_note": "Synthetic reconstruction based on the public report.",
+    "category": "runner_capacity_failover",
+    "expected_root_cause": "Backend caching behavior after failover caused duplicate job assignments, reducing capacity in affected hosted-runner pools.",
+    "expected_trigger": "Failover followed by incorrect backend caching behavior.",
+    "expected_affected_component": "Ubuntu-24 hosted runner pools.",
+    "expected_mitigation": "Correct the backend caching behavior and restore runner-pool capacity.",
+    "required_evidence": [
+      "failover preceded duplicate job assignments",
+      "duplicate assignments reduced runner capacity",
+      "job start delays increased in affected runner pools"
+    ],
+    "expected_hypothesis_id": null
+  },
+  {
+    "incident_id": "INC-012",
+    "title": "Actions run-start delays from throttling misconfiguration",
+    "source_type": "github_public",
+    "ground_truth_source": "GitHub Availability Report: June 2025",
+    "source_url": "https://github.blog/news-insights/company-news/github-availability-report-june-2025/",
+    "public_facts_note": "Synthetic reconstruction based on the public report.",
+    "category": "service_throttling",
+    "expected_root_cause": "A load spike exposed a service misconfiguration that caused request throttling in the critical path of Actions run starts.",
+    "expected_trigger": "Spike in load between internal Actions services.",
+    "expected_affected_component": "Actions run-start critical path.",
+    "expected_mitigation": "Correct the service configuration to prevent throttling.",
+    "required_evidence": [
+      "inter-service load increased",
+      "request throttling appeared in the run-start path",
+      "run-start delays and intermittent job failures correlated with throttling"
+    ],
+    "expected_hypothesis_id": null
+  },
+  {
+    "incident_id": "INC-013",
+    "title": "Copilot model-provider outage",
+    "source_type": "github_public",
+    "ground_truth_source": "GitHub Availability Report: June 2025",
+    "source_url": "https://github.blog/news-insights/company-news/github-availability-report-june-2025/",
+    "public_facts_note": "Synthetic reconstruction based on the public report.",
+    "category": "external_dependency",
+    "expected_root_cause": "An outage affecting a model provider caused Copilot degradation and unavailability for some models.",
+    "expected_trigger": "Outage at an external model provider.",
+    "expected_affected_component": "Copilot model-provider dependency path.",
+    "expected_mitigation": "Route around or recover from the affected provider dependency and restore model availability.",
+    "required_evidence": [
+      "Copilot errors and timeouts increased",
+      "impact differed by model provider",
+      "provider outage correlated with the Copilot degradation"
+    ],
+    "expected_hypothesis_id": null
+  },
+  {
+    "incident_id": "INC-014",
+    "title": "Webhooks delivery delays from authentication configuration",
+    "source_type": "github_public",
+    "ground_truth_source": "GitHub Availability Report: July 2024",
+    "source_url": "https://github.blog/news-insights/company-news/github-availability-report-july-2024/",
+    "public_facts_note": "Synthetic reconstruction based on the public report.",
+    "category": "configuration_authentication_queue",
+    "expected_root_cause": "A configuration change removed authentication from Webhooks background-job requests, causing those requests to be rejected.",
+    "expected_trigger": "Webhooks background-job authentication configuration change.",
+    "expected_affected_component": "Webhooks background job infrastructure.",
+    "expected_mitigation": "Repair the configuration and restore accepted background-job requests.",
+    "required_evidence": [
+      "authentication configuration changed",
+      "background-job requests were rejected",
+      "Webhooks delivery delays increased"
+    ],
+    "expected_hypothesis_id": null
+  },
+  {
+    "incident_id": "INC-015",
+    "title": "Actions and Pages delays from runner-connection misconfiguration",
+    "source_type": "github_public",
+    "ground_truth_source": "GitHub Availability Report: September 2024",
+    "source_url": "https://github.blog/news-insights/company-news/github-availability-report-september-2024/",
+    "public_facts_note": "Synthetic reconstruction based on the public report.",
+    "category": "runner_configuration_cpu",
+    "expected_root_cause": "A misconfiguration in the runner-connection service caused CPU throttling and performance degradation.",
+    "expected_trigger": "Runner-connection service misconfiguration.",
+    "expected_affected_component": "GitHub Actions runner-connection service.",
+    "expected_mitigation": "Divert runner connections away from misconfigured nodes and correct the configuration.",
+    "required_evidence": [
+      "runner-connection configuration was incorrect",
+      "CPU throttling increased on affected nodes",
+      "Actions and Pages job delays correlated with the throttling"
+    ],
+    "expected_hypothesis_id": null
   }
 ]

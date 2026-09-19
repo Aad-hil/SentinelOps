@@ -40,6 +40,8 @@ class InvestigationState(TypedDict, total=False):
     approval_required: bool
     approval_status: str
     observability_events: list[dict[str, Any]]
+    otel_trace_id: str
+    otel_parent_span_id: str
 
 
 def append_finding(state: InvestigationState, finding: AgentFinding) -> dict[str, Any]:

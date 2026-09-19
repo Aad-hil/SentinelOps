@@ -157,7 +157,7 @@ _RECOVERY_CONCEPTS: dict[str, tuple[tuple[str, ...], ...]] = {
     "database_migration_permissions": (("revert", "old cluster"), ("permission",)),
     "inefficient_query_background_load": (("query", "fix"), ("rate", "limit", "throttle"), ("queue",)),
     "database_replication_lag_query_amplification": (("prevent", "overload"), ("query",)),
-    "data_store_upgrade_resource_contention": (("rollback", "stable")),
+    "data_store_upgrade_resource_contention": (("rollback", "stable"),),
     "migration_peak_load_connection_saturation": (("pause", "migration"), ("throttle",), ("recover",)),
 }
 

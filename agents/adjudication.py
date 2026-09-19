@@ -64,6 +64,8 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
                 contradicting_evidence=hypothesis.contradicting_evidence,
                 confidence=round(confidence, 3),
                 status=status,
+                causal_score=hypothesis.causal_score,
+                causal_evidence=hypothesis.causal_evidence,
             )
         )
 

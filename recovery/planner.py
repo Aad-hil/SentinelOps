@@ -65,8 +65,11 @@ _RECOVERY_TEMPLATES: dict[str, tuple[tuple[str, str, str, str, bool], ...]] = {
 }
 
 
-def _template_steps(hypothesis_id: str) -> tuple[RecoveryStep, ...]:
-    """Instantiate the generic recovery template for a validated hypothesis."""
+def _template_steps(
+    hypothesis_id: str,
+    evidence: tuple[str, ...] = (),
+) -> tuple[RecoveryStep, ...]:
+    """Instantiate a hypothesis template and preserve its causal evidence sources."""
     return tuple(
         RecoveryStep(
             step_id=step_id,
@@ -74,6 +77,7 @@ def _template_steps(hypothesis_id: str) -> tuple[RecoveryStep, ...]:
             purpose=purpose,
             risk=risk,
             requires_approval=requires_approval,
+            evidence=evidence,
         )
         for step_id, action, purpose, risk, requires_approval
         in _RECOVERY_TEMPLATES.get(hypothesis_id, ())
@@ -144,7 +148,13 @@ def build_recovery_plan(state: InvestigationState) -> RecoveryPlan:
             ),
         )
 
-    steps = _template_steps(hypothesis_id)
+    hypotheses = tuple(state.get("hypotheses", ()))
+    leading = next(
+        (hypothesis for hypothesis in hypotheses if hypothesis.hypothesis_id == hypothesis_id),
+        None,
+    )
+    causal_evidence = tuple(leading.causal_evidence) if leading else ()
+    steps = _template_steps(hypothesis_id, causal_evidence)
     if not steps:
         steps = (
             RecoveryStep(

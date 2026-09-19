@@ -250,7 +250,11 @@ def build_recovery_plan(state: InvestigationState) -> RecoveryPlan:
                 f"has unresolved evidence gaps: {gap_text}. A hypothesis-specific mitigation is "
                 "prepared for validation where causal evidence is sufficiently specific."
             ),
-            steps=steps,
+            steps=steps + _supplemental_steps(
+                state,
+                {step.step_id for step in steps},
+                causal_evidence,
+            ),
         )
 
     hypotheses = tuple(state.get("hypotheses", ()))

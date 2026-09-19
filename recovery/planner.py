@@ -127,7 +127,7 @@ def build_recovery_plan(state: InvestigationState) -> RecoveryPlan:
         )
         causal_evidence = tuple(leading.causal_evidence) if leading else ()
         template_steps = _template_steps(hypothesis_id, causal_evidence)
-        if template_steps and (adjudication.causal_support or (leading and leading.causal_score >= 0.667)):
+        if template_steps and leading and (adjudication.causal_support or leading.causal_score >= 0.333 or leading.supporting_evidence):
             prepared_steps = tuple(
                 RecoveryStep(
                     step_id=f"prepare-{step.step_id}",

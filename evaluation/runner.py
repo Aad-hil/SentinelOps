@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
+from pathlib import Path
 from statistics import mean
 from time import perf_counter
 
@@ -13,6 +15,17 @@ from evaluation.incident_metrics import (
 )
 from graph.investigation import build_investigation_graph
 from simulator.benchmark import build_all_benchmark_incidents
+
+
+_CASES_PATH = Path(__file__).with_name("incident_cases.json")
+
+
+def _case_category(incident_id: str) -> str:
+    cases = json.loads(_CASES_PATH.read_text(encoding="utf-8"))
+    for case in cases:
+        if case["incident_id"] == incident_id:
+            return case["category"]
+    raise KeyError(f"Unknown benchmark incident: {incident_id}")
 
 
 # These groups describe the concepts represented by the synthetic benchmark
@@ -217,14 +230,7 @@ def evaluate_incident(graph, scenario) -> IncidentEvaluation:
     top3_recall = 1.0 if expected_id and "H1" in predicted_ids[:3] else (0.0 if expected_id else None)
 
     evidence_texts = [item.observation for item in state.get("evidence_items", [])]
-    category = scenario.ground_truth.root_cause
-    case_category = next(
-        item["category"]
-        for item in __import__("json").loads(
-            (__import__("pathlib").Path(__file__).parents[1] / "evaluation" / "incident_cases.json").read_text(encoding="utf-8")
-        )
-        if item["incident_id"] == scenario.incident.incident_id
-    )
+    case_category = _case_category(scenario.incident.incident_id)
 
     top_statement = hypotheses[0].statement if hypotheses else ""
     root_match = text_concept_match(top_statement, _ROOT_CAUSE_CONCEPTS[case_category])

@@ -52,12 +52,10 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
             status = "strong_candidate" if confidence >= 0.75 else "supported"
         elif hypothesis.hypothesis_id == "H2":
             confidence = min(1.0, confidence * 0.55 + (0.25 if traffic_direct else 0.0))
-            if not traffic_direct:
-                status = "insufficient_evidence"
+            status = "supported" if traffic_direct and confidence >= 0.6 else "insufficient_evidence"
         elif hypothesis.hypothesis_id == "H3":
             confidence = min(1.0, confidence * 0.55 + (0.25 if network_direct else 0.0))
-            if not network_direct:
-                status = "insufficient_evidence"
+            status = "supported" if network_direct and confidence >= 0.6 else "insufficient_evidence"
         adjudicated.append(
             Hypothesis(
                 hypothesis_id=hypothesis.hypothesis_id,

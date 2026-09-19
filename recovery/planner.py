@@ -117,7 +117,7 @@ def _supplemental_steps(
             )
         )
 
-    if ("upgrade" in text or "major version" in text) and "rollback-upgrade" not in existing_ids:
+    if ("upgrade" in text or "major version" in text or "version" in text) and "rollback-upgrade" not in existing_ids:
         add(
             RecoveryStep(
                 step_id="rollback-upgrade",
@@ -141,7 +141,7 @@ def _supplemental_steps(
             )
         )
 
-    if ("peak" in text or "request_rate" in text or "request rate" in text) and "throttle-load" not in existing_ids:
+    if ("peak" in text or "traffic" in text or "request_rate" in text or "request rate" in text or "request volume" in text) and "throttle-load" not in existing_ids:
         add(
             RecoveryStep(
                 step_id="throttle-load",
@@ -149,6 +149,18 @@ def _supplemental_steps(
                 purpose="Protect database capacity while recovery is validated.",
                 risk="medium",
                 requires_approval=True,
+                evidence=evidence,
+            )
+        )
+
+    if (("migration" in text or "schema" in text) and ("peak" in text or "traffic" in text or "request volume" in text) and ("connection" in text or "db_connection" in text)) and "recover-connection-capacity" not in existing_ids:
+        add(
+            RecoveryStep(
+                step_id="recover-connection-capacity",
+                action="Recover database connection capacity after the migration and peak-load pressure is reduced.",
+                purpose="Restore connection headroom before returning to normal workload.",
+                risk="low",
+                requires_approval=False,
                 evidence=evidence,
             )
         )

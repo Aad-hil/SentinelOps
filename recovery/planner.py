@@ -185,7 +185,7 @@ def _select_hypothesis_for_recovery(state: InvestigationState):
         hypothesis = next((item for item in hypotheses if item.hypothesis_id == hypothesis_id), None)
         if hypothesis and any(term in text for term in terms):
             return hypothesis
-    return next((item for item in hypotheses if item.status != "insufficient_evidence"), hypotheses[0])
+    return next((item for item in hypotheses if getattr(item, "status", None) != "insufficient_evidence"), hypotheses[0])
 
 
 def build_recovery_plan(state: InvestigationState) -> RecoveryPlan:

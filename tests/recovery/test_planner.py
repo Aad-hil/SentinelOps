@@ -79,7 +79,7 @@ def test_plan_uses_hypothesis_specific_recovery_actions():
     assert plan.readiness == "ready_for_review"
     assert any("expensive database" in action or "write/query" in action for action in actions)
     assert any("write latency" in action for action in actions)
-    assert all(step.evidence == () for step in plan.steps)
+    assert all(step.evidence for step in plan.steps) is True
 
 
 def test_plan_supports_all_generic_hypothesis_templates():

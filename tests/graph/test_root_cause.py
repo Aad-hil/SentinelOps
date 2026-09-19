@@ -43,3 +43,16 @@ def test_root_cause_agent_does_not_receive_ground_truth():
 
     assert "ground_truth" not in result
     assert all(not hasattr(hypothesis, "ground_truth") for hypothesis in result["hypotheses"])
+
+
+def test_root_cause_agent_builds_causal_chain_for_incident_002():
+    evidence = build_incident_002_evidence()
+    result = build_investigation_graph().invoke({"evidence": evidence})
+
+    by_id = {hypothesis.hypothesis_id: hypothesis for hypothesis in result["hypotheses"]}
+    h1 = by_id["H1"]
+
+    assert h1.causal_score == 1.0
+    assert h1.causal_evidence
+    assert h1.causal_evidence[0]
+    assert h1.causal_evidence[-1]

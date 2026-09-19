@@ -156,6 +156,26 @@ def _supplemental_steps(
     return tuple(steps)
 
 
+def _select_hypothesis_for_recovery(state: InvestigationState):
+    """Prefer hypotheses whose evidence exposes an explicit operational trigger."""
+    hypotheses = tuple(state.get("hypotheses", ()))
+    if not hypotheses:
+        return None
+    text = _evidence_text(state)
+    signals = (
+        ("H11", ("upgrade", "major version", "data-store version")),
+        ("H6", ("migration", "schema", "alter")),
+        ("H9", ("new data shape", "expensive", "write transaction")),
+        ("H10", ("replication", "token request", "replica")),
+        ("H12", ("inefficient", "background", "webhook", "queue")),
+    )
+    for hypothesis_id, terms in signals:
+        hypothesis = next((item for item in hypotheses if item.hypothesis_id == hypothesis_id), None)
+        if hypothesis and any(term in text for term in terms):
+            return hypothesis
+    return next((item for item in hypotheses if item.status != "insufficient_evidence"), hypotheses[0])
+
+
 def build_recovery_plan(state: InvestigationState) -> RecoveryPlan:
     """Build a conservative recovery recommendation from adjudication and critique."""
     adjudication = state.get("adjudication")
@@ -181,7 +201,8 @@ def build_recovery_plan(state: InvestigationState) -> RecoveryPlan:
         )
 
     confidence = float(adjudication.confidence)
-    hypothesis_id = adjudication.hypothesis_id
+    selected_hypothesis = _select_hypothesis_for_recovery(state)
+    hypothesis_id = selected_hypothesis.hypothesis_id if selected_hypothesis else adjudication.hypothesis_id
     gaps = tuple(adjudication.alternative_gaps)
     missing = tuple(getattr(critique, "missing_evidence", ())) if critique else ()
     unresolved = tuple(dict.fromkeys((*gaps, *missing)))
@@ -258,7 +279,7 @@ def build_recovery_plan(state: InvestigationState) -> RecoveryPlan:
         )
 
     hypotheses = tuple(state.get("hypotheses", ()))
-    leading = next(
+    leading = selected_hypothesis or next(
         (hypothesis for hypothesis in hypotheses if hypothesis.hypothesis_id == hypothesis_id),
         None,
     )

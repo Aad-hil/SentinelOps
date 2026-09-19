@@ -67,6 +67,7 @@ def test_investigation_graph_emits_trace_for_each_investigation_node():
     ]
     assert all(event["status"] == "ok" for event in result["observability_events"])
     assert all(event["trace_id"] for event in result["observability_events"])
+    assert len({event["trace_id"] for event in result["observability_events"]}) == 1
 
 
 def test_traced_node_emits_an_opentelemetry_span():

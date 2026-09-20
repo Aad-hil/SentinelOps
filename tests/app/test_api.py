@@ -1,3 +1,7 @@
+import os
+
+os.environ.setdefault("SENTINELOPS_CHECKPOINT_BACKEND", "memory")
+
 from fastapi.testclient import TestClient
 
 from app.api import app

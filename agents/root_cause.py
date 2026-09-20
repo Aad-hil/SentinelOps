@@ -308,7 +308,7 @@ def _mechanism_evidence_strength(
 
     specific_terms = {
         "H1": ("query",),
-        "H2": ("overload", "capacity"),
+        "H2": ("overload", "capacity", "cpu"),
         "H3": ("downstream", "network"),
         "H4": ("exhaust", "pool"),
         "H5": ("lock", "slow"),

@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from agents.root_cause import _causal_chain
+from agents.root_cause import _causal_chain, _trigger_evidence_strength
 from graph.evidence import EvidenceItem
 from graph.investigation import build_investigation_graph
 from graph.state import InvestigationState
@@ -120,3 +120,42 @@ def test_causal_chain_handles_missing_stages_without_crashing():
 
     assert score == 0.667
     assert evidence == ("deployment:release-1", "log:error")
+
+def test_trigger_evidence_strength_prefers_change_records():
+    items = [
+        EvidenceItem(
+            source="deployment:inc-005-v2",
+            evidence_type="deployment",
+            observation="schema migration is in progress",
+            timestamp=datetime(2026, 9, 6, 12, 0, tzinfo=timezone.utc),
+            relevance=1.0,
+            agent="deployment",
+        ),
+        EvidenceItem(
+            source="metric:db-contention",
+            evidence_type="metric",
+            observation="database resource contention and connection saturation increased",
+            timestamp=datetime(2026, 9, 6, 12, 2, tzinfo=timezone.utc),
+            relevance=1.0,
+            agent="telemetry",
+        ),
+    ]
+
+    assert _trigger_evidence_strength("H6", items) == 1.0
+    assert _trigger_evidence_strength("H5", items) < 1.0
+
+
+def test_trigger_evidence_strength_handles_non_change_trigger_evidence():
+    items = [
+        EvidenceItem(
+            source="metric:request-rate",
+            evidence_type="metric",
+            observation="request rate increased",
+            timestamp=datetime(2026, 9, 6, 12, 1, tzinfo=timezone.utc),
+            relevance=1.0,
+            agent="telemetry",
+        ),
+    ]
+
+    assert 0.0 < _trigger_evidence_strength("H2", items) < 1.0
+

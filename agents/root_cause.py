@@ -168,6 +168,44 @@ def _trigger_evidence_strength(
     return min(len(trigger_items) / 3.0, 0.66)
 
 
+def _mechanism_evidence_strength(
+    hypothesis_id: str,
+    items: list[EvidenceItem],
+) -> float:
+    """Measure evidence for the hypothesis-specific middle causal mechanism."""
+    requirements = _CAUSAL_REQUIREMENTS[hypothesis_id]
+    mechanism_signals = requirements[1]
+    matches = [
+        item
+        for item in items
+        if any(_matches_signal(item, signal) for signal in mechanism_signals)
+    ]
+    if not matches:
+        return 0.0
+
+    specific_terms = {
+        "H1": ("query", "database"),
+        "H2": ("overload", "capacity"),
+        "H3": ("timeout", "latency"),
+        "H4": ("exhaust", "connection"),
+        "H5": ("lock", "contention", "slow", "resource"),
+        "H6": ("contention", "resource", "load"),
+        "H7": ("failover", "recovery", "unstable"),
+        "H8": ("permission", "config", "insert", "write"),
+        "H9": ("expensive", "transaction", "cpu", "resource"),
+        "H10": ("lag", "replication"),
+        "H11": ("contention", "resource", "pressure"),
+        "H12": ("inefficient", "query", "backlog"),
+    }.get(hypothesis_id, ())
+    specific_matches = [
+        item for item in matches
+        if any(_matches_signal(item, signal) for signal in specific_terms)
+    ]
+    if specific_matches:
+        return 1.0
+    return min(len(matches) / 3.0, 0.66)
+
+
 def _contradictions(hypothesis_id: str, items: list[EvidenceItem]) -> list[EvidenceItem]:
     contradictions: list[EvidenceItem] = []
     for item in items:
@@ -203,12 +241,12 @@ def generate_hypotheses(state: InvestigationState) -> list[Hypothesis]:
             supporting_sources = tuple(item.source for item in supporting)
         contradiction_penalty = min(len(contradictions) / 4.0, 0.6)
         trigger_strength = _trigger_evidence_strength(hypothesis_id, items)
+        mechanism_strength = _mechanism_evidence_strength(hypothesis_id, items)
 
         # Evidence quantity remains useful, but causal structure has greater
         # weight so a shared symptom cannot outrank a complete causal chain.
-        # A small provenance bonus breaks ties in favor of hypotheses whose
-        # trigger is directly recorded by a deployment/change event rather than
-        # inferred only from downstream symptoms.
+        # Small provenance bonuses prefer hypotheses with directly observed
+        # trigger and mechanism evidence over generic symptom explanations.
         confidence = max(
             0.0,
             min(
@@ -217,6 +255,7 @@ def generate_hypotheses(state: InvestigationState) -> list[Hypothesis]:
                 + support_score * 0.35
                 + causal_score * 0.55
                 + trigger_strength * 0.08
+                + mechanism_strength * 0.07
                 - contradiction_penalty,
             ),
         )

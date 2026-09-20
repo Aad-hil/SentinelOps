@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import asdict, is_dataclass
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from app.schemas import (
@@ -25,6 +27,8 @@ app = FastAPI(
     version="0.1.0",
     description="API for evidence-backed incident investigation and safe recovery planning.",
 )
+
+_DASHBOARD_PATH = Path(__file__).parent / "static" / "index.html"
 
 
 class InvestigationRequest(BaseModel):
@@ -85,6 +89,12 @@ def _investigation_response(state: dict[str, Any]) -> InvestigationResponse:
 def health() -> dict[str, str]:
     """Return API liveness information."""
     return {"status": "ok"}
+
+
+@app.get("/", include_in_schema=False)
+def dashboard() -> FileResponse:
+    """Serve the lightweight SentinelOps investigation dashboard."""
+    return FileResponse(_DASHBOARD_PATH, media_type="text/html")
 
 
 @app.post("/api/v1/investigations", response_model=InvestigationResponse)

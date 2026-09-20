@@ -209,3 +209,35 @@ def test_hypothesis_identity_strength_requires_distinguishing_evidence():
     assert _hypothesis_identity_strength("H2", items) == 0.5
     assert _hypothesis_identity_strength("H9", items) == 0.0
 
+def test_causal_relationships_assign_trigger_mechanism_and_impact_roles():
+    from agents.root_cause import _causal_relationships
+
+    items = [
+        EvidenceItem(
+            source="deployment:inc-007",
+            evidence_type="deployment",
+            observation="new data shape creates an expensive write transaction",
+            timestamp=datetime(2026, 9, 20, 12, 0, tzinfo=timezone.utc),
+            relevance=1.0,
+            agent="deployment",
+        ),
+        EvidenceItem(
+            source="metric:write-latency",
+            evidence_type="metric",
+            observation="write latency increased and requests timed out",
+            timestamp=datetime(2026, 9, 20, 12, 2, tzinfo=timezone.utc),
+            relevance=1.0,
+            agent="telemetry",
+        ),
+    ]
+
+    relationships = _causal_relationships("H9", items)
+
+    assert {relationship.role for relationship in relationships} == {
+        "trigger",
+        "mechanism",
+        "impact",
+    }
+    assert all(relationship.hypothesis_id == "H9" for relationship in relationships)
+    assert all(0.0 < relationship.strength <= 1.0 for relationship in relationships)
+

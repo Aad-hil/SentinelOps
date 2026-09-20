@@ -8,6 +8,14 @@ from typing import Any
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+from app.schemas import (
+    AdjudicationResponse,
+    EvidenceResponse,
+    HypothesisResponse,
+    InvestigationResponse,
+    RecoveryPlanResponse,
+    SafetyDecisionResponse,
+)
 from graph.investigation import build_investigation_graph
 from simulator.scenarios import build_benchmark_evidence
 
@@ -22,20 +30,10 @@ app = FastAPI(
 class InvestigationRequest(BaseModel):
     """Request to investigate one deterministic SentinelOps benchmark incident."""
 
-    incident_id: str = Field(min_length=1, description="Benchmark incident identifier, e.g. INC-002")
-
-
-class InvestigationResponse(BaseModel):
-    """Stable API representation of an investigation result."""
-
-    incident_id: str
-    status: str
-    root_cause: dict[str, Any] | None = None
-    hypotheses: list[dict[str, Any]] = []
-    evidence: list[dict[str, Any]] = []
-    recovery_plan: dict[str, Any] | None = None
-    safety_decision: dict[str, Any] | None = None
-    messages: list[str] = []
+    incident_id: str = Field(
+        min_length=1,
+        description="Benchmark incident identifier, e.g. INC-002",
+    )
 
 
 def _jsonable(value: Any) -> Any:
@@ -52,16 +50,33 @@ def _jsonable(value: Any) -> Any:
 
 
 def _investigation_response(state: dict[str, Any]) -> InvestigationResponse:
-    hypotheses = list(state.get("hypotheses", []))
-    adjudication = state.get("adjudication")
+    """Map internal LangGraph state into the stable public API contract."""
     return InvestigationResponse(
         incident_id=state["incident_id"],
         status=state.get("investigation_status", "unknown"),
-        root_cause=_jsonable(adjudication),
-        hypotheses=_jsonable(hypotheses),
-        evidence=_jsonable(list(state.get("evidence_items", []))),
-        recovery_plan=_jsonable(state.get("recovery_plan")),
-        safety_decision=_jsonable(state.get("safety_decision")),
+        root_cause=(
+            AdjudicationResponse.model_validate(_jsonable(state["adjudication"]))
+            if state.get("adjudication") is not None
+            else None
+        ),
+        hypotheses=[
+            HypothesisResponse.model_validate(_jsonable(hypothesis))
+            for hypothesis in state.get("hypotheses", [])
+        ],
+        evidence=[
+            EvidenceResponse.model_validate(_jsonable(item))
+            for item in state.get("evidence_items", [])
+        ],
+        recovery_plan=(
+            RecoveryPlanResponse.model_validate(_jsonable(state["recovery_plan"]))
+            if state.get("recovery_plan") is not None
+            else None
+        ),
+        safety_decision=(
+            SafetyDecisionResponse.model_validate(_jsonable(state["safety_decision"]))
+            if state.get("safety_decision") is not None
+            else None
+        ),
         messages=list(state.get("messages", [])),
     )
 

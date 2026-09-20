@@ -20,12 +20,16 @@ from simulator.benchmark import build_all_benchmark_incidents
 _CASES_PATH = Path(__file__).with_name("incident_cases.json")
 
 
-def _case_category(incident_id: str) -> str:
+def _case(incident_id: str) -> dict:
     cases = json.loads(_CASES_PATH.read_text(encoding="utf-8"))
     for case in cases:
         if case["incident_id"] == incident_id:
-            return case["category"]
+            return case
     raise KeyError(f"Unknown benchmark incident: {incident_id}")
+
+
+def _case_category(incident_id: str) -> str:
+    return _case(incident_id)["category"]
 
 
 # These groups describe the concepts represented by the synthetic benchmark
@@ -225,9 +229,17 @@ def evaluate_incident(graph, scenario) -> IncidentEvaluation:
     hypotheses = list(state.get("hypotheses", []))
     predicted_ids = [hypothesis.hypothesis_id for hypothesis in hypotheses]
 
-    expected_id = scenario.incident.incident_id == "INC-002"
-    root_accuracy = 1.0 if expected_id and predicted_ids and predicted_ids[0] == "H1" else (0.0 if expected_id else None)
-    top3_recall = 1.0 if expected_id and "H1" in predicted_ids[:3] else (0.0 if expected_id else None)
+    expected_id = _case(scenario.incident.incident_id).get("expected_hypothesis_id")
+    root_accuracy = (
+        1.0 if expected_id and predicted_ids and predicted_ids[0] == expected_id
+        else 0.0 if expected_id
+        else None
+    )
+    top3_recall = (
+        1.0 if expected_id and expected_id in predicted_ids[:3]
+        else 0.0 if expected_id
+        else None
+    )
 
     evidence_texts = [item.observation for item in state.get("evidence_items", [])]
     case_category = _case_category(scenario.incident.incident_id)

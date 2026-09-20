@@ -11,6 +11,13 @@ def test_health() -> None:
     assert response.json() == {"status": "ok"}
 
 
+def test_dashboard_is_served() -> None:
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "SentinelOps" in response.text
+    assert "INC-002" in response.text
+
+
 def test_investigation_returns_stable_contract() -> None:
     response = client.post(
         "/api/v1/investigations",

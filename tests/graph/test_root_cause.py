@@ -159,3 +159,28 @@ def test_trigger_evidence_strength_handles_non_change_trigger_evidence():
 
     assert 0.0 < _trigger_evidence_strength("H2", items) < 1.0
 
+def test_mechanism_evidence_strength_rewards_hypothesis_specific_signal():
+    from agents.root_cause import _mechanism_evidence_strength
+
+    items = [
+        EvidenceItem(
+            source="deployment:inc-007-v2",
+            evidence_type="deployment",
+            observation="new data shape creates an expensive database write transaction",
+            timestamp=datetime(2026, 9, 8, 12, 0, tzinfo=timezone.utc),
+            relevance=1.0,
+            agent="deployment",
+        ),
+        EvidenceItem(
+            source="metric:write-latency",
+            evidence_type="metric",
+            observation="database resource pressure increased",
+            timestamp=datetime(2026, 9, 8, 12, 2, tzinfo=timezone.utc),
+            relevance=1.0,
+            agent="telemetry",
+        ),
+    ]
+
+    assert _mechanism_evidence_strength("H9", items) == 1.0
+    assert _mechanism_evidence_strength("H5", items) < 1.0
+

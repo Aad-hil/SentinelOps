@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import atexit
 import os
 from dotenv import load_dotenv
 from langgraph.checkpoint.base import BaseCheckpointSaver

@@ -194,6 +194,24 @@ class EvaluationReport:
         return sum(item.status in {"complete", "awaiting_human_approval"} for item in self.incidents)
 
     @property
+    def top1_hypothesis_accuracy(self) -> float:
+        scores = [
+            item.top1_hypothesis_accuracy
+            for item in self.incidents
+            if item.top1_hypothesis_accuracy is not None
+        ]
+        return mean(scores) if scores else 0.0
+
+    @property
+    def top3_hypothesis_recall(self) -> float:
+        scores = [
+            item.top3_hypothesis_recall
+            for item in self.incidents
+            if item.top3_hypothesis_recall is not None
+        ]
+        return mean(scores) if scores else 0.0
+
+    @property
     def mean_root_cause_concept_match(self) -> float:
         return mean(item.root_cause_concept_match for item in self.incidents) if self.incidents else 0.0
 
@@ -286,6 +304,8 @@ def format_report(report: EvaluationReport) -> str:
         "=== SentinelOps Evaluation ===",
         f"Incidents: {report.incident_count}",
         f"Completed/awaiting approval: {report.completed_count}",
+        f"Top-1 hypothesis accuracy: {report.top1_hypothesis_accuracy:.3f}",
+        f"Top-3 hypothesis recall: {report.top3_hypothesis_recall:.3f}",
         f"Mean root-cause concept match: {report.mean_root_cause_concept_match:.3f}",
         f"Mean evidence coverage: {report.mean_evidence_coverage:.3f}",
         f"Mean recovery match: {report.mean_recovery_match:.3f}",

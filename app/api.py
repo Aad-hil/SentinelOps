@@ -92,6 +92,15 @@ def _investigation_response(state: dict[str, Any]) -> InvestigationResponse:
             else None
         ),
         messages=list(state.get("messages", [])),
+        observability_events=[
+            {
+                **event,
+                "trace_id": event.get("trace_id", ""),
+                "output_keys": list(event.get("output_keys", [])),
+            }
+            for event in state.get("observability_events", [])
+        ],
+        trace_id=state.get("otel_trace_id"),
     )
 
 

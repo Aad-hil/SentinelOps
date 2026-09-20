@@ -396,8 +396,8 @@ def generate_hypotheses(state: InvestigationState) -> list[Hypothesis]:
             min(
                 1.0,
                 0.10
-                + support_score * 0.35
-                + causal_score * 0.55
+                + support_score * 0.25
+                + causal_score * 0.65
                 + trigger_strength * 0.20
                 + mechanism_strength * 0.07
                 - contradiction_penalty

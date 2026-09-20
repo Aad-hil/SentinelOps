@@ -184,3 +184,28 @@ def test_mechanism_evidence_strength_rewards_hypothesis_specific_signal():
     assert _mechanism_evidence_strength("H9", items) == 1.0
     assert _mechanism_evidence_strength("H5", items) < 1.0
 
+def test_hypothesis_identity_strength_requires_distinguishing_evidence():
+    from agents.root_cause import _hypothesis_identity_strength
+
+    items = [
+        EvidenceItem(
+            source="metric:request-rate",
+            evidence_type="metric",
+            observation="request rate increased sharply",
+            timestamp=datetime(2026, 9, 20, 12, 0, tzinfo=timezone.utc),
+            relevance=1.0,
+            agent="telemetry",
+        ),
+        EvidenceItem(
+            source="metric:db-cpu",
+            evidence_type="metric",
+            observation="database CPU reached saturation",
+            timestamp=datetime(2026, 9, 20, 12, 1, tzinfo=timezone.utc),
+            relevance=1.0,
+            agent="telemetry",
+        ),
+    ]
+
+    assert _hypothesis_identity_strength("H2", items) == 0.5
+    assert _hypothesis_identity_strength("H9", items) == 0.0
+

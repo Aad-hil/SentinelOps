@@ -184,18 +184,18 @@ def _mechanism_evidence_strength(
         return 0.0
 
     specific_terms = {
-        "H1": ("query", "database"),
+        "H1": ("query",),
         "H2": ("overload", "capacity"),
-        "H3": ("timeout", "latency"),
-        "H4": ("exhaust", "connection"),
-        "H5": ("lock", "contention", "slow", "resource"),
-        "H6": ("contention", "resource", "load"),
-        "H7": ("failover", "recovery", "unstable"),
-        "H8": ("permission", "config", "insert", "write"),
-        "H9": ("expensive", "transaction", "cpu", "resource"),
-        "H10": ("lag", "replication"),
-        "H11": ("contention", "resource", "pressure"),
-        "H12": ("inefficient", "query", "backlog"),
+        "H3": ("downstream", "network"),
+        "H4": ("exhaust", "pool"),
+        "H5": ("lock", "slow"),
+        "H6": ("schema", "migration"),
+        "H7": ("failover", "crash", "unstable"),
+        "H8": ("permission", "insert"),
+        "H9": ("expensive", "transaction"),
+        "H10": ("replication", "lag"),
+        "H11": ("upgrade", "version"),
+        "H12": ("inefficient", "backlog"),
     }.get(hypothesis_id, ())
     specific_matches = [
         item for item in matches

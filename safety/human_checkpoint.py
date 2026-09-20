@@ -1,6 +1,4 @@
-from typing import Literal
-
-from langgraph.types import Command, interrupt
+from langgraph.types import interrupt
 
 from graph.state import InvestigationState
 from safety.approval import record_human_approval
@@ -8,10 +6,10 @@ from safety.approval import record_human_approval
 
 def run_human_approval_checkpoint(
     state: InvestigationState,
-) -> Command[Literal["supervisor"]]:
+) -> dict:
     """Pause for operator approval and explicitly route the decision."""
     if not state.get("approval_required"):
-        return Command(update={}, goto="supervisor")
+        return {}
 
     decision = interrupt(
         {
@@ -48,4 +46,4 @@ def run_human_approval_checkpoint(
         approved=approved,
         reviewer=reviewer,
     )
-    return Command(update=update, goto="supervisor")
+    return update

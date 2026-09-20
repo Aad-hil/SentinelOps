@@ -14,6 +14,8 @@ def test_benchmark_runner_evaluates_all_fifteen_incidents() -> None:
     assert all(0.0 <= item.evidence_coverage <= 1.0 for item in report.incidents)
     assert all(0.0 <= item.recovery_match <= 1.0 for item in report.incidents)
     assert report.mean_root_cause_concept_match >= 0.0
+    assert 0.0 <= report.top1_hypothesis_accuracy <= 1.0
+    assert 0.0 <= report.top3_hypothesis_recall <= 1.0
 
 
 def test_benchmark_report_is_human_readable() -> None:

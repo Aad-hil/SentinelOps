@@ -7,7 +7,7 @@ from safety.approval import record_human_approval
 def run_human_approval_checkpoint(
     state: InvestigationState,
 ) -> dict:
-    """Pause for operator approval when the graph has a resumable thread."""
+    """Pause for operator approval and explicitly route the decision."""
     if not state.get("approval_required"):
         return {}
 
@@ -41,8 +41,9 @@ def run_human_approval_checkpoint(
     if not isinstance(reviewer, str):
         raise ValueError("human approval response must include string 'reviewer'")
 
-    return record_human_approval(
+    update = record_human_approval(
         state,
         approved=approved,
         reviewer=reviewer,
     )
+    return update

@@ -9,7 +9,7 @@ main{width:min(1440px,calc(100% - 40px));margin:0 auto;padding:30px 0 64px}.tool
 input,button{font:inherit;border:1px solid var(--line);border-radius:9px;padding:12px 14px;background:#0d1626;color:var(--text)}input:focus{outline:2px solid rgba(110,168,254,.25);border-color:var(--accent)}button{cursor:pointer;background:linear-gradient(180deg,#1c3152,#15243d);font-weight:700;min-width:120px}button:hover{border-color:var(--accent)}button:disabled{opacity:.55;cursor:wait}
 .incident-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:24px;margin-bottom:18px}.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:700}.incident-id{font-size:32px;line-height:1.1;margin:6px 0 5px}.status{display:inline-flex;padding:6px 10px;border-radius:999px;background:#493d16;color:var(--warn);font-size:11px;font-weight:800;letter-spacing:.06em}
 .grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,.65fr);gap:18px}.card{background:linear-gradient(180deg,rgba(16,24,39,.98),rgba(12,20,34,.98));border:1px solid var(--line);border-radius:13px;padding:21px;box-shadow:0 8px 30px rgba(0,0,0,.12)}.wide{grid-column:1/-1}
-h2{font-size:14px;margin:0 0 17px}.muted{color:var(--muted)}.error{color:var(--danger);margin:-8px 0 16px}.root-id{font-size:12px;color:var(--accent);font-weight:800;letter-spacing:.08em}.root-title{font-size:19px;font-weight:750;margin:6px 0 10px}.rationale{color:#c4cede;font-size:13px}
+h2{font-size:14px;margin:0 0 17px}.muted{color:var(--muted)}.error{color:var(--danger);margin:-8px 0 16px}.approval-card{border-color:#665522;background:linear-gradient(180deg,#171b25,#111724)}.approval-actions{display:flex;gap:10px;margin-top:16px}.approve,.reject{flex:1;font-weight:800}.approve{background:#163c31;border-color:#2e765e;color:var(--good)}.reject{background:#3b2024;border-color:#75414a;color:#ff9b9b}.reviewer{width:100%;margin-top:12px}.root-id{font-size:12px;color:var(--accent);font-weight:800;letter-spacing:.08em}.root-title{font-size:19px;font-weight:750;margin:6px 0 10px}.rationale{color:#c4cede;font-size:13px}
 .confidence-row{display:flex;align-items:end;gap:12px;margin:20px 0 14px}.confidence{font-size:36px;font-weight:850;line-height:1}.confidence-label{font-size:11px;color:var(--muted);text-transform:uppercase}.progress{height:7px;background:#1b2639;border-radius:999px;overflow:hidden}.progress>span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:inherit}
 .facts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}.fact{padding:13px;background:var(--panel2);border:1px solid #1c2940;border-radius:9px}.fact b{display:block;font-size:16px;margin-bottom:3px}.fact span{font-size:11px;color:var(--muted)}.ok{color:var(--good)}
 .safety-decision{font-size:17px;font-weight:800}.risk{display:inline-block;margin-top:10px;padding:4px 8px;border-radius:6px;background:#302914;color:var(--warn);font-size:11px;text-transform:uppercase;font-weight:800}.safety-text{font-size:13px;color:#c4cede;margin:12px 0}.approval{font-size:12px;color:var(--warn);font-weight:700}
@@ -22,14 +22,14 @@ h2{font-size:14px;margin:0 0 17px}.muted{color:var(--muted)}.error{color:var(--d
 <header><div><div class="brand">SENTINELOPS</div><div class="sub">AI-powered incident investigation & safe recovery</div></div><div id="health" class="sub">Checking API…</div></header>
 <main><div class="toolbar"><input id="incident" value="INC-002" aria-label="Incident ID"><button id="run">Investigate</button></div><div id="error" class="error"></div>
 <section id="result" hidden><div class="card incident-head"><div><div class="eyebrow">Incident</div><div id="incident-id" class="incident-id"></div><div class="muted">Evidence-backed investigation</div></div><div id="status" class="status"></div></div>
-<div class="grid"><div class="card"><h2>Root Cause</h2><div id="root"></div></div><div class="card"><h2>Safety Decision</h2><div id="safety"></div></div><div class="card wide"><h2>Recovery Plan</h2><div id="recovery"></div></div><div class="card wide"><h2>Competing Hypotheses</h2><div id="hypotheses"></div></div><div class="card wide"><h2>Evidence</h2><div id="evidence" class="evidence"></div></div></div></section></main>
+<div class="grid"><div class="card"><h2>Root Cause</h2><div id="root"></div></div><div class="card"><h2>Safety Decision</h2><div id="safety"></div></div><div id="approval-card" class="card wide approval-card" hidden><h2>Human Approval Required</h2><div class="muted">Review the proposed recovery plan before allowing the investigation to proceed.</div><input id="reviewer" class="reviewer" placeholder="Reviewer name" aria-label="Reviewer name"><div class="approval-actions"><button id="approve" class="approve">Approve Recovery</button><button id="reject" class="reject">Reject Recovery</button></div></div><div class="card wide"><h2>Recovery Plan</h2><div id="recovery"></div></div><div class="card wide"><h2>Competing Hypotheses</h2><div id="hypotheses"></div></div><div class="card wide"><h2>Evidence</h2><div id="evidence" class="evidence"></div></div></div></section></main>
 <script>
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pct=v=>Math.round(Number(v||0)*100);
 const label=v=>String(v??"").replaceAll("_"," ");
 function render(data){
-  $("result").hidden=false;$("incident-id").textContent=data.incident_id;$("status").textContent=label(data.status).toUpperCase();
+  $("result").hidden=false;$("incident-id").textContent=data.incident_id;$("status").textContent=label(data.status).toUpperCase();$("approval-card").hidden=!(data.status==="awaiting_human_approval"&&data.approval_required);
   const r=data.root_cause;
   if(r){
     const h=data.hypotheses.find(x=>x.hypothesis_id===r.hypothesis_id);
@@ -49,12 +49,23 @@ function render(data){
   }).join("")+'</div>':"<span class='muted'>No hypotheses.</span>";
   $("evidence").innerHTML=data.evidence.length?data.evidence.map(e=>'<div class="evidence-item"><div class="evidence-top"><span class="type">'+esc(e.evidence_type)+'</span><span class="source">'+esc(e.source)+'</span></div><div class="observation">'+esc(e.observation)+'</div>'+(e.timestamp?'<div class="time">'+esc(e.timestamp)+'</div>':"")+'</div>').join(""):"<span class='muted'>No evidence.</span>";
 }
+async function submitApproval(approved){
+  const reviewer=$("reviewer").value.trim();
+  if(!reviewer){$("error").textContent="Reviewer name is required.";return}
+  $("approve").disabled=true;$("reject").disabled=true;$("error").textContent="";
+  try{
+    const res=await fetch("/api/v1/investigations/"+encodeURIComponent($("incident-id").textContent)+"/approval",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({approved,reviewer})});
+    const data=await res.json();if(!res.ok)throw new Error(data.detail||"Approval failed");
+    render(data);$("approval-card").hidden=true;
+  }catch(e){$("error").textContent=e.message}
+  finally{$("approve").disabled=false;$("reject").disabled=false}
+}
 async function investigate(){
   $("error").textContent="";$("run").disabled=true;$("run").textContent="Investigating…";
   try{const res=await fetch("/api/v1/investigations",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({incident_id:$("incident").value.trim()})});const data=await res.json();if(!res.ok)throw new Error(data.detail||"Investigation failed");render(data)}
   catch(e){$("error").textContent=e.message}finally{$("run").disabled=false;$("run").textContent="Investigate"}
 }
-$("run").addEventListener("click",investigate);
+$("run").addEventListener("click",investigate);$("approve").addEventListener("click",()=>submitApproval(true));$("reject").addEventListener("click",()=>submitApproval(false));
 fetch("/health").then(r=>r.ok?$("health").innerHTML='<span class="online"><span class="dot"></span>API online</span>':Promise.reject()).catch(()=>$("health").textContent="API unavailable");
 investigate();
 </script></body></html>

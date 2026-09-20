@@ -108,13 +108,23 @@ def _supplemental_steps(
     # Connection-pool and connection-failure incidents need a concrete
     # capacity recovery action. Keep this signal-driven rather than tying it
     # to benchmark incident IDs.
-    if "connection" in text and ("error" in text or "pool" in text):
+    if "connection_errors" in text or "connection errors" in text:
         add(
             RecoveryStep(
-                step_id="restore-connection-capacity",
-                action="Restore database connection capacity; if connection errors persist, prepare a controlled database restart for human review.",
-                purpose="Clear connection pressure or a degraded primary connection state before returning to normal workload.",
+                step_id="restart-database",
+                action="Prepare a controlled database restart for human review to clear persistent primary connection errors.",
+                purpose="Restore the affected database connection path without autonomous production changes.",
                 risk="medium",
+                requires_approval=True,
+                evidence=evidence,
+            )
+        )
+        add(
+            RecoveryStep(
+                step_id="migrate-workload-platform",
+                action="Prepare migration of the affected workload to a more robust database platform for human review.",
+                purpose="Provide a durable recovery path when the current database platform cannot reliably sustain connections.",
+                risk="high",
                 requires_approval=True,
                 evidence=evidence,
             )
@@ -136,6 +146,18 @@ def _supplemental_steps(
 
     # Peak-load incidents may require more than throttling: prepare reversible
     # capacity and query optimizations while preserving human approval.
+    if ("db_cpu_percent" in text or "database cpu" in text) and ("error" in text or "timeout" in text):
+        add(
+            RecoveryStep(
+                step_id="restart-affected-database",
+                action="Prepare a controlled restart of the affected database or front-end component for human review if CPU pressure remains after load reduction.",
+                purpose="Clear persistent resource pressure after protecting the overloaded workload.",
+                risk="high",
+                requires_approval=True,
+                evidence=evidence,
+            )
+        )
+
     if ("peak" in text or "request_rate" in text or "request rate" in text) and "headroom" in text:
         add(
             RecoveryStep(

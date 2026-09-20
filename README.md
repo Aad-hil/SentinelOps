@@ -6,7 +6,7 @@ The system investigates simulated production incidents using telemetry, document
 
 ## Project Status
 
-🚧 Phase 4 — Investigation, Memory & Safe Recovery
+🚧 Phase 7 — API, Dashboard & Durable Investigation State
 
 Current end-to-end flow:
 
@@ -38,6 +38,27 @@ Coming soon.
 - LangGraph
 - PostgreSQL
 - Qdrant
+- PostgreSQL-backed LangGraph checkpoints
+
+## Durable Checkpointing
+
+SentinelOps uses PostgreSQL-backed LangGraph checkpoints by default. This keeps investigation state and human-approval interruptions available across API process restarts, using the incident ID as the LangGraph `thread_id`.
+
+Install the checkpoint dependencies with:
+
+```powershell
+uv sync
+```
+
+Configure the PostgreSQL settings in `.env` from `.env.example`, then start the database used by your local environment.
+
+For isolated tests or experiments, set:
+
+```env
+SENTINELOPS_CHECKPOINT_BACKEND=memory
+```
+
+The PostgreSQL checkpointer creates and migrates its own checkpoint tables through `PostgresSaver.setup()`. No application-specific migration file is required for those tables.
 
 ## License
 

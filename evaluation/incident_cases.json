@@ -16,7 +16,7 @@
       "connection pool utilization reached 100 percent",
       "database connection wait time increased"
     ],
-    "expected_hypothesis_id": null
+    "expected_hypothesis_id": "H4"
   },
   {
     "incident_id": "INC-002",
@@ -54,7 +54,7 @@
       "Put Manifest volume was unusually high",
       "a non-performant database query contributed to the load"
     ],
-    "expected_hypothesis_id": null
+    "expected_hypothesis_id": "H2"
   },
   {
     "incident_id": "INC-004",
@@ -73,7 +73,7 @@
       "lock contention increased",
       "resource exhaustion and query latency increased"
     ],
-    "expected_hypothesis_id": null
+    "expected_hypothesis_id": "H5"
   },
   {
     "incident_id": "INC-005",
@@ -92,7 +92,7 @@
       "query load contributed to resource contention",
       "connection saturation correlated with service errors"
     ],
-    "expected_hypothesis_id": null
+    "expected_hypothesis_id": "H6"
   },
   {
     "incident_id": "INC-006",
@@ -111,7 +111,7 @@
       "maintenance interacted with the long-running query",
       "query termination and database restart restored service"
     ],
-    "expected_hypothesis_id": null
+    "expected_hypothesis_id": "H5"
   },
   {
     "incident_id": "INC-007",
@@ -130,7 +130,7 @@
       "expensive database write transactions appeared",
       "timeouts affected dependent services"
     ],
-    "expected_hypothesis_id": null
+    "expected_hypothesis_id": "H9"
   },
   {
     "incident_id": "INC-008",
@@ -149,7 +149,7 @@
       "package upload/download requests became slow or failed",
       "database restart cleared the errors"
     ],
-    "expected_hypothesis_id": null
+    "expected_hypothesis_id": "H4"
   },
   {
     "incident_id": "INC-009",
@@ -168,7 +168,7 @@
       "failover could not safely select a new primary",
       "database-version/configuration conditions correlated with repeated crashes"
     ],
-    "expected_hypothesis_id": null
+    "expected_hypothesis_id": "H7"
   },
   {
     "incident_id": "INC-010",
@@ -187,7 +187,7 @@
       "database headroom was low",
       "poorly performing queries amplified database pressure"
     ],
-    "expected_hypothesis_id": null
+    "expected_hypothesis_id": "H2"
   },
   {
     "incident_id": "INC-011",
@@ -206,7 +206,7 @@
       "insert queries failed while update/delete queries succeeded",
       "missing permissions explained the insert failures"
     ],
-    "expected_hypothesis_id": null
+    "expected_hypothesis_id": "H8"
   },
   {
     "incident_id": "INC-012",
@@ -225,7 +225,7 @@
       "inefficient database query consumed resources",
       "background-job and webhook queues backed up"
     ],
-    "expected_hypothesis_id": null
+    "expected_hypothesis_id": "H12"
   },
   {
     "incident_id": "INC-013",
@@ -244,7 +244,7 @@
       "database replication lag increased",
       "replicas lacked sufficiently up-to-date information for some requests"
     ],
-    "expected_hypothesis_id": null
+    "expected_hypothesis_id": "H10"
   },
   {
     "incident_id": "INC-014",
@@ -263,7 +263,7 @@
       "resource contention increased",
       "slow queries and timeouts spread across dependent services"
     ],
-    "expected_hypothesis_id": null
+    "expected_hypothesis_id": "H11"
   },
   {
     "incident_id": "INC-015",
@@ -282,6 +282,6 @@
       "traffic increased toward the weekly peak",
       "database connection capacity saturated and query contention increased"
     ],
-    "expected_hypothesis_id": null
+    "expected_hypothesis_id": "H6"
   }
 ]

@@ -288,3 +288,35 @@ def test_trigger_evidence_strength_prefers_direct_migration_over_connection_symp
     assert _trigger_evidence_strength("H6", items) == 1.0
     assert _trigger_evidence_strength("H4", items) == 0.66
 
+def test_causal_chain_does_not_use_recovery_action_as_root_cause_mechanism():
+    items = [
+        EvidenceItem(
+            source="metric:connection-errors",
+            evidence_type="metric",
+            observation="primary database connection errors increased",
+            timestamp=datetime(2026, 9, 8, 12, 0, tzinfo=timezone.utc),
+            relevance=1.0,
+            agent="telemetry",
+        ),
+        EvidenceItem(
+            source="deployment:restart",
+            evidence_type="deployment_change",
+            observation="database restart reason=connection error recovery",
+            timestamp=datetime(2026, 9, 8, 12, 2, tzinfo=timezone.utc),
+            relevance=1.0,
+            agent="deployment",
+        ),
+        EvidenceItem(
+            source="log:error",
+            evidence_type="log",
+            observation="package requests failed",
+            timestamp=datetime(2026, 9, 8, 12, 3, tzinfo=timezone.utc),
+            relevance=1.0,
+            agent="telemetry",
+        ),
+    ]
+
+    score, _ = _causal_chain("H7", items)
+
+    assert score < 1.0
+

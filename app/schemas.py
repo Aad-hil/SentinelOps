@@ -74,6 +74,21 @@ class SafetyDecisionResponse(BaseModel):
     evidence_gaps: list[str] = Field(default_factory=list)
 
 
+
+
+class ObservabilityEventResponse(BaseModel):
+    """Structured execution event emitted by an investigation graph node."""
+
+    trace_id: str
+    incident_id: str | None = None
+    node: str
+    status: str
+    timestamp: datetime
+    duration_ms: float
+    output_keys: list[str] = Field(default_factory=list)
+    error: str | None = None
+
+
 class InvestigationResponse(BaseModel):
     """Stable public contract for one SentinelOps investigation."""
 
@@ -87,6 +102,8 @@ class InvestigationResponse(BaseModel):
     recovery_plan: RecoveryPlanResponse | None = None
     safety_decision: SafetyDecisionResponse | None = None
     messages: list[str] = Field(default_factory=list)
+    observability_events: list[ObservabilityEventResponse] = Field(default_factory=list)
+    trace_id: str | None = None
 
 
 class ApprovalRequest(BaseModel):

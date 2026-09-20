@@ -6,6 +6,17 @@ from graph.state import AgentFinding, InvestigationState, append_finding
 
 
 @dataclass(frozen=True)
+class CausalEvidenceRelationship:
+    """An explicit relationship between evidence and a causal role."""
+
+    source: str
+    role: str
+    hypothesis_id: str
+    strength: float
+    rationale: str
+
+
+@dataclass(frozen=True)
 class Hypothesis:
     """A candidate explanation evaluated against shared evidence."""
 
@@ -17,6 +28,7 @@ class Hypothesis:
     status: str = "candidate"
     causal_score: float = 0.0
     causal_evidence: tuple[str, ...] = ()
+    causal_relationships: tuple[CausalEvidenceRelationship, ...] = ()
 
 
 # Generic causal patterns; these are not benchmark ground truth.
@@ -131,6 +143,37 @@ def _causal_chain(
         score = 1.0
 
     return round(score, 3), tuple(item.source for item in selected if item is not None)
+
+def _causal_relationships(
+    hypothesis_id: str,
+    items: list[EvidenceItem],
+) -> tuple[CausalEvidenceRelationship, ...]:
+    """Map evidence to trigger, mechanism, and impact roles for a hypothesis."""
+    role_names = ("trigger", "mechanism", "impact")
+    requirements = _CAUSAL_REQUIREMENTS[hypothesis_id]
+    relationships: list[CausalEvidenceRelationship] = []
+
+    for role_index, signals in enumerate(requirements):
+        matches = [
+            item for item in items
+            if any(_matches_signal(item, signal) for signal in signals)
+        ]
+        for item in matches:
+            strength = 0.55
+            if item.evidence_type in {"deployment", "deployment_change"} and role_index == 0:
+                strength += 0.15
+            relationships.append(
+                CausalEvidenceRelationship(
+                    source=item.source,
+                    role=role_names[role_index],
+                    hypothesis_id=hypothesis_id,
+                    strength=round(min(1.0, strength), 3),
+                    rationale=f"Evidence matches the {role_names[role_index]} signals for {hypothesis_id}.",
+                )
+            )
+
+    return tuple(relationships)
+
 
 def _hypothesis_identity_strength(
     hypothesis_id: str,
@@ -267,6 +310,7 @@ def generate_hypotheses(state: InvestigationState) -> list[Hypothesis]:
         trigger_strength = _trigger_evidence_strength(hypothesis_id, items)
         mechanism_strength = _mechanism_evidence_strength(hypothesis_id, items)
         identity_strength = _hypothesis_identity_strength(hypothesis_id, items)
+        causal_relationships = _causal_relationships(hypothesis_id, items)
         identity_penalty = 0.20 * (1.0 - identity_strength)
 
         # Evidence quantity remains useful, but causal structure has greater
@@ -297,6 +341,7 @@ def generate_hypotheses(state: InvestigationState) -> list[Hypothesis]:
                 status="supported" if confidence >= 0.6 else "candidate",
                 causal_score=causal_score,
                 causal_evidence=causal_evidence,
+                causal_relationships=causal_relationships,
             )
         )
 

@@ -107,7 +107,7 @@ def _causal_chain(
     requirements = _CAUSAL_REQUIREMENTS[hypothesis_id]
     stages: list[list[EvidenceItem]] = []
 
-    for signals in requirements:
+    for role_index, signals in enumerate(requirements):
         matches = [
             item for item in items
             if any(_matches_signal(item, signal) for signal in signals)

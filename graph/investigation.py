@@ -55,6 +55,11 @@ def _skip_human_approval_checkpoint(state: InvestigationState) -> dict[str, Any]
     return {}
 
 
+def _route_after_human_approval(state: InvestigationState) -> str:
+    """Finish the graph after the human decision has been applied."""
+    return state.get("investigation_status", "complete")
+
+
 def build_investigation_graph(
     checkpointer: Any = None,
     incident_memory_repository: Any = None,
@@ -107,5 +112,15 @@ def build_investigation_graph(
     graph.add_edge("adjudication", "supervisor")
     graph.add_edge("recovery", "supervisor")
     graph.add_edge("safety", "human_approval")
+    graph.add_conditional_edges(
+        "human_approval",
+        _route_after_human_approval,
+        {
+            "approved_for_execution": END,
+            "blocked": END,
+            "complete": END,
+            "awaiting_human_approval": END,
+        },
+    )
 
     return graph.compile(checkpointer=checkpointer)

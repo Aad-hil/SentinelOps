@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from graph.evidence import EvidenceItem
 from graph.state import AgentFinding, InvestigationState, append_finding
-from agents.root_cause import Hypothesis
+from agents.root_cause import Hypothesis, CausalEvidenceRelationship
 
 
 @dataclass(frozen=True)
@@ -30,6 +30,55 @@ def _has_any(items: list[EvidenceItem], *terms: str) -> bool:
     return any(term.lower() in _text(item) for item in items for term in terms)
 
 
+def _relationship_quality(hypothesis: Hypothesis) -> float:
+    """Score completeness and directness of the hypothesis causal roles."""
+    relationships = hypothesis.causal_relationships
+    if not relationships:
+        return 0.0
+
+    roles = {relationship.role for relationship in relationships}
+    completeness = len(roles.intersection({"trigger", "mechanism", "impact"})) / 3.0
+
+    direct = sum(
+        relationship.strength
+        for relationship in relationships
+        if relationship.role in {"trigger", "mechanism", "impact"}
+    ) / len(relationships)
+
+    return round(completeness * direct, 3)
+
+
+def _causal_identity_gap(hypothesis: Hypothesis) -> bool:
+    """Detect a complete-looking chain that lacks hypothesis-specific evidence."""
+    relationships = hypothesis.causal_relationships
+    if not relationships:
+        return False
+
+    roles = {relationship.role for relationship in relationships}
+    if len(roles.intersection({"trigger", "mechanism", "impact"})) < 3:
+        return True
+
+    distinguishing = {
+        "H1": ("deployment", "release", "change"),
+        "H2": ("traffic", "request", "load", "rate"),
+        "H3": ("network", "downstream", "dependency"),
+        "H4": ("connection", "pool"),
+        "H5": ("lock", "contention", "slow", "query change"),
+        "H6": ("schema", "migration", "alter"),
+        "H7": ("crash", "failover", "version", "configuration"),
+        "H8": ("permission", "migration", "configuration"),
+        "H9": ("expensive", "transaction", "write latency"),
+        "H10": ("replication", "lag", "token"),
+        "H11": ("upgrade", "data-store", "version"),
+        "H12": ("inefficient", "background", "queue", "webhook"),
+    }[hypothesis.hypothesis_id]
+    text = " ".join(
+        relationship.source.lower() + " " + relationship.rationale.lower()
+        for relationship in relationships
+    )
+    return not any(term in text for term in distinguishing)
+
+
 def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], Adjudication | None]:
     """Re-score hypotheses using temporal, causal, recovery, and alternative evidence."""
     hypotheses = list(state.get("hypotheses", []))
@@ -47,6 +96,13 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
     for hypothesis in hypotheses:
         confidence = hypothesis.confidence
         status = hypothesis.status
+
+        relationship_quality = _relationship_quality(hypothesis)
+        if relationship_quality:
+            confidence = min(1.0, confidence * 0.85 + relationship_quality * 0.15)
+        if _causal_identity_gap(hypothesis):
+            confidence = max(0.0, confidence - 0.10)
+
         if hypothesis.hypothesis_id == "H1":
             confidence = min(1.0, confidence * 0.55 + (0.15 if temporal else 0.0) + (0.15 if causal else 0.0) + (0.10 if recovery else 0.0))
             status = "strong_candidate" if confidence >= 0.75 else "supported"
@@ -66,6 +122,7 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
                 status=status,
                 causal_score=hypothesis.causal_score,
                 causal_evidence=hypothesis.causal_evidence,
+                causal_relationships=hypothesis.causal_relationships,
             )
         )
 

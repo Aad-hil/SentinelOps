@@ -170,6 +170,9 @@ _RECOVERY_CONCEPTS: dict[str, tuple[tuple[str, ...], ...]] = {
 class IncidentEvaluation:
     incident_id: str
     status: str
+    expected_hypothesis_id: str | None
+    predicted_hypothesis_id: str | None
+    predicted_hypothesis_confidence: float | None
     top1_hypothesis_accuracy: float | None
     top3_hypothesis_recall: float | None
     root_cause_concept_match: float
@@ -255,6 +258,9 @@ def evaluate_incident(graph, scenario) -> IncidentEvaluation:
     return IncidentEvaluation(
         incident_id=scenario.incident.incident_id,
         status=state.get("investigation_status", "unknown"),
+        expected_hypothesis_id=expected_id,
+        predicted_hypothesis_id=predicted_ids[0] if predicted_ids else None,
+        predicted_hypothesis_confidence=hypotheses[0].confidence if hypotheses else None,
         top1_hypothesis_accuracy=root_accuracy,
         top3_hypothesis_recall=top3_recall,
         root_cause_concept_match=root_match,
@@ -290,8 +296,16 @@ def format_report(report: EvaluationReport) -> str:
     for item in report.incidents:
         root = f"{item.top1_hypothesis_accuracy:.3f}" if item.top1_hypothesis_accuracy is not None else "n/a"
         top3 = f"{item.top3_hypothesis_recall:.3f}" if item.top3_hypothesis_recall is not None else "n/a"
+        expected = item.expected_hypothesis_id or "n/a"
+        predicted = item.predicted_hypothesis_id or "n/a"
+        confidence = (
+            f"{item.predicted_hypothesis_confidence:.3f}"
+            if item.predicted_hypothesis_confidence is not None
+            else "n/a"
+        )
         lines.append(
             f"- {item.incident_id}: status={item.status}, "
+            f"expected={expected}, predicted={predicted}, confidence={confidence}, "
             f"top1={root}, top3={top3}, root_cause={item.root_cause_concept_match:.3f}, "
             f"evidence={item.evidence_coverage:.3f}, recovery={item.recovery_match:.3f}, "
             f"duration={item.duration_seconds:.3f}s"

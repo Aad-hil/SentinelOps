@@ -252,10 +252,19 @@ def _trigger_evidence_strength(
     # contains the hypothesis trigger. Recovery/mitigation changes such as a
     # restart, rollback, or throttling action should not be mistaken for the
     # incident trigger.
+    # A generic deployment record is not, by itself, proof of a deployment-caused
+    # incident. Require a hypothesis-specific trigger signal in the observation
+    # rather than matching the generic "deployment" signal from the evidence
+    # source label.
     direct_change_items = [
         item
         for item in trigger_items
         if item.evidence_type in {"deployment", "deployment_change"}
+        and any(
+            _matches_signal(item, signal)
+            for signal in trigger_signals
+            if signal != "deployment"
+        )
         and not any(
             term in _evidence_text(item)
             for term in ("restart", "rollback", "recovery", "throttle", "protect")
@@ -389,7 +398,7 @@ def generate_hypotheses(state: InvestigationState) -> list[Hypothesis]:
                 0.10
                 + support_score * 0.35
                 + causal_score * 0.55
-                + trigger_strength * 0.08
+                + trigger_strength * 0.20
                 + mechanism_strength * 0.07
                 - contradiction_penalty
                 - identity_penalty,

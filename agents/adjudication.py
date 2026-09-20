@@ -58,7 +58,13 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
     temporal = _has(items, "deployment", "web-2025.01.09.3") and _has(items, "deployment", "query")
     causal = _has(items, "query_fingerprint") and _has(items, "query_path") and _has(items, "database")
     recovery = _has_any(items, "rollback") and _has_any(items, "error rate", "baseline", "returned toward baseline")
-    traffic_direct = _has(items, "traffic") or _has(items, "request volume") or _has(items, "requests per second")
+    traffic_direct = (
+        _has(items, "traffic")
+        or _has(items, "request volume")
+        or _has(items, "request rate")
+        or _has(items, "request_rate")
+        or _has(items, "requests per second")
+    )
     network_direct = _has(items, "network") or _has(items, "downstream") or _has(items, "connection timeout")
 
     adjudicated: list[Hypothesis] = []

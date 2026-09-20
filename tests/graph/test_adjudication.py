@@ -35,3 +35,18 @@ def test_adjudication_handles_empty_hypotheses():
 
     assert hypotheses == []
     assert adjudication is None
+
+def test_adjudication_preserves_causal_relationships():
+    evidence = build_incident_002_evidence()
+    result = build_investigation_graph().invoke({"evidence": evidence})
+
+    h1 = next(h for h in result["hypotheses"] if h.hypothesis_id == "H1")
+
+    assert {r.role for r in h1.causal_relationships} == {
+        "trigger",
+        "mechanism",
+        "impact",
+    }
+    assert all(r.hypothesis_id == "H1" for r in h1.causal_relationships)
+    assert all(r.rationale for r in h1.causal_relationships)
+

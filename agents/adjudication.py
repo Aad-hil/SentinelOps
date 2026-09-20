@@ -92,6 +92,9 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
 
     adjudicated.sort(key=lambda h: h.confidence, reverse=True)
     leading = adjudicated[0]
+    leading_relationship_roles = {
+        relationship.role for relationship in leading.causal_relationships
+    }
     gaps: list[str] = []
     if leading.hypothesis_id == "H1" and not recovery:
         gaps.append("post-rollback recovery evidence")
@@ -99,7 +102,7 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
         gaps.append("direct request-volume evidence")
     if leading.hypothesis_id == "H3" and not network_direct:
         gaps.append("direct network or downstream evidence")
-    if len(relationship_roles.intersection({"trigger", "mechanism", "impact"})) < 3:
+    if len(leading_relationship_roles.intersection({"trigger", "mechanism", "impact"})) < 3:
         gaps.append("complete trigger-mechanism-impact relationship")
 
     rationale = (

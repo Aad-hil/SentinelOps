@@ -264,14 +264,16 @@ def _trigger_evidence_strength(
     if direct_change_items:
         return 1.0
 
-    # Telemetry is more direct than retrieved knowledge: a request-rate metric
-    # or an observed trace is evidence of what happened, while a runbook is
-    # contextual guidance. Keep the distinction bounded so evidence quantity
-    # still matters.
+    # Telemetry is more direct than retrieved knowledge, but not every
+    # telemetry field is equally useful for identifying a causal trigger.
+    # Metrics/logs can describe an observed trigger; trace operation names can
+    # describe an affected operation without proving that it initiated the
+    # incident. Keep trace-trigger evidence weaker and bounded so the agent
+    # does not confuse "what was affected" with "what caused it".
     weights = {
         "metric": 0.66,
         "log": 0.66,
-        "trace": 0.66,
+        "trace": 0.40,
         "recovery": 0.45,
         "knowledge": 0.33,
         "knowledge_reference": 0.25,

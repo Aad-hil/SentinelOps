@@ -8,10 +8,12 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
+from langgraph.types import Command
 from pydantic import BaseModel, Field
 
 from app.schemas import (
     AdjudicationResponse,
+    ApprovalRequest,
     EvidenceResponse,
     HypothesisResponse,
     InvestigationResponse,
@@ -19,6 +21,7 @@ from app.schemas import (
     SafetyDecisionResponse,
 )
 from graph.investigation import build_investigation_graph
+from memory.checkpoint import create_checkpointer
 from simulator.scenarios import build_benchmark_evidence
 
 
@@ -29,6 +32,11 @@ app = FastAPI(
 )
 
 _DASHBOARD_PATH = Path(__file__).parent / "static" / "index.html"
+_CHECKPOINTER = create_checkpointer()
+_GRAPH = build_investigation_graph(
+    checkpointer=_CHECKPOINTER,
+    incident_memory_repository=None,
+)
 
 
 class InvestigationRequest(BaseModel):
@@ -58,6 +66,8 @@ def _investigation_response(state: dict[str, Any]) -> InvestigationResponse:
     return InvestigationResponse(
         incident_id=state["incident_id"],
         status=state.get("investigation_status", "unknown"),
+        approval_status=state.get("approval_status", "not_required"),
+        approval_required=bool(state.get("approval_required", False)),
         root_cause=(
             AdjudicationResponse.model_validate(_jsonable(state["adjudication"]))
             if state.get("adjudication") is not None
@@ -85,6 +95,10 @@ def _investigation_response(state: dict[str, Any]) -> InvestigationResponse:
     )
 
 
+def _config(incident_id: str) -> dict[str, Any]:
+    return {"configurable": {"thread_id": incident_id}}
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     """Return API liveness information."""
@@ -99,7 +113,7 @@ def dashboard() -> FileResponse:
 
 @app.post("/api/v1/investigations", response_model=InvestigationResponse)
 def investigate(request: InvestigationRequest) -> InvestigationResponse:
-    """Run an investigation against a deterministic benchmark incident."""
+    """Start an investigation and stop at the human approval checkpoint when required."""
     try:
         evidence = build_benchmark_evidence(request.incident_id)
     except KeyError as exc:
@@ -113,9 +127,51 @@ def investigate(request: InvestigationRequest) -> InvestigationResponse:
         "incident_summary": evidence.incident.description,
         "evidence": evidence,
     }
-    graph = build_investigation_graph(
-        checkpointer=None,
-        incident_memory_repository=None,
+    state = _GRAPH.invoke(initial_state, config=_config(request.incident_id))
+    return _investigation_response(state)
+
+
+@app.post(
+    "/api/v1/investigations/{incident_id}/approval",
+    response_model=InvestigationResponse,
+)
+def approve_investigation(
+    incident_id: str,
+    request: ApprovalRequest,
+) -> InvestigationResponse:
+    """Resume a pending investigation with an explicit human approval decision."""
+    try:
+        _ = build_benchmark_evidence(incident_id)
+    except KeyError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Unknown incident_id: {incident_id}",
+        ) from exc
+
+    config = _config(incident_id)
+    snapshot = _GRAPH.get_state(config)
+    values = snapshot.values
+
+    if not values:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No investigation checkpoint found for: {incident_id}",
+        )
+
+    if values.get("investigation_status") != "awaiting_human_approval":
+        raise HTTPException(
+            status_code=409,
+            detail="Investigation is not awaiting human approval.",
+        )
+
+    if not values.get("approval_required"):
+        raise HTTPException(
+            status_code=409,
+            detail="Investigation no longer requires human approval.",
+        )
+
+    state = _GRAPH.invoke(
+        Command(resume={"approved": request.approved, "reviewer": request.reviewer}),
+        config=config,
     )
-    state = graph.invoke(initial_state)
     return _investigation_response(state)

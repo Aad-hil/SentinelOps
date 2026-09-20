@@ -65,9 +65,9 @@ _HYPOTHESES = (
 # treated as causal proof.
 _CAUSAL_REQUIREMENTS = {
     "H1": (("deployment", "change", "release"), ("query", "database", "db"), ("saturation", "cpu", "error")),
-    "H2": (("traffic", "request", "load", "rate", "volume", "high-volume", "peak traffic"), ("overload", "capacity", "queue", "headroom", "saturation", "cpu", "pressure"), ("error", "latency", "timeout")),
+    "H2": (("traffic", "request", "load", "rate"), ("overload", "capacity", "queue", "headroom", "saturation", "cpu", "pressure"), ("error", "latency", "timeout")),
     "H3": (("network", "downstream", "dependency"), ("timeout", "latency", "failure"), ("error", "request")),
-    "H4": (("connection", "pool", "capacity"), ("exhaust", "wait", "queue", "saturation", "utilization"), ("error", "failure", "latency")),
+    "H4": (("connection", "pool", "capacity"), ("exhaust", "wait", "queue"), ("error", "failure", "latency")),
     "H5": (("query", "query change"), ("lock", "contention", "slow", "resource"), ("latency", "cpu", "error")),
     "H6": (("schema", "migration", "alter"), ("contention", "resource", "load"), ("latency", "error", "connection")),
     "H7": (("primary", "crash", "failure"), ("failover", "recovery", "unstable"), ("error", "outage", "health")),
@@ -228,17 +228,38 @@ def _trigger_evidence_strength(
     if not trigger_items:
         return 0.0
 
-    change_items = [
+    # A change record is strong trigger evidence only when the change itself
+    # contains the hypothesis trigger. Recovery/mitigation changes such as a
+    # restart, rollback, or throttling action should not be mistaken for the
+    # incident trigger.
+    direct_change_items = [
         item
         for item in trigger_items
         if item.evidence_type in {"deployment", "deployment_change"}
-        or "deployment" in item.source.lower()
-        or "change" in item.source.lower()
+        and not any(
+            term in _evidence_text(item)
+            for term in ("restart", "rollback", "recovery", "throttle", "protect")
+        )
     ]
-    if change_items:
+    if direct_change_items:
         return 1.0
 
-    return min(len(trigger_items) / 3.0, 0.66)
+    # Telemetry is more direct than retrieved knowledge: a request-rate metric
+    # or an observed trace is evidence of what happened, while a runbook is
+    # contextual guidance. Keep the distinction bounded so evidence quantity
+    # still matters.
+    weights = {
+        "metric": 0.66,
+        "log": 0.66,
+        "trace": 0.66,
+        "recovery": 0.45,
+        "knowledge": 0.33,
+        "knowledge_reference": 0.25,
+    }
+    return min(
+        0.66,
+        max(weights.get(item.evidence_type, 0.50) for item in trigger_items),
+    )
 
 
 def _mechanism_evidence_strength(

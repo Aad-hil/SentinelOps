@@ -107,6 +107,5 @@ def build_investigation_graph(
     graph.add_edge("adjudication", "supervisor")
     graph.add_edge("recovery", "supervisor")
     graph.add_edge("safety", "human_approval")
-    graph.add_edge("human_approval", "supervisor")
 
     return graph.compile(checkpointer=checkpointer)

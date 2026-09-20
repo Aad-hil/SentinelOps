@@ -111,6 +111,16 @@ def _causal_chain(
         matches = [
             item for item in items
             if any(_matches_signal(item, signal) for signal in signals)
+            and not (
+                role_index < 2
+                and (
+                    item.evidence_type == "recovery"
+                    or any(
+                        term in _evidence_text(item)
+                        for term in ("rollback", "restart", "recovery", "throttle", "protect")
+                    )
+                )
+            )
         ]
         stages.append(matches)
 
@@ -157,6 +167,16 @@ def _causal_relationships(
         matches = [
             item for item in items
             if any(_matches_signal(item, signal) for signal in signals)
+            and not (
+                role_index < 2
+                and (
+                    item.evidence_type == "recovery"
+                    or any(
+                        term in _evidence_text(item)
+                        for term in ("rollback", "restart", "recovery", "throttle", "protect")
+                    )
+                )
+            )
         ]
         for item in matches:
             strength = 0.55
@@ -314,6 +334,21 @@ def _contradictions(hypothesis_id: str, items: list[EvidenceItem]) -> list[Evide
     return contradictions
 
 
+def _incident_context_trigger_strength(
+    hypothesis_id: str,
+    state: InvestigationState,
+) -> float:
+    """Measure whether the incident summary explicitly describes a hypothesis trigger."""
+    incident = state.get("evidence")
+    if incident is None:
+        return 0.0
+
+    text = f"{incident.incident.title} {incident.incident.description}".lower()
+    trigger_signals = _CAUSAL_REQUIREMENTS[hypothesis_id][0]
+    matched = sum(signal.lower() in text for signal in trigger_signals)
+    return min(1.0, matched / 2.0)
+
+
 def generate_hypotheses(state: InvestigationState) -> list[Hypothesis]:
     """Generate competing causal hypotheses from observed evidence only."""
     items = list(state.get("evidence_items", []))
@@ -334,7 +369,10 @@ def generate_hypotheses(state: InvestigationState) -> list[Hypothesis]:
         else:
             supporting_sources = tuple(item.source for item in supporting)
         contradiction_penalty = min(len(contradictions) / 4.0, 0.6)
-        trigger_strength = _trigger_evidence_strength(hypothesis_id, items)
+        trigger_strength = max(
+            _trigger_evidence_strength(hypothesis_id, items),
+            _incident_context_trigger_strength(hypothesis_id, state),
+        )
         mechanism_strength = _mechanism_evidence_strength(hypothesis_id, items)
         identity_strength = _hypothesis_identity_strength(hypothesis_id, items)
         causal_relationships = _causal_relationships(hypothesis_id, items)

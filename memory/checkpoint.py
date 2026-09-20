@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Callable
-
 from dotenv import load_dotenv
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import MemorySaver
@@ -71,3 +69,6 @@ def close_checkpointer() -> None:
     if _CHECKPOINT_POOL is not None:
         _CHECKPOINT_POOL.close()
         _CHECKPOINT_POOL = None
+
+
+atexit.register(close_checkpointer)

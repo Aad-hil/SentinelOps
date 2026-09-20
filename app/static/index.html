@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SentinelOps — Investigation</title>
+  <style>
+    :root { color-scheme: dark; --bg:#0b1020; --panel:#121a2b; --muted:#91a0b8; --text:#eef3fb; --line:#24304a; --accent:#6ea8fe; --warn:#f4c95d; --good:#67d6a1; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:var(--bg); color:var(--text); }
+    header { padding:24px 32px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; }
+    .brand { font-weight:800; letter-spacing:.04em; } .sub { color:var(--muted); font-size:13px; margin-top:4px; }
+    main { max-width:1200px; margin:0 auto; padding:28px 20px 48px; }
+    .toolbar { display:flex; gap:10px; margin-bottom:20px; }
+    input,button { border:1px solid var(--line); border-radius:8px; padding:10px 12px; background:#0e1627; color:var(--text); }
+    input { flex:1; min-width:180px; } button { cursor:pointer; background:#17233a; } button:hover { border-color:var(--accent); }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+    .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px; }
+    .wide { grid-column:1/-1; } h2 { font-size:15px; margin:0 0 14px; } h1 { margin:0; font-size:28px; }
+    .status { display:inline-block; padding:5px 9px; border-radius:999px; font-size:12px; background:#4a3d16; color:var(--warn); }
+    .meta { color:var(--muted); font-size:13px; } .confidence { font-size:28px; font-weight:750; margin:8px 0; }
+    .facts { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:16px; }
+    .fact { background:#0e1627; border-radius:8px; padding:12px; } .fact b { display:block; margin-bottom:5px; }
+    .ok { color:var(--good); } .muted { color:var(--muted); } ul { padding-left:20px; } li { margin:7px 0; }
+    .evidence { max-height:300px; overflow:auto; } .item { padding:10px 0; border-bottom:1px solid var(--line); }
+    .error { color:#ff8d8d; margin-top:10px; }
+    @media(max-width:760px){ .grid{grid-template-columns:1fr}.wide{grid-column:auto}.facts{grid-template-columns:1fr} header{padding:18px} }
+  </style>
+</head>
+<body>
+<header><div><div class="brand">SENTINELOPS</div><div class="sub">AI-powered incident investigation & safe recovery</div></div><div id="health" class="sub">Checking API…</div></header>
+<main>
+  <div class="toolbar"><input id="incident" value="INC-002" aria-label="Incident ID"><button id="run">Investigate</button></div>
+  <div id="error" class="error"></div>
+  <section id="result" hidden>
+    <div class="card wide" style="margin-bottom:16px">
+      <div class="meta">INCIDENT</div><h1 id="incident-id"></h1><p id="status" class="status"></p>
+    </div>
+    <div class="grid">
+      <div class="card"><h2>Root Cause</h2><div id="root"></div></div>
+      <div class="card"><h2>Safety</h2><div id="safety"></div></div>
+      <div class="card wide"><h2>Recovery Plan</h2><div id="recovery"></div></div>
+      <div class="card wide"><h2>Competing Hypotheses</h2><div id="hypotheses"></div></div>
+      <div class="card wide"><h2>Evidence</h2><div id="evidence" class="evidence"></div></div>
+    </div>
+  </section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function render(data){
+  $("result").hidden=false; $("incident-id").textContent=data.incident_id;
+  $("status").textContent=data.status.replaceAll("_"," ").toUpperCase();
+  const r=data.root_cause;
+  $("root").innerHTML=r ? `<div><b>${esc(r.hypothesis_id)}</b></div><p>${esc(r.rationale)}</p><div class="confidence">${Math.round(r.confidence*100)}%</div><div class="meta">Confidence</div><div class="facts"><div class="fact"><b class="${r.temporal_support?"ok":""}">${r.temporal_support?"✓":"—"}</b>Temporal</div><div class="fact"><b class="${r.causal_support?"ok":""}">${r.causal_support?"✓":"—"}</b>Causal</div><div class="fact"><b class="${r.recovery_support?"ok":""}">${r.recovery_support?"✓":"—"}</b>Recovery</div></div>` : "<span class='muted'>No adjudicated root cause.</span>";
+  const s=data.safety_decision;
+  $("safety").innerHTML=s ? `<p><b>${esc(s.decision.replaceAll("_"," ").toUpperCase())}</b></p><p>${esc(s.rationale)}</p><p class="meta">Risk: ${esc(s.risk_level)} · Approval required: ${s.approval_required}</p>` : "<span class='muted'>No safety decision.</span>";
+  const p=data.recovery_plan;
+  $("recovery").innerHTML=p ? `<p><b>Readiness:</b> ${esc(p.readiness)}</p><p>${esc(p.rationale)}</p><ul>${p.steps.map(x=>`<li><b>${esc(x.step_id)}</b> — ${esc(x.action)} <span class="meta">(${esc(x.risk)} risk${x.requires_approval?", approval required":""})</span></li>`).join("")}</ul>` : "<span class='muted'>No recovery plan.</span>";
+  $("hypotheses").innerHTML=data.hypotheses.length ? data.hypotheses.map(h=>`<div class="item"><b>${esc(h.hypothesis_id)} — ${esc(h.status)}</b><div>${esc(h.statement)}</div><div class="meta">Confidence ${Math.round(h.confidence*100)}% · Causal score ${h.causal_score}</div></div>`).join("") : "<span class='muted'>No hypotheses.</span>";
+  $("evidence").innerHTML=data.evidence.length ? data.evidence.map(e=>`<div class="item"><b>${esc(e.evidence_type)}</b> · ${esc(e.source)}<div>${esc(e.observation)}</div><div class="meta">${e.timestamp?esc(e.timestamp):""}</div></div>`).join("") : "<span class='muted'>No evidence.</span>";
+}
+async function investigate(){
+  $("error").textContent=""; $("run").disabled=true; $("run").textContent="Investigating…";
+  try{const res=await fetch("/api/v1/investigations",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({incident_id:$("incident").value.trim()})}); const data=await res.json(); if(!res.ok) throw new Error(data.detail||"Investigation failed"); render(data);}
+  catch(e){$("error").textContent=e.message} finally{$("run").disabled=false;$("run").textContent="Investigate";}
+}
+$("run").addEventListener("click",investigate);
+fetch("/health").then(r=>r.ok?$("health").textContent="API online":Promise.reject()).catch(()=>$("health").textContent="API unavailable");
+investigate();
+</script>
+</body>
+</html>

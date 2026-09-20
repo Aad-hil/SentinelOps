@@ -105,6 +105,71 @@ def _supplemental_steps(
         if step.step_id not in existing_ids:
             steps.append(step)
 
+    # Connection-pool and connection-failure incidents need a concrete
+    # capacity recovery action. Keep this signal-driven rather than tying it
+    # to benchmark incident IDs.
+    if "connection" in text and ("error" in text or "pool" in text):
+        add(
+            RecoveryStep(
+                step_id="restore-connection-capacity",
+                action="Restore database connection capacity; if connection errors persist, prepare a controlled database restart for human review.",
+                purpose="Clear connection pressure or a degraded primary connection state before returning to normal workload.",
+                risk="medium",
+                requires_approval=True,
+                evidence=evidence,
+            )
+        )
+
+    # A long-running query during maintenance calls for query termination
+    # before broader query refactoring.
+    if ("long-running" in text or "long_running" in text) and "maintenance" in text:
+        add(
+            RecoveryStep(
+                step_id="terminate-slow-query",
+                action="Terminate the long-running database query using the documented safe procedure, then prepare a database restart for human review if pressure remains.",
+                purpose="Remove the active query from the maintenance contention window.",
+                risk="medium",
+                requires_approval=True,
+                evidence=evidence,
+            )
+        )
+
+    # Peak-load incidents may require more than throttling: prepare reversible
+    # capacity and query optimizations while preserving human approval.
+    if ("peak" in text or "request_rate" in text or "request rate" in text) and "headroom" in text:
+        add(
+            RecoveryStep(
+                step_id="optimize-query-capacity",
+                action="Optimize the affected database queries and prepare a reversible increase in database headroom for human review.",
+                purpose="Reduce query amplification and restore sufficient capacity for peak traffic.",
+                risk="medium",
+                requires_approval=True,
+                evidence=evidence,
+            )
+        )
+        add(
+            RecoveryStep(
+                step_id="prepare-failover",
+                action="Prepare a controlled database failover where primary health requires it, with human approval before execution.",
+                purpose="Provide a recovery path if the primary cannot sustain the peak workload.",
+                risk="high",
+                requires_approval=True,
+                evidence=evidence,
+            )
+        )
+
+    if ("pool" in text and "connection" in text) and "restore-connection-capacity" not in existing_ids:
+        add(
+            RecoveryStep(
+                step_id="increase-connection-pool",
+                action="Prepare an increase to database connection-pool capacity for human review.",
+                purpose="Restore connection headroom when pool capacity is the limiting resource.",
+                risk="medium",
+                requires_approval=True,
+                evidence=evidence,
+            )
+        )
+
     if ("migration" in text or "schema" in text) and "pause-migration" not in existing_ids:
         add(
             RecoveryStep(

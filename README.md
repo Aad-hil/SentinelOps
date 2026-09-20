@@ -1,3 +1,5 @@
+[![CI](https://github.com/Aad-hil/SentinelOps/actions/workflows/ci.yml/badge.svg)](https://github.com/Aad-hil/SentinelOps/actions/workflows/ci.yml)
+
 # SentinelOps
 
 **SentinelOps** is an evidence-backed, multi-agent incident investigation and safe recovery planning platform.

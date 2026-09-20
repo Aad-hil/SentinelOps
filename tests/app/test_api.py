@@ -2,11 +2,18 @@ import os
 
 os.environ.setdefault("SENTINELOPS_CHECKPOINT_BACKEND", "memory")
 
+import pytest
 from fastapi.testclient import TestClient
 
-from app.api import app
+from app.api import _CHECKPOINTER, app
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def clear_incident_checkpoint() -> None:
+    """Keep API HITL tests isolated while reusing the benchmark incident."""
+    _CHECKPOINTER.delete_thread("INC-002")
 
 
 def test_health() -> None:

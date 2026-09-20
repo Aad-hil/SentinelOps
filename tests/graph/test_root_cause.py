@@ -241,3 +241,50 @@ def test_causal_relationships_assign_trigger_mechanism_and_impact_roles():
     assert all(relationship.hypothesis_id == "H9" for relationship in relationships)
     assert all(0.0 < relationship.strength <= 1.0 for relationship in relationships)
 
+def test_trigger_evidence_strength_does_not_treat_recovery_deployment_as_trigger():
+    items = [
+        EvidenceItem(
+            source="deployment:inc-008-v2",
+            evidence_type="deployment",
+            observation="database restart reason=connection error recovery",
+            timestamp=datetime(2026, 9, 10, 12, 0, tzinfo=timezone.utc),
+            relevance=1.0,
+            agent="deployment",
+        ),
+        EvidenceItem(
+            source="metric:connection-errors",
+            evidence_type="metric",
+            observation="db_connection_errors_per_min increased",
+            timestamp=datetime(2026, 9, 10, 12, 1, tzinfo=timezone.utc),
+            relevance=1.0,
+            agent="telemetry",
+        ),
+    ]
+
+    assert _trigger_evidence_strength("H4", items) == 0.66
+    assert _trigger_evidence_strength("H7", items) < 0.66
+
+
+def test_trigger_evidence_strength_prefers_direct_migration_over_connection_symptoms():
+    items = [
+        EvidenceItem(
+            source="deployment:inc-015-v2",
+            evidence_type="deployment",
+            observation="migration=active traffic_window=peak",
+            timestamp=datetime(2026, 9, 15, 12, 0, tzinfo=timezone.utc),
+            relevance=1.0,
+            agent="deployment",
+        ),
+        EvidenceItem(
+            source="metric:connection-utilization",
+            evidence_type="metric",
+            observation="db_connection_utilization_percent reached 100",
+            timestamp=datetime(2026, 9, 15, 12, 1, tzinfo=timezone.utc),
+            relevance=1.0,
+            agent="telemetry",
+        ),
+    ]
+
+    assert _trigger_evidence_strength("H6", items) == 1.0
+    assert _trigger_evidence_strength("H4", items) == 0.66
+

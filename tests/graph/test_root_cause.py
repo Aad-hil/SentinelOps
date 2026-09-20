@@ -320,3 +320,27 @@ def test_causal_chain_does_not_use_recovery_action_as_root_cause_mechanism():
 
     assert score < 1.0
 
+
+
+def test_benchmark_cpu_query_load_prefers_traffic_hypothesis():
+    from simulator.benchmark import build_benchmark_incident
+
+    scenario = build_benchmark_incident("INC-003")
+    result = build_investigation_graph().invoke({"evidence": scenario})
+    assert result["hypotheses"][0].hypothesis_id == "H2"
+
+
+def test_benchmark_peak_load_prefers_traffic_hypothesis():
+    from simulator.benchmark import build_benchmark_incident
+
+    scenario = build_benchmark_incident("INC-010")
+    result = build_investigation_graph().invoke({"evidence": scenario})
+    assert result["hypotheses"][0].hypothesis_id == "H2"
+
+
+def test_benchmark_migration_peak_load_prefers_migration_hypothesis():
+    from simulator.benchmark import build_benchmark_incident
+
+    scenario = build_benchmark_incident("INC-015")
+    result = build_investigation_graph().invoke({"evidence": scenario})
+    assert result["hypotheses"][0].hypothesis_id == "H6"

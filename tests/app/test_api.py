@@ -62,6 +62,27 @@ def test_approval_resumes_investigation_without_restarting() -> None:
     assert payload["recovery_plan"] is not None
 
 
+
+def test_rejection_blocks_investigation() -> None:
+    started = client.post(
+        "/api/v1/investigations",
+        json={"incident_id": "INC-002"},
+    )
+    assert started.status_code == 200
+    assert started.json()["status"] == "awaiting_human_approval"
+
+    response = client.post(
+        "/api/v1/investigations/INC-002/approval",
+        json={"approved": False, "reviewer": "Aadhil"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["incident_id"] == "INC-002"
+    assert payload["status"] == "blocked"
+    assert payload["approval_status"] == "rejected"
+    assert payload["approval_required"] is False
+
 def test_approval_requires_pending_investigation() -> None:
     response = client.post(
         "/api/v1/investigations/INC-002/approval",

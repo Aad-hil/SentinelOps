@@ -132,6 +132,32 @@ def _causal_chain(
 
     return round(score, 3), tuple(item.source for item in selected if item is not None)
 
+def _hypothesis_identity_strength(
+    hypothesis_id: str,
+    items: list[EvidenceItem],
+) -> float:
+    """Measure evidence for signals that distinguish a hypothesis from peers."""
+    identity_signals = {
+        "H1": ("deployment", "query"),
+        "H2": ("traffic", "request_rate", "load"),
+        "H3": ("network", "downstream", "dependency"),
+        "H4": ("connection", "pool", "connection_errors"),
+        "H5": ("lock", "contention", "slow", "query_change"),
+        "H6": ("schema", "migration", "alter"),
+        "H7": ("crash", "failover", "database_version", "configuration"),
+        "H8": ("permission", "permissions", "migration", "configuration"),
+        "H9": ("expensive", "transaction", "write_latency"),
+        "H10": ("replication", "lag", "token"),
+        "H11": ("upgrade", "data-store", "version"),
+        "H12": ("inefficient", "background", "queue", "webhook"),
+    }[hypothesis_id]
+    matched = sum(
+        any(_matches_signal(item, signal) for item in items)
+        for signal in identity_signals
+    )
+    return min(1.0, matched / 2.0)
+
+
 def _trigger_evidence_strength(
     hypothesis_id: str,
     items: list[EvidenceItem],
@@ -240,6 +266,8 @@ def generate_hypotheses(state: InvestigationState) -> list[Hypothesis]:
         contradiction_penalty = min(len(contradictions) / 4.0, 0.6)
         trigger_strength = _trigger_evidence_strength(hypothesis_id, items)
         mechanism_strength = _mechanism_evidence_strength(hypothesis_id, items)
+        identity_strength = _hypothesis_identity_strength(hypothesis_id, items)
+        identity_penalty = 0.20 * (1.0 - identity_strength)
 
         # Evidence quantity remains useful, but causal structure has greater
         # weight so a shared symptom cannot outrank a complete causal chain.
@@ -254,7 +282,8 @@ def generate_hypotheses(state: InvestigationState) -> list[Hypothesis]:
                 + causal_score * 0.55
                 + trigger_strength * 0.08
                 + mechanism_strength * 0.07
-                - contradiction_penalty,
+                - contradiction_penalty
+                - identity_penalty,
             ),
         )
 

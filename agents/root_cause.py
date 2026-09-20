@@ -162,13 +162,19 @@ def _causal_relationships(
             strength = 0.55
             if item.evidence_type in {"deployment", "deployment_change"} and role_index == 0:
                 strength += 0.15
+            matched_signals = tuple(
+                signal for signal in signals if _matches_signal(item, signal)
+            )
             relationships.append(
                 CausalEvidenceRelationship(
                     source=item.source,
                     role=role_names[role_index],
                     hypothesis_id=hypothesis_id,
                     strength=round(min(1.0, strength), 3),
-                    rationale=f"Evidence matches the {role_names[role_index]} signals for {hypothesis_id}.",
+                    rationale=(
+                        f"Evidence matches {role_names[role_index]} signals "
+                        f"for {hypothesis_id}: {', '.join(matched_signals)}."
+                    ),
                 )
             )
 

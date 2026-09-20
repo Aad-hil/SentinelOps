@@ -87,20 +87,44 @@ def _timestamp_key(item: EvidenceItem) -> datetime:
     return timestamp.astimezone(timezone.utc)
 
 
+def _stage_specificity(
+    hypothesis_id: str,
+    stage_index: int,
+    item: EvidenceItem,
+) -> float:
+    """Measure how specifically an item supports one causal stage."""
+    specific_by_stage = {
+        "H1": (("deployment", "change", "release"), ("query",), ("saturation",)),
+        "H2": (("traffic", "request", "load", "rate"), ("overload", "capacity"), ("error", "latency", "timeout")),
+        "H3": (("network", "downstream", "dependency"), ("timeout", "latency", "failure"), ("error", "request")),
+        "H4": (("connection", "pool", "capacity"), ("exhaust", "wait", "queue"), ("error", "failure", "latency")),
+        "H5": (("query", "query change"), ("lock", "contention", "slow"), ("latency", "error", "cpu")),
+        "H6": (("schema", "migration", "alter"), ("contention", "resource", "load"), ("latency", "error", "connection")),
+        "H7": (("primary", "crash", "failure"), ("failover", "recovery", "unstable"), ("error", "outage", "health")),
+        "H8": (("configuration", "version", "permission", "migration"), ("permission", "config", "insert", "write"), ("error", "failure")),
+        "H9": (("write", "transaction"), ("expensive", "write", "transaction"), ("latency", "timeout", "error")),
+        "H10": (("replication", "replica", "request"), ("lag", "replication"), ("stale", "unavailable", "latency")),
+        "H11": (("upgrade", "version", "data-store"), ("contention", "resource", "pressure"), ("latency", "timeout", "error")),
+        "H12": (("background", "queue", "api", "request"), ("inefficient", "query", "backlog"), ("queue", "webhook", "latency", "error")),
+    }
+    signals = specific_by_stage[hypothesis_id][stage_index]
+    matches = sum(_matches_signal(item, signal) for signal in signals)
+    return min(1.0, 0.55 + 0.15 * (matches - 1)) if matches else 0.0
+
+
 def _causal_chain(
     hypothesis_id: str,
     items: list[EvidenceItem],
 ) -> tuple[float, tuple[str, ...]]:
-    """Measure whether evidence supports a chronological causal chain."""
+    """Measure causal coverage while discounting generic symptom evidence."""
     requirements = _CAUSAL_REQUIREMENTS[hypothesis_id]
     stages: list[list[EvidenceItem]] = []
 
     for signals in requirements:
-        matches = [
+        stages.append([
             item for item in items
             if any(_matches_signal(item, signal) for signal in signals)
-        ]
-        stages.append(matches)
+        ])
 
     covered = sum(bool(stage) for stage in stages)
     if covered == 0:
@@ -109,17 +133,34 @@ def _causal_chain(
     ordered = True
     previous = None
     selected: list[EvidenceItem] = []
-    for stage in stages:
-        # Missing stages reduce causal coverage, but must not crash evaluation.
+    for stage_index, stage in enumerate(stages):
         if not stage:
             ordered = False
             continue
 
         if previous is None:
-            candidate = min(stage, key=_timestamp_key)
+            candidate = max(
+                stage,
+                key=lambda item: (
+                    _stage_specificity(hypothesis_id, stage_index, item),
+                    item.relevance,
+                    -_timestamp_key(item).timestamp(),
+                ),
+            )
         else:
             later = [item for item in stage if _timestamp_key(item) >= previous]
-            candidate = min(later, key=_timestamp_key) if later else None
+            candidate = (
+                max(
+                    later,
+                    key=lambda item: (
+                        _stage_specificity(hypothesis_id, stage_index, item),
+                        item.relevance,
+                        -_timestamp_key(item).timestamp(),
+                    ),
+                )
+                if later
+                else None
+            )
             if candidate is None:
                 ordered = False
                 continue
@@ -129,7 +170,10 @@ def _causal_chain(
 
     score = covered / len(stages)
     if ordered and covered == len(stages):
-        score = 1.0
+        score = sum(
+            _stage_specificity(hypothesis_id, index, item)
+            for index, item in enumerate(selected)
+        ) / len(selected)
 
     return round(score, 3), tuple(item.source for item in selected if item is not None)
 

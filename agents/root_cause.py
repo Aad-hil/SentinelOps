@@ -65,13 +65,13 @@ _HYPOTHESES = (
 # treated as causal proof.
 _CAUSAL_REQUIREMENTS = {
     "H1": (("deployment", "change", "release"), ("query", "database", "db"), ("saturation", "cpu", "error")),
-    "H2": (("traffic", "request", "load", "rate"), ("overload", "capacity", "queue"), ("error", "latency", "timeout")),
+    "H2": (("traffic", "request", "load", "rate", "volume", "high-volume", "peak traffic"), ("overload", "capacity", "queue", "headroom", "saturation", "cpu", "pressure"), ("error", "latency", "timeout")),
     "H3": (("network", "downstream", "dependency"), ("timeout", "latency", "failure"), ("error", "request")),
-    "H4": (("connection", "pool", "capacity"), ("exhaust", "wait", "queue"), ("error", "failure", "latency")),
+    "H4": (("connection", "pool", "capacity"), ("exhaust", "wait", "queue", "saturation", "utilization"), ("error", "failure", "latency")),
     "H5": (("query", "query change"), ("lock", "contention", "slow", "resource"), ("latency", "cpu", "error")),
     "H6": (("schema", "migration", "alter"), ("contention", "resource", "load"), ("latency", "error", "connection")),
     "H7": (("primary", "crash", "failure"), ("failover", "recovery", "unstable"), ("error", "outage", "health")),
-    "H8": (("configuration", "version", "permission", "migration"), ("permission", "config", "insert", "write"), ("error", "failure")),
+    "H8": (("configuration", "version", "migration", "missing permission", "permissions missing", "permission denied", "permission change"), ("permission", "config", "insert", "write"), ("error", "failure")),
     "H9": (("write", "transaction"), ("expensive", "cpu", "resource"), ("latency", "timeout", "error")),
     "H10": (("replication", "replica", "request"), ("lag", "replication"), ("stale", "unavailable", "latency")),
     "H11": (("upgrade", "version", "data-store"), ("contention", "resource", "pressure"), ("latency", "timeout", "error")),

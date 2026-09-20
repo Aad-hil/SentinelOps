@@ -60,3 +60,7 @@ testpaths = [
 [tool.ruff]
 line-length = 88
 target-version = "py313"
+exclude = [".venv", "build", "dist"]
+
+[tool.ruff.lint]
+ignore = ["E501"]

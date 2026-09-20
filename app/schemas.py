@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -80,9 +79,29 @@ class InvestigationResponse(BaseModel):
 
     incident_id: str
     status: str
+    approval_status: str = "not_required"
+    approval_required: bool = False
     root_cause: AdjudicationResponse | None = None
     hypotheses: list[HypothesisResponse] = Field(default_factory=list)
     evidence: list[EvidenceResponse] = Field(default_factory=list)
     recovery_plan: RecoveryPlanResponse | None = None
     safety_decision: SafetyDecisionResponse | None = None
     messages: list[str] = Field(default_factory=list)
+
+
+class ApprovalRequest(BaseModel):
+    """Human decision for a pending recovery approval checkpoint."""
+
+    approved: bool
+    reviewer: str = Field(min_length=1)
+
+
+class ApprovalResponse(BaseModel):
+    """Result of resuming an investigation after human review."""
+
+    incident_id: str
+    status: str
+    approval_status: str
+    approval_required: bool
+    reviewer: str
+    approved: bool

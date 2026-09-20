@@ -75,7 +75,10 @@ _CAUSAL_REQUIREMENTS = {
     "H9": (("write transaction", "new data shape", "expensive write"), ("expensive", "cpu", "resource"), ("latency", "timeout", "error")),
     "H10": (("replication", "replica", "request"), ("lag", "replication"), ("stale", "unavailable", "latency")),
     "H11": (("upgrade", "version", "data-store"), ("contention", "resource", "pressure"), ("latency", "timeout", "error")),
-    "H12": (("background", "queue", "api", "request"), ("inefficient", "query", "backlog"), ("queue", "webhook", "latency", "error")),
+    # H12 is specifically about background/webhook/queue workloads. Generic
+    # API/request traffic belongs to the broader traffic hypothesis (H2) and
+    # must not be enough to complete H12's trigger stage.
+    "H12": (("background", "webhook", "queue"), ("inefficient", "query", "backlog"), ("queue", "webhook", "latency", "error")),
 }
 
 

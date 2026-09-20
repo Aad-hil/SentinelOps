@@ -134,6 +134,40 @@ def _causal_chain(
     return round(score, 3), tuple(item.source for item in selected if item is not None)
 
 
+def _trigger_evidence_strength(
+    hypothesis_id: str,
+    items: list[EvidenceItem],
+) -> float:
+    """Prefer hypotheses whose trigger is directly evidenced by a change record.
+
+    Causal-chain completeness can tie a specific trigger hypothesis with a
+    broader symptom hypothesis. When that happens, evidence from deployment or
+    change records is stronger trigger evidence than downstream symptoms alone.
+    This keeps ranking evidence-driven without hard-coding incident IDs.
+    """
+    requirements = _CAUSAL_REQUIREMENTS[hypothesis_id]
+    trigger_signals = requirements[0]
+    trigger_items = [
+        item
+        for item in items
+        if any(_matches_signal(item, signal) for signal in trigger_signals)
+    ]
+    if not trigger_items:
+        return 0.0
+
+    change_items = [
+        item
+        for item in trigger_items
+        if item.evidence_type in {"deployment", "deployment_change"}
+        or "deployment" in item.source.lower()
+        or "change" in item.source.lower()
+    ]
+    if change_items:
+        return 1.0
+
+    return min(len(trigger_items) / 3.0, 0.66)
+
+
 def _contradictions(hypothesis_id: str, items: list[EvidenceItem]) -> list[EvidenceItem]:
     contradictions: list[EvidenceItem] = []
     for item in items:
@@ -168,12 +202,23 @@ def generate_hypotheses(state: InvestigationState) -> list[Hypothesis]:
         else:
             supporting_sources = tuple(item.source for item in supporting)
         contradiction_penalty = min(len(contradictions) / 4.0, 0.6)
+        trigger_strength = _trigger_evidence_strength(hypothesis_id, items)
 
         # Evidence quantity remains useful, but causal structure has greater
         # weight so a shared symptom cannot outrank a complete causal chain.
+        # A small provenance bonus breaks ties in favor of hypotheses whose
+        # trigger is directly recorded by a deployment/change event rather than
+        # inferred only from downstream symptoms.
         confidence = max(
             0.0,
-            min(1.0, 0.10 + support_score * 0.35 + causal_score * 0.55 - contradiction_penalty),
+            min(
+                1.0,
+                0.10
+                + support_score * 0.35
+                + causal_score * 0.55
+                + trigger_strength * 0.08
+                - contradiction_penalty,
+            ),
         )
 
         hypotheses.append(

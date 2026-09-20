@@ -5,7 +5,7 @@ os.environ.setdefault("SENTINELOPS_CHECKPOINT_BACKEND", "memory")
 import pytest
 from fastapi.testclient import TestClient
 
-from app.api import _CHECKPOINTER, app
+from app.api import _CHECKPOINTER, _GRAPH, app
 
 client = TestClient(app)
 
@@ -95,6 +95,16 @@ def test_rejection_blocks_investigation() -> None:
     assert payload["approval_required"] is False
 
 def test_approval_requires_pending_investigation() -> None:
+    config = {"configurable": {"thread_id": "INC-002"}}
+
+    _GRAPH.update_state(
+        config,
+        {
+            "investigation_status": "complete",
+            "approval_required": False,
+        },
+    )
+
     response = client.post(
         "/api/v1/investigations/INC-002/approval",
         json={"approved": True, "reviewer": "Aadhil"},

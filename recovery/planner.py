@@ -300,8 +300,14 @@ def build_recovery_plan(state: InvestigationState) -> RecoveryPlan:
         )
 
     confidence = float(adjudication.confidence)
-    selected_hypothesis = _select_hypothesis_for_recovery(state)
-    hypothesis_id = selected_hypothesis.hypothesis_id if selected_hypothesis else adjudication.hypothesis_id
+    # The adjudicator is the source of truth. Evidence-signal heuristics may
+    # enrich a plan, but must never silently replace the adjudicated root cause.
+    hypotheses = tuple(state.get("hypotheses", ()))
+    selected_hypothesis = next(
+        (item for item in hypotheses if item.hypothesis_id == adjudication.hypothesis_id),
+        None,
+    )
+    hypothesis_id = adjudication.hypothesis_id
     gaps = tuple(adjudication.alternative_gaps)
     missing = tuple(getattr(critique, "missing_evidence", ())) if critique else ()
     unresolved = tuple(dict.fromkeys((*gaps, *missing)))

@@ -107,3 +107,23 @@ def test_knowledge_agent_uses_injected_rag_tool():
     )
     assert knowledge_finding.evidence == ("runbooks/deployment-rollback.md",)
     assert knowledge_finding.confidence == 0.7
+
+
+
+def test_investigation_graph_accepts_runtime_rag_retriever_without_state_injection():
+    evidence = build_incident_002_evidence()
+    retriever = FakeRetriever(calls=[])
+    graph = build_investigation_graph()
+
+    result = graph.invoke(
+        {"evidence": evidence},
+        config={"configurable": {"knowledge_retriever": retriever}},
+    )
+
+    assert len(retriever.calls) == 1
+    assert retriever.calls[0][1] == 5
+    knowledge_evidence = [
+        item for item in result["evidence_items"] if item.evidence_type == "knowledge"
+    ]
+    assert len(knowledge_evidence) == 1
+    assert knowledge_evidence[0].observation.startswith("Use deployment rollback")

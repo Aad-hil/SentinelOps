@@ -1,3 +1,5 @@
+from langchain_core.runnables import RunnableConfig
+
 from graph.evidence import EvidenceItem
 from graph.state import AgentFinding, InvestigationState, append_agent_evidence, append_finding
 from tools.knowledge import search_knowledge
@@ -13,7 +15,7 @@ _RUNBOOK_HINTS = {
 
 def run_knowledge_agent(
     state: InvestigationState,
-    config: dict | None = None,
+    config: RunnableConfig | None = None,
 ) -> dict:
     """Search current knowledge and publish historical incident context."""
     evidence = state["evidence"]

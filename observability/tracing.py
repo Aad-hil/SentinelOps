@@ -149,7 +149,7 @@ def traced_node(
 
     accepts_config = "config" in signature(node).parameters
 
-    def run(state: InvestigationState, config: RunnableConfig | None = None) -> dict[str, Any]:
+    def run(state: InvestigationState, config: RunnableConfig = None) -> dict[str, Any]:
         parent_context, trace_id, parent_span_id = _span_context_from_state(state)
         started = perf_counter()
 

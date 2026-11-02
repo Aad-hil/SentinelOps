@@ -11,7 +11,7 @@ from rag.chunking import DocumentChunk, chunk_documents
 from rag.embeddings import EmbeddingProvider, create_embedding_provider_from_env
 from rag.ingestion import load_markdown_documents
 from rag.models import Document
-from rag.vector_store import DEFAULT_COLLECTION, QdrantVectorStore
+from rag.vector_store import QdrantVectorStore, default_collection_for_embedding
 
 
 @dataclass(frozen=True)
@@ -73,9 +73,13 @@ def index_knowledge(
     )
 
     provider = embedding_provider or create_embedding_provider_from_env()
+    provider_name = os.getenv("SENTINELOPS_EMBEDDING_PROVIDER", "local").strip().lower()
+    collection_name = os.getenv("QDRANT_COLLECTION") or default_collection_for_embedding(
+        provider_name, provider.dimension
+    )
     store = vector_store or QdrantVectorStore(
         url=os.getenv("QDRANT_URL", "http://localhost:6333"),
-        collection_name=os.getenv("QDRANT_COLLECTION", DEFAULT_COLLECTION),
+        collection_name=collection_name,
         dimension=provider.dimension,
     )
 

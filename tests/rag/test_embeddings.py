@@ -82,3 +82,42 @@ def test_unexpected_embedding_dimension_is_rejected():
 
     with pytest.raises(ValueError, match="Expected 256 dimensions"):
         provider.embed_text("test")
+
+
+
+def test_sentence_transformer_provider_uses_local_model_and_normalizes():
+    from rag.embeddings import SentenceTransformerEmbeddingProvider
+
+    class FakeModel:
+        def get_sentence_embedding_dimension(self):
+            return 3
+
+        def encode(self, texts, **kwargs):
+            assert texts == ["first", "second"]
+            assert kwargs["normalize_embeddings"] is True
+            assert kwargs["convert_to_numpy"] is True
+            return [[1, 0, 0], [0, 1, 0]]
+
+    provider = SentenceTransformerEmbeddingProvider(model=FakeModel())
+
+    assert provider.dimension == 3
+    assert provider.embed_documents(["first", "second"]) == [
+        [1.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0],
+    ]
+
+
+def test_sentence_transformer_provider_rejects_empty_text():
+    from rag.embeddings import SentenceTransformerEmbeddingProvider
+
+    class FakeModel:
+        def get_sentence_embedding_dimension(self):
+            return 3
+
+        def encode(self, texts, **kwargs):
+            raise AssertionError("encode should not be called")
+
+    provider = SentenceTransformerEmbeddingProvider(model=FakeModel())
+
+    with pytest.raises(ValueError, match="non-empty"):
+        provider.embed_text("  ")

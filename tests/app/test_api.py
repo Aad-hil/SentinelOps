@@ -216,3 +216,41 @@ def test_rag_disabled_mode_does_not_initialize_embedding_provider(monkeypatch) -
     from app.api import _get_knowledge_retriever
 
     assert _get_knowledge_retriever() is None
+
+
+def test_investigate_is_idempotent_after_approval():
+    started = client.post("/api/v1/investigations", json={"incident_id": "INC-002"})
+    assert started.status_code == 200
+    approved = client.post(
+        "/api/v1/investigations/INC-002/approval",
+        json={"approved": True, "reviewer": "Aadhil"},
+    )
+    assert approved.status_code == 200
+    assert approved.json()["status"] == "approved_for_execution"
+
+    reopened = client.post("/api/v1/investigations", json={"incident_id": "INC-002"})
+
+    assert reopened.status_code == 200
+    assert reopened.json()["status"] == "approved_for_execution"
+
+
+def test_incident_list_includes_all_benchmark_incidents():
+    response = client.get("/api/v1/incidents")
+    assert response.status_code == 200
+    payload = response.json()
+    assert len(payload) == 15
+    assert payload[1]["incident_id"] == "INC-002"
+
+
+def test_saved_incident_can_be_opened_and_deleted():
+    started = client.post("/api/v1/investigations", json={"incident_id": "INC-002"})
+    assert started.status_code == 200
+
+    opened = client.get("/api/v1/incidents/INC-002")
+    assert opened.status_code == 200
+    assert opened.json()["status"] == "awaiting_human_approval"
+
+    deleted = client.delete("/api/v1/incidents/INC-002")
+    assert deleted.status_code == 200
+    assert deleted.json()["status"] == "deleted"
+    assert client.get("/api/v1/incidents/INC-002").status_code == 404

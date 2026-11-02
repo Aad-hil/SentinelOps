@@ -174,3 +174,15 @@ def test_investigation_injects_configured_rag_retriever(monkeypatch) -> None:
         and item["evidence_type"] == "knowledge"
         for item in response.json()["evidence"]
     )
+
+
+def test_rag_disabled_mode_does_not_initialize_embedding_provider(monkeypatch) -> None:
+    monkeypatch.setenv("SENTINELOPS_RAG_ENABLED", "false")
+    monkeypatch.setattr(
+        "app.api.create_knowledge_retriever_from_env",
+        lambda: (_ for _ in ()).throw(AssertionError("RAG should remain disabled")),
+    )
+
+    from app.api import _get_knowledge_retriever
+
+    assert _get_knowledge_retriever() is None

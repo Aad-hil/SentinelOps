@@ -8,6 +8,7 @@ from typing import Any, Callable
 from uuid import uuid4
 
 from opentelemetry import trace
+from langchain_core.runnables import RunnableConfig
 from opentelemetry.trace import (
     NonRecordingSpan,
     SpanContext,
@@ -142,13 +143,13 @@ def traced_node(
     node: Callable[..., dict[str, Any]],
     *,
     tracer=None,
-) -> Callable[[InvestigationState], dict[str, Any]]:
+) -> Callable[..., dict[str, Any]]:
     """Wrap a graph node with structured events and a propagated OTel parent."""
     node_tracer = tracer or get_tracer()
 
     accepts_config = "config" in signature(node).parameters
 
-    def run(state: InvestigationState, config: Any = None) -> dict[str, Any]:
+    def run(state: InvestigationState, config: RunnableConfig | None = None) -> dict[str, Any]:
         parent_context, trace_id, parent_span_id = _span_context_from_state(state)
         started = perf_counter()
 

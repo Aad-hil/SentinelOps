@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from datetime import datetime, timezone
+from inspect import signature
 from time import perf_counter
 from typing import Any, Callable
 from uuid import uuid4
@@ -138,14 +139,16 @@ def _append_trace(
 
 def traced_node(
     node_name: str,
-    node: Callable[[InvestigationState], dict[str, Any]],
+    node: Callable[..., dict[str, Any]],
     *,
     tracer=None,
 ) -> Callable[[InvestigationState], dict[str, Any]]:
     """Wrap a graph node with structured events and a propagated OTel parent."""
     node_tracer = tracer or get_tracer()
 
-    def run(state: InvestigationState) -> dict[str, Any]:
+    accepts_config = "config" in signature(node).parameters
+
+    def run(state: InvestigationState, config: Any = None) -> dict[str, Any]:
         parent_context, trace_id, parent_span_id = _span_context_from_state(state)
         started = perf_counter()
 
@@ -160,7 +163,7 @@ def traced_node(
             span.set_attribute("sentinelops.parent_span_id", parent_span_id)
 
             try:
-                result = node(state)
+                result = node(state, config=config) if accepts_config else node(state)
             except Exception as exc:
                 duration_ms = (perf_counter() - started) * 1000
                 span.set_status(Status(StatusCode.ERROR, str(exc)))

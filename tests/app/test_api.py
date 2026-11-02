@@ -11,8 +11,11 @@ client = TestClient(app)
 
 
 @pytest.fixture(autouse=True)
-def clear_incident_checkpoint() -> None:
-    """Keep API HITL tests isolated while reusing the benchmark incident."""
+def clear_incident_checkpoint(monkeypatch) -> None:
+    """Isolate API tests from local RAG settings and prior HITL checkpoints."""
+    # API behavior tests use deterministic benchmark evidence by default.
+    # The dedicated RAG integration test explicitly enables its fake retriever.
+    monkeypatch.setenv("SENTINELOPS_RAG_ENABLED", "false")
     _CHECKPOINTER.delete_thread("INC-002")
 
 
@@ -73,7 +76,6 @@ def test_approval_resumes_investigation_without_restarting() -> None:
     assert payload["recovery_plan"] is not None
 
 
-
 def test_rejection_blocks_investigation() -> None:
     started = client.post(
         "/api/v1/investigations",
@@ -93,6 +95,7 @@ def test_rejection_blocks_investigation() -> None:
     assert payload["status"] == "blocked"
     assert payload["approval_status"] == "rejected"
     assert payload["approval_required"] is False
+
 
 def test_approval_requires_pending_investigation() -> None:
     config = {"configurable": {"thread_id": "INC-002"}}
@@ -129,9 +132,7 @@ def test_unknown_incident_returns_404() -> None:
         json={"incident_id": "INC-999"},
     )
 
-
     assert response.status_code == 404
-
 
 
 def test_investigation_injects_configured_rag_retriever(monkeypatch) -> None:

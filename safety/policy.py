@@ -14,7 +14,7 @@ _HIGH_RISK_ACTION_TERMS = (
 _MEDIUM_RISK_ACTION_TERMS = (
     "rollback", "restart", "mitigation", "mitigate", "configuration change",
     "config change", "production rollout", "production change", "deploy",
-    "scale", "failover",
+    "scale", "failover", "query behavior",
 )
 
 

@@ -15,7 +15,7 @@ _RUNBOOK_HINTS = {
 
 def run_knowledge_agent(
     state: InvestigationState,
-    config: RunnableConfig | None = None,
+    config: RunnableConfig = None,
 ) -> dict:
     """Search current knowledge and publish historical incident context."""
     evidence = state["evidence"]

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from typing import Any
@@ -22,6 +23,7 @@ from app.schemas import (
 )
 from graph.investigation import build_investigation_graph
 from memory.checkpoint import create_checkpointer
+from rag.retrieval import create_knowledge_retriever_from_env
 from simulator.scenarios import build_benchmark_evidence
 
 
@@ -37,6 +39,8 @@ _GRAPH = build_investigation_graph(
     checkpointer=_CHECKPOINTER,
     incident_memory_repository=None,
 )
+_KNOWLEDGE_RETRIEVER: Any | None = None
+_RETRIEVER_INITIALIZED = False
 
 
 class InvestigationRequest(BaseModel):
@@ -46,6 +50,26 @@ class InvestigationRequest(BaseModel):
         min_length=1,
         description="Benchmark incident identifier, e.g. INC-002",
     )
+
+
+def _get_knowledge_retriever() -> Any | None:
+    """Load RAG only when explicitly enabled; local demo mode has no cloud dependency."""
+    global _KNOWLEDGE_RETRIEVER, _RETRIEVER_INITIALIZED
+    if os.getenv("SENTINELOPS_RAG_ENABLED", "false").strip().lower() != "true":
+        return None
+    if not _RETRIEVER_INITIALIZED:
+        try:
+            _KNOWLEDGE_RETRIEVER = create_knowledge_retriever_from_env()
+        except Exception as exc:
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "RAG is enabled but its embedding/vector-store dependencies "
+                    f"could not be initialized: {exc}"
+                ),
+            ) from exc
+        _RETRIEVER_INITIALIZED = True
+    return _KNOWLEDGE_RETRIEVER
 
 
 def _jsonable(value: Any) -> Any:
@@ -136,6 +160,9 @@ def investigate(request: InvestigationRequest) -> InvestigationResponse:
         "incident_summary": evidence.incident.description,
         "evidence": evidence,
     }
+    retriever = _get_knowledge_retriever()
+    if retriever is not None:
+        initial_state["knowledge_retriever"] = retriever
     state = _GRAPH.invoke(initial_state, config=_config(request.incident_id))
     return _investigation_response(state)
 

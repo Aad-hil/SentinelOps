@@ -128,8 +128,15 @@ def _investigation_response(state: dict[str, Any]) -> InvestigationResponse:
     )
 
 
-def _config(incident_id: str) -> dict[str, Any]:
-    return {"configurable": {"thread_id": incident_id}}
+def _config(
+    incident_id: str,
+    *,
+    knowledge_retriever: Any | None = None,
+) -> dict[str, Any]:
+    configurable: dict[str, Any] = {"thread_id": incident_id}
+    if knowledge_retriever is not None:
+        configurable["knowledge_retriever"] = knowledge_retriever
+    return {"configurable": configurable}
 
 
 @app.get("/health")
@@ -161,9 +168,10 @@ def investigate(request: InvestigationRequest) -> InvestigationResponse:
         "evidence": evidence,
     }
     retriever = _get_knowledge_retriever()
-    if retriever is not None:
-        initial_state["knowledge_retriever"] = retriever
-    state = _GRAPH.invoke(initial_state, config=_config(request.incident_id))
+    state = _GRAPH.invoke(
+        initial_state,
+        config=_config(request.incident_id, knowledge_retriever=retriever),
+    )
     return _investigation_response(state)
 
 

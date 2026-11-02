@@ -35,7 +35,10 @@ class SentenceTransformerEmbeddingProvider:
             from sentence_transformers import SentenceTransformer
 
             model = SentenceTransformer(model_name)
-        dimension = model.get_sentence_embedding_dimension()
+        get_dimension = getattr(model, "get_embedding_dimension", None)
+        if get_dimension is None:
+            get_dimension = model.get_sentence_embedding_dimension
+        dimension = get_dimension()
         if not dimension:
             raise ValueError("The sentence-transformer model did not expose an embedding dimension")
         self.model_name = model_name

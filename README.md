@@ -230,15 +230,15 @@ SentinelOps includes 15 deterministic incident scenarios with expected root caus
 
 Latest benchmark snapshot:
 
-| Metric | Result |
+| Metric | Latest result |
 |---|---:|
-| Incidents | 15 / 15 |
-| Top-1 hypothesis accuracy | 100% |
-| Top-3 hypothesis recall | 100% |
-| Mean root-cause concept match | 85.0% |
+| Incidents completed / awaiting approval | 15 / 15 |
+| Top-1 hypothesis accuracy | 11 / 15 (73.3%) |
+| Top-3 hypothesis recall | 13 / 15 (86.7%) |
+| Mean root-cause concept match | 78.3% |
 | Mean evidence coverage | 97.0% |
-| Mean recovery match | 84.4% |
-| Mean investigation duration | ~29 ms |
+| Mean recovery match | 71.1% |
+| Mean investigation duration | ~70 ms |
 
 Run the benchmark with:
 

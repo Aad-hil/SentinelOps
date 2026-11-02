@@ -69,3 +69,14 @@ def test_search_rejects_wrong_dimension():
         assert "Expected 3 dimensions" in str(exc)
     else:
         raise AssertionError("Expected wrong query dimension to fail")
+
+
+def test_default_collection_is_scoped_to_embedding_provider_and_dimension():
+    from rag.vector_store import default_collection_for_embedding
+
+    assert default_collection_for_embedding("local", 384) == (
+        "sentinelops_knowledge_local_384"
+    )
+    assert default_collection_for_embedding("bedrock", 1024) == (
+        "sentinelops_knowledge_bedrock_1024"
+    )

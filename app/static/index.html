@@ -42,10 +42,12 @@ h2{font-size:14px;margin:0 0 17px}.muted{color:var(--muted)}.error{color:var(--d
 .legend-item{display:flex;align-items:center;gap:6px}.legend-dot{width:8px;height:8px;border-radius:50%;background:#53627a}.legend-dot.done{background:var(--good)}.legend-dot.wait{background:var(--warn)}.legend-dot.fail{background:var(--danger)}
 .graph-inspector{margin-top:14px;padding:15px;border:1px solid #263650;border-radius:10px;background:#0b1423}
 .graph-inspector h3{font-size:12px;margin:0 0 7px}.inspector-meta{font-size:11px;color:var(--muted);margin-bottom:10px}.inspector-list{display:grid;gap:7px}.inspector-event{font-size:11px;padding:9px;background:#111d30;border-radius:7px;color:#c7d2e2}.inspector-evidence{font-size:11px;padding:8px 0;border-top:1px solid #223149;color:#c7d2e2}.graph-note{font-size:10px;color:var(--muted);margin-top:10px}
+
+.home-panel{margin-bottom:24px}.home-title{font-size:26px;font-weight:850;margin:0 0 5px}.home-description{color:var(--muted);font-size:13px;margin-bottom:18px}.incident-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:13px}.incident-card{background:linear-gradient(180deg,rgba(16,24,39,.98),rgba(12,20,34,.98));border:1px solid var(--line);border-radius:12px;padding:17px}.incident-card h3{font-size:14px;margin:8px 0 5px}.incident-card p{font-size:11px;color:var(--muted);min-height:34px}.incident-meta{font-size:10px;color:var(--muted);display:flex;justify-content:space-between}.incident-actions{display:flex;gap:7px;margin-top:13px}.incident-actions button{min-width:0;flex:1;padding:9px;font-size:11px}.incident-actions .delete-btn{background:#321d25;border-color:#75414a;color:#ff9b9b}.severity{font-size:9px;color:var(--warn);letter-spacing:.1em;font-weight:850}.back-btn{margin-bottom:14px;min-width:0}.empty-state{padding:24px;text-align:center;color:var(--muted)}
 </style></head>
 <body>
 <header><div><div class="brand">SENTINELOPS</div><div class="sub">AI-powered incident investigation & safe recovery</div></div><div id="health" class="sub">Checking API…</div></header>
-<main><div class="toolbar"><input id="incident" value="INC-002" aria-label="Incident ID"><button id="run">Investigate</button></div><div id="error" class="error"></div>
+<main><section id="home" class="home-panel"><div class="home-title">Incident Command Center</div><div class="home-description">Select an incident to investigate, reopen its saved results, or remove its saved investigation.</div><div id="incident-list" class="incident-grid"><div class="empty-state">Loading incidents…</div></div></section><button id="back-home" class="back-btn" hidden>← All incidents</button><div class="toolbar" hidden><input id="incident" value="INC-002" aria-label="Incident ID"><button id="run">Investigate</button></div><div id="error" class="error"></div>
 <section id="result" hidden><div class="card incident-head"><div><div class="eyebrow">Incident</div><div id="incident-id" class="incident-id"></div><div class="muted">Evidence-backed investigation</div></div><div id="status" class="status"></div></div>
 <div class="grid"><div class="card"><h2>Root Cause</h2><div id="root"></div></div><div class="card"><h2>Safety Decision</h2><div id="safety"></div></div><div id="approval-card" class="card wide approval-card" hidden><h2>Human Approval Required</h2><div class="muted">Review the proposed recovery plan before allowing the investigation to proceed.</div><input id="reviewer" class="reviewer" placeholder="Reviewer name" aria-label="Reviewer name"><div class="approval-actions"><button id="approve" class="approve">Approve Recovery</button><button id="reject" class="reject">Reject Recovery</button></div></div><div class="card wide"><h2>Recovery Plan</h2><div id="recovery"></div></div><div class="card wide"><h2>Interactive Agent Execution Graph</h2><div class="muted" style="font-size:11px;margin:-8px 0 14px">Execution topology and node outcomes for this investigation. Select any node to inspect its events and evidence.</div><div class="graph-legend"><span class="legend-item"><i class="legend-dot done"></i>Completed</span><span class="legend-item"><i class="legend-dot wait"></i>Awaiting approval</span><span class="legend-item"><i class="legend-dot fail"></i>Failed / blocked</span><span class="legend-item"><i class="legend-dot"></i>Not executed</span></div><div class="graph-wrap"><div class="graph-canvas" id="graph-canvas"><svg class="graph-lines" viewBox="0 0 1200 630" aria-hidden="true"><defs><marker id="graph-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="#536b91"/></marker></defs><path d="M125 315 L180 315"/><path d="M330 315 L410 315"/><path d="M580 313 C635 313 650 49 720 49"/><path class="loop" d="M720 49 C650 49 650 313 580 313"/><path d="M580 313 C635 313 650 119 720 119"/><path class="loop" d="M720 119 C650 119 650 313 580 313"/><path d="M580 313 C635 313 650 189 720 189"/><path class="loop" d="M720 189 C650 189 650 313 580 313"/><path d="M580 313 C635 313 650 259 720 259"/><path class="loop" d="M720 259 C650 259 650 313 580 313"/><path d="M580 313 C635 313 650 329 720 329"/><path class="loop" d="M720 329 C650 329 650 313 580 313"/><path d="M580 313 C635 313 650 399 720 399"/><path class="loop" d="M720 399 C650 399 650 313 580 313"/><path d="M580 313 C635 313 650 469 720 469"/><path class="loop" d="M720 469 C650 469 650 313 580 313"/><path d="M580 313 C635 313 650 539 720 539"/><path d="M880 539 L990 539"/><path d="M1080 514 C1160 430 1160 370 1090 322"/></svg><button class="graph-node start" data-node="__start"><span class="node-name">START</span><span class="node-state">Entry</span></button><button class="graph-node history" data-node="historical_memory"><span class="node-name">Historical Memory</span><span class="node-state">Prior incidents</span></button><button class="graph-node supervisor" data-node="supervisor"><span class="node-name">Supervisor</span><span class="node-state">Workflow routing</span><span class="node-count" id="supervisor-count"></span></button><button class="graph-node agent" data-node="telemetry"><span class="node-name">Telemetry Agent</span><span class="node-state">Pending</span></button><button class="graph-node agent" data-node="knowledge"><span class="node-name">Knowledge Agent · RAG</span><span class="node-state">Pending</span></button><button class="graph-node agent" data-node="deployment"><span class="node-name">Deployment Agent</span><span class="node-state">Pending</span></button><button class="graph-node agent" data-node="root_cause"><span class="node-name">Root Cause Agent</span><span class="node-state">Pending</span></button><button class="graph-node agent" data-node="critic"><span class="node-name">Critic Agent</span><span class="node-state">Pending</span></button><button class="graph-node agent" data-node="adjudication"><span class="node-name">Adjudication Agent</span><span class="node-state">Pending</span></button><button class="graph-node agent" data-node="recovery"><span class="node-name">Recovery Agent</span><span class="node-state">Pending</span></button><button class="graph-node agent" data-node="safety"><span class="node-name">Safety Agent</span><span class="node-state">Pending</span></button><button class="graph-node approval-node" data-node="human_approval"><span class="node-name">Human Approval</span><span class="node-state">Checkpoint</span></button><button class="graph-node end" data-node="__end"><span class="node-name">END</span><span class="node-state">Terminal</span></button></div></div><div class="graph-inspector" id="graph-inspector"><h3>Supervisor</h3><div class="inspector-meta">Select a node to inspect execution details.</div></div><div class="graph-note">This view is reconstructed from recorded node events and the configured LangGraph topology after the API response. It is not a live streaming trace.</div></div><div class="card wide"><h2>Agent Execution Timeline</h2><div id="timeline"></div></div><div class="card wide"><h2>Competing Hypotheses</h2><div id="hypotheses"></div></div><div class="card wide"><h2>Evidence</h2><div id="evidence" class="evidence"></div></div></div></section></main>
 <script>
@@ -141,13 +143,46 @@ async function submitApproval(approved){
   }catch(e){$("error").textContent=e.message}
   finally{$("approve").disabled=false;$("reject").disabled=false}
 }
-async function investigate(){
+async function investigate(incidentId){
+  const id=(incidentId||$("incident").value).trim();
   $("error").textContent="";$("run").disabled=true;$("run").textContent="Investigating…";
-  try{const res=await fetch("/api/v1/investigations",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({incident_id:$("incident").value.trim()})});const data=await res.json();if(!res.ok)throw new Error(data.detail||"Investigation failed");render(data)}
+  try{const res=await fetch("/api/v1/investigations",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({incident_id:id})});const data=await res.json();if(!res.ok)throw new Error(data.detail||"Investigation failed");$("home").hidden=true;$("back-home").hidden=false;$("result").hidden=false;render(data)}
   catch(e){$("error").textContent=e.message}finally{$("run").disabled=false;$("run").textContent="Investigate"}
 }
+async function loadIncidents(){
+  try{
+    const res=await fetch("/api/v1/incidents");if(!res.ok)throw new Error("Unable to load incidents");
+    const incidents=await res.json();
+    $("incident-list").innerHTML=incidents.map(item=>{
+      const status=item.has_investigation?label(item.status):"Not started";
+      const statusColor=item.status==="awaiting_human_approval"?"var(--warn)":(["complete","approved_for_execution"].includes(item.status)?"var(--good)":"var(--muted)");
+      return '<article class="incident-card"><div class="incident-meta"><span>'+esc(item.incident_id)+'</span><span class="severity">'+esc(item.severity)+'</span></div><h3>'+esc(item.title)+'</h3><p>'+esc(item.description)+'</p><div class="incident-meta"><span>'+esc(item.service)+'</span><b style="color:'+statusColor+'">'+esc(status)+'</b></div><div class="incident-actions"><button data-action="investigate" data-id="'+esc(item.incident_id)+'">'+(item.has_investigation?"Open result":"Investigate")+'</button>'+(item.has_investigation?'<button class="delete-btn" data-action="delete" data-id="'+esc(item.incident_id)+'">Delete</button>':"")+'</div></article>';
+    }).join("");
+  }catch(e){$("incident-list").innerHTML='<div class="empty-state">'+esc(e.message)+'</div>'}
+}
+async function openSavedIncident(id){
+  try{
+    const res=await fetch("/api/v1/incidents/"+encodeURIComponent(id));const data=await res.json();if(!res.ok)throw new Error(data.detail||"Unable to open incident");
+    $("home").hidden=true;$("back-home").hidden=false;$("result").hidden=false;render(data);
+  }catch(e){$("error").textContent=e.message}
+}
+async function deleteIncident(id){
+  if(!confirm("Delete the saved investigation for "+id+"? This cannot be undone."))return;
+  try{
+    const res=await fetch("/api/v1/incidents/"+encodeURIComponent(id),{method:"DELETE"});const data=await res.json();if(!res.ok)throw new Error(data.detail||"Delete failed");
+    await loadIncidents();
+  }catch(e){$("error").textContent=e.message}
+}
+$("incident-list").addEventListener("click",e=>{
+  const button=e.target.closest("button[data-action]");if(!button)return;
+  const id=button.dataset.id;
+  if(button.dataset.action==="investigate")investigate(id);
+  if(button.dataset.action==="delete")deleteIncident(id);
+});
+$("back-home").addEventListener("click",()=>{$("result").hidden=true;$("home").hidden=false;$("back-home").hidden=true;$("error").textContent="";loadIncidents()});
+
 $("graph-canvas").addEventListener("click",e=>{const node=e.target.closest(".graph-node");if(node)selectGraphNode(node.dataset.node)});
 $("run").addEventListener("click",investigate);$("approve").addEventListener("click",()=>submitApproval(true));$("reject").addEventListener("click",()=>submitApproval(false));
 fetch("/health").then(r=>r.ok?$("health").innerHTML='<span class="online"><span class="dot"></span>API online</span>':Promise.reject()).catch(()=>$("health").textContent="API unavailable");
-investigate();
+loadIncidents();
 </script></body></html>

@@ -1,10 +1,11 @@
 from datetime import datetime, timezone
 
 from memory.builders import build_incident_memory
+from recovery.models import RecoveryPlan, RecoveryStep
 from simulator.scenarios import build_incident_002_evidence
 
 
-def test_build_incident_memory_uses_adjudicated_hypothesis():
+def test_build_incident_memory_uses_adjudicated_hypothesis_and_actual_plan():
     evidence = build_incident_002_evidence()
     state = {
         "incident_id": evidence.incident.incident_id,
@@ -12,6 +13,31 @@ def test_build_incident_memory_uses_adjudicated_hypothesis():
         "evidence": evidence,
         "hypotheses": [],
         "adjudication": None,
+        "recovery_plan": RecoveryPlan(
+            incident_id="INC-002",
+            hypothesis_id="H1",
+            confidence=0.95,
+            readiness="ready_for_review",
+            rationale="The plan is supported by the incident evidence.",
+            steps=(
+                RecoveryStep(
+                    step_id="inspect-query",
+                    action="Inspect the query associated with the deployment.",
+                    purpose="Validate the suspected trigger.",
+                    risk="low",
+                    requires_approval=False,
+                    evidence=("deployment:web-2025.01.09.3",),
+                ),
+                RecoveryStep(
+                    step_id="rollback",
+                    action="Roll back the problematic deployment after approval.",
+                    purpose="Remove the suspected trigger.",
+                    risk="medium",
+                    requires_approval=True,
+                    evidence=("deployment:web-2025.01.09.3",),
+                ),
+            ),
+        ),
     }
 
     from agents.root_cause import generate_hypotheses
@@ -54,13 +80,16 @@ def test_build_incident_memory_uses_adjudicated_hypothesis():
     assert memory.root_cause_hypothesis_id == "H1"
     assert memory.root_cause_statement is not None
     assert memory.root_cause_confidence is not None
-    assert memory.resolution_summary is not None
-    assert memory.recovery_action is not None
+    assert memory.resolution_summary is None
+    assert memory.recovery_action == (
+        "Inspect the query associated with the deployment.; "
+        "Roll back the problematic deployment after approval."
+    )
     assert memory.created_at == evidence.incident.detected_at
     assert memory.completed_at is not None
 
 
-def test_build_incident_memory_handles_missing_adjudication():
+def test_build_incident_memory_handles_missing_adjudication_and_plan():
     evidence = build_incident_002_evidence()
     state = {
         "incident_id": evidence.incident.incident_id,

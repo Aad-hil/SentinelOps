@@ -25,6 +25,7 @@ from graph.investigation import build_investigation_graph
 from memory.checkpoint import create_checkpointer
 from rag.retrieval import create_knowledge_retriever_from_env
 from simulator.scenarios import build_benchmark_evidence
+from simulator.benchmark import build_all_benchmark_incidents
 
 
 app = FastAPI(
@@ -151,9 +152,58 @@ def dashboard() -> FileResponse:
     return FileResponse(_DASHBOARD_PATH, media_type="text/html")
 
 
+@app.get("/api/v1/incidents")
+def list_incidents() -> list[dict[str, Any]]:
+    """List benchmark incidents with their persisted investigation status."""
+    incidents = build_all_benchmark_incidents()
+    results = []
+    for scenario in incidents:
+        snapshot = _GRAPH.get_state(_config(scenario.incident.incident_id))
+        values = snapshot.values or {}
+        results.append({
+            "incident_id": scenario.incident.incident_id,
+            "title": scenario.incident.title,
+            "service": scenario.incident.service,
+            "severity": scenario.incident.severity,
+            "description": scenario.incident.description,
+            "status": values.get("investigation_status", "not_started"),
+            "approval_status": values.get("approval_status", "not_started"),
+            "approval_required": bool(values.get("approval_required", False)),
+            "has_investigation": bool(values),
+        })
+    return results
+
+
+@app.get("/api/v1/incidents/{incident_id}", response_model=InvestigationResponse)
+def get_incident(incident_id: str) -> InvestigationResponse:
+    """Return the saved investigation for one incident without running agents."""
+    try:
+        build_benchmark_evidence(incident_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"Unknown incident_id: {incident_id}") from exc
+    snapshot = _GRAPH.get_state(_config(incident_id))
+    if not snapshot.values:
+        raise HTTPException(status_code=404, detail=f"No investigation found for: {incident_id}")
+    return _investigation_response(snapshot.values)
+
+
+@app.delete("/api/v1/incidents/{incident_id}")
+def delete_incident(incident_id: str) -> dict[str, str]:
+    """Delete one incident's saved investigation checkpoint."""
+    try:
+        build_benchmark_evidence(incident_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"Unknown incident_id: {incident_id}") from exc
+    snapshot = _GRAPH.get_state(_config(incident_id))
+    if not snapshot.values:
+        raise HTTPException(status_code=404, detail=f"No saved investigation for: {incident_id}")
+    _CHECKPOINTER.delete_thread(incident_id)
+    return {"incident_id": incident_id, "status": "deleted"}
+
+
 @app.post("/api/v1/investigations", response_model=InvestigationResponse)
 def investigate(request: InvestigationRequest) -> InvestigationResponse:
-    """Start an investigation and stop at the human approval checkpoint when required."""
+    """Start only if no saved investigation exists; otherwise return its current result."""
     try:
         evidence = build_benchmark_evidence(request.incident_id)
     except KeyError as exc:
@@ -162,28 +212,12 @@ def investigate(request: InvestigationRequest) -> InvestigationResponse:
             detail=f"Unknown incident_id: {request.incident_id}",
         ) from exc
 
-    # A thread is keyed by incident ID. Before starting a new run, distinguish
-    # a genuinely paused approval from a stale terminal checkpoint that still
-    # carries awaiting_human_approval in its values.
     config = _config(request.incident_id)
     previous = _GRAPH.get_state(config)
-    if previous.values.get("investigation_status") == "awaiting_human_approval":
-        has_live_interrupt = any(
-            bool(task.interrupts) for task in previous.tasks
-        )
-        if has_live_interrupt and "human_approval" in previous.next:
-            raise HTTPException(
-                status_code=409,
-                detail=(
-                    "This incident already has an investigation waiting for "
-                    "human approval. Submit the approval decision before starting "
-                    "another investigation."
-                ),
-            )
-
-    # Reuse of an incident ID must not inherit completed_tasks, plan, or other
-    # state from a previous run. Approval requests continue using this thread.
-    _CHECKPOINTER.delete_thread(request.incident_id)
+    if previous.values:
+        # Investigation is idempotent: clicking Investigate again opens the
+        # saved result instead of silently restarting an approved/finished run.
+        return _investigation_response(previous.values)
 
     initial_state = {
         "incident_id": evidence.incident.incident_id,

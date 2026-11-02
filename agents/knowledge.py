@@ -11,10 +11,15 @@ _RUNBOOK_HINTS = {
 }
 
 
-def run_knowledge_agent(state: InvestigationState) -> dict:
+def run_knowledge_agent(
+    state: InvestigationState,
+    config: dict | None = None,
+) -> dict:
     """Search current knowledge and publish historical incident context."""
     evidence = state["evidence"]
     retriever = state.get("knowledge_retriever")
+    if retriever is None and config is not None:
+        retriever = config.get("configurable", {}).get("knowledge_retriever")
     query = f"{evidence.incident.title}. {evidence.incident.description}"
 
     items: list[EvidenceItem] = []

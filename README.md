@@ -153,6 +153,39 @@ SENTINELOPS_CHECKPOINT_BACKEND=postgres
 
 See [.env.example](.env.example) for PostgreSQL, Qdrant, AWS Bedrock, OpenAI, LangSmith, and OpenTelemetry settings.
 
+
+### Enable local RAG (optional, no paid API)
+
+The API runs without semantic RAG by default. To enable the local retrieval pipeline, start Qdrant and use the local Sentence Transformers embedding model:
+
+```powershell
+docker run -d --name sentinelops-qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant
+```
+
+Set these values in `.env`:
+
+```env
+SENTINELOPS_RAG_ENABLED=true
+SENTINELOPS_EMBEDDING_PROVIDER=local
+SENTINELOPS_LOCAL_EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+QDRANT_URL=http://localhost:6333
+QDRANT_COLLECTION=sentinelops_knowledge_local_384
+```
+
+Index the repository's Markdown knowledge corpus:
+
+```powershell
+python -m rag.indexer
+```
+
+Then start/restart the API:
+
+```powershell
+python -m uvicorn app.api:app --reload
+```
+
+The first local embedding run downloads the model weights; it does not call a paid embedding API. Keep the embedding provider, model, vector dimension, and Qdrant collection consistent between indexing and API retrieval. If you select Bedrock instead, set `SENTINELOPS_EMBEDDING_PROVIDER=bedrock` and use a separate 1024-dimensional collection such as `sentinelops_knowledge_bedrock_1024`; Bedrock usage may incur AWS charges.
+
 ## Run the API and dashboard
 
 ```powershell

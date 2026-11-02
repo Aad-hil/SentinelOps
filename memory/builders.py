@@ -7,7 +7,7 @@ from memory.models import IncidentMemory
 
 
 def build_incident_memory(state: InvestigationState) -> IncidentMemory:
-    """Build durable incident memory from a completed agent-facing state."""
+    """Build durable memory without claiming a proposed recovery was executed."""
     evidence = state["evidence"]
     incident = evidence.incident
     hypotheses = list(state.get("hypotheses", []))
@@ -22,15 +22,17 @@ def build_incident_memory(state: InvestigationState) -> IncidentMemory:
     if leading is None and hypotheses:
         leading = hypotheses[0]
 
-    recovery_action = None
+    recovery_plan = state.get("recovery_plan")
+    proposed_actions = (
+        [step.action.strip() for step in recovery_plan.steps if step.action.strip()]
+        if recovery_plan is not None
+        else []
+    )
+    recovery_action = "; ".join(proposed_actions) or None
+
+    # SentinelOps only proposes recovery steps. Human approval does not prove
+    # that an operator executed them or that the incident was resolved.
     resolution_summary = None
-    if adjudication is not None:
-        recovery_action = (
-            "Rollback the problematic deployment and verify service recovery."
-            if adjudication.recovery_support
-            else None
-        )
-        resolution_summary = adjudication.rationale
 
     completed_at = datetime.now(timezone.utc)
     return IncidentMemory(

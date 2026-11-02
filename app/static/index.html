@@ -99,7 +99,9 @@ function selectGraphNode(node){
   else if(["telemetry","knowledge","deployment","root_cause","critic","adjudication","recovery","safety"].includes(node))html+='<div class="inspector-meta" style="margin-top:8px">No evidence items are attributed directly to this agent in the response.</div>';
   $("graph-inspector").innerHTML=html;
 }
-\nfunction render(data){
+
+function render(data){
+  renderExecutionGraph(data);
   $("result").hidden=false;$("incident-id").textContent=data.incident_id;$("status").textContent=label(data.status).toUpperCase();$("approval-card").hidden=!(data.status==="awaiting_human_approval"&&data.approval_required);
   const r=data.root_cause;
   if(r){

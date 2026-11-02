@@ -146,7 +146,8 @@ async function investigate(){
   try{const res=await fetch("/api/v1/investigations",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({incident_id:$("incident").value.trim()})});const data=await res.json();if(!res.ok)throw new Error(data.detail||"Investigation failed");render(data)}
   catch(e){$("error").textContent=e.message}finally{$("run").disabled=false;$("run").textContent="Investigate"}
 }
-$("graph-canvas").addEventListener("click",e=>{const node=e.target.closest(".graph-node");if(node)selectGraphNode(node.dataset.node)});\n$("run").addEventListener("click",investigate);$("approve").addEventListener("click",()=>submitApproval(true));$("reject").addEventListener("click",()=>submitApproval(false));
+$("graph-canvas").addEventListener("click",e=>{const node=e.target.closest(".graph-node");if(node)selectGraphNode(node.dataset.node)});
+$("run").addEventListener("click",investigate);$("approve").addEventListener("click",()=>submitApproval(true));$("reject").addEventListener("click",()=>submitApproval(false));
 fetch("/health").then(r=>r.ok?$("health").innerHTML='<span class="online"><span class="dot"></span>API online</span>':Promise.reject()).catch(()=>$("health").textContent="API unavailable");
 investigate();
 </script></body></html>

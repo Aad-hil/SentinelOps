@@ -53,6 +53,35 @@ def test_investigation_stops_at_human_approval() -> None:
     assert payload["safety_decision"] is not None
 
 
+def test_stale_pending_checkpoint_is_replaced_on_new_investigation() -> None:
+    config = {"configurable": {"thread_id": "INC-002"}}
+    _GRAPH.update_state(config, {
+        "incident_id": "INC-002",
+        "investigation_status": "awaiting_human_approval",
+        "approval_status": "pending",
+        "approval_required": True,
+        "completed_tasks": ["telemetry", "knowledge", "deployment", "root_cause",
+                            "critic", "adjudication", "recovery", "safety"],
+    })
+
+    response = client.post("/api/v1/investigations", json={"incident_id": "INC-002"})
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "awaiting_human_approval"
+    snapshot = _GRAPH.get_state(config)
+    assert "human_approval" in snapshot.next
+    assert any(task.interrupts for task in snapshot.tasks)
+
+
+def test_cannot_restart_while_human_approval_is_pending() -> None:
+    started = client.post("/api/v1/investigations", json={"incident_id": "INC-002"})
+    assert started.status_code == 200
+
+    restarted = client.post("/api/v1/investigations", json={"incident_id": "INC-002"})
+
+    assert restarted.status_code == 409
+    assert "waiting for human approval" in restarted.json()["detail"]
+
 def test_approval_resumes_investigation_without_restarting() -> None:
     started = client.post(
         "/api/v1/investigations",

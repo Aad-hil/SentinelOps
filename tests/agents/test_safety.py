@@ -201,3 +201,31 @@ def test_approval_requires_human_review_decision():
 def test_approval_requires_reviewer():
     with pytest.raises(ValueError, match="reviewer"):
         record_human_approval(pending_state(), approved=True, reviewer="   ")
+
+
+
+def test_medium_risk_query_improvement_requires_review_not_blocking():
+    plan = RecoveryPlan(
+        incident_id="INC-002",
+        hypothesis_id="H10",
+        confidence=0.95,
+        readiness="ready_for_review",
+        rationale="Supported root cause.",
+        steps=(
+            RecoveryStep(
+                "improve-query-behavior",
+                "Improve and validate the query behavior responsible for replication pressure.",
+                "Prevent recurrence of query amplification.",
+                "medium",
+                True,
+            ),
+        ),
+    )
+
+    decision = evaluate_recovery_safety(plan)
+
+    assert decision.decision == "review_required"
+    assert decision.approval_required is True
+    assert decision.human_approval_required is True
+    assert decision.blocked_steps == ()
+    assert decision.reviewed_steps == ("improve-query-behavior",)

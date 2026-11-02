@@ -131,3 +131,46 @@ def test_unknown_incident_returns_404() -> None:
 
 
     assert response.status_code == 404
+
+
+
+def test_investigation_injects_configured_rag_retriever(monkeypatch) -> None:
+    from dataclasses import dataclass
+
+    from rag.retrieval import RetrievalResult
+
+    @dataclass
+    class FakeRetriever:
+        calls: list[tuple[str, int]]
+
+        def retrieve(self, query: str, *, top_k: int = 5):
+            self.calls.append((query, top_k))
+            return [
+                RetrievalResult(
+                    content="Use the deployment rollback runbook after validating the change.",
+                    source="runbooks/deployment-rollback.md",
+                    category="runbook",
+                    chunk_id="rollback-001",
+                    score=0.93,
+                    metadata={},
+                )
+            ]
+
+    retriever = FakeRetriever(calls=[])
+    monkeypatch.setenv("SENTINELOPS_RAG_ENABLED", "true")
+    monkeypatch.setattr("app.api._get_knowledge_retriever", lambda: retriever)
+
+    response = client.post(
+        "/api/v1/investigations",
+        json={"incident_id": "INC-002"},
+    )
+
+    assert response.status_code == 200
+    assert len(retriever.calls) == 1
+    assert "Primary database saturation" in retriever.calls[0][0]
+    assert retriever.calls[0][1] == 5
+    assert any(
+        item["source"] == "runbooks/deployment-rollback.md"
+        and item["evidence_type"] == "knowledge"
+        for item in response.json()["evidence"]
+    )

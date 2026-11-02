@@ -101,3 +101,46 @@ def test_plan_supports_all_generic_hypothesis_templates():
         plan = build_recovery_plan(make_state(adjudication=adjudication))
         assert plan.steps
         assert plan.readiness == "ready_for_review"
+
+
+
+def test_plan_uses_adjudicated_hypothesis_over_conflicting_evidence_signals():
+    adjudication = SimpleNamespace(
+        hypothesis_id="H1",
+        confidence=0.95,
+        temporal_support=True,
+        causal_support=True,
+        recovery_support=True,
+        alternative_gaps=(),
+    )
+    hypotheses = (
+        SimpleNamespace(
+            hypothesis_id="H1",
+            causal_evidence=("deployment-change",),
+            status="supported",
+        ),
+        SimpleNamespace(
+            hypothesis_id="H10",
+            causal_evidence=("replication-lag",),
+            status="supported",
+        ),
+    )
+    evidence = SimpleNamespace(
+        source="database-replication",
+        observation="replication lag increased during token request traffic",
+    )
+
+    plan = build_recovery_plan(
+        make_state(
+            adjudication=adjudication,
+            hypotheses=hypotheses,
+            evidence_items=(evidence,),
+        )
+    )
+
+    assert plan.hypothesis_id == "H1"
+    assert [step.step_id for step in plan.steps[:3]] == [
+        "identify-query",
+        "rollback-deployment",
+        "verify-database-recovery",
+    ]

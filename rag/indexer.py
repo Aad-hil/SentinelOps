@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -73,8 +74,8 @@ def index_knowledge(
 
     provider = embedding_provider or create_embedding_provider_from_env()
     store = vector_store or QdrantVectorStore(
-        url=__import__("os").getenv("QDRANT_URL", "http://localhost:6333"),
-        collection_name=__import__("os").getenv("QDRANT_COLLECTION", DEFAULT_COLLECTION),
+        url=os.getenv("QDRANT_URL", "http://localhost:6333"),
+        collection_name=os.getenv("QDRANT_COLLECTION", DEFAULT_COLLECTION),
         dimension=provider.dimension,
     )
 

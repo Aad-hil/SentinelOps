@@ -17,18 +17,89 @@ h2{font-size:14px;margin:0 0 17px}.muted{color:var(--muted)}.error{color:var(--d
 .hypotheses{display:grid;gap:7px}.hypothesis{border:1px solid var(--line);border-radius:9px;background:var(--panel2);overflow:hidden}.hypothesis summary{list-style:none;cursor:pointer;padding:13px 15px}.hypothesis summary::-webkit-details-marker{display:none}.hyp-head{display:grid;grid-template-columns:42px 1fr 48px;gap:10px;align-items:center}.hyp-id{color:var(--accent);font-weight:850}.hyp-statement{font-size:12px;font-weight:650}.hyp-score{text-align:right;font-weight:800;font-size:12px}.hyp-status{font-size:10px;color:var(--muted);margin-top:3px;text-transform:uppercase}.hyp-details{padding:0 15px 15px;border-top:1px solid var(--line);font-size:11px;color:#b9c5d6}.hyp-details p{margin:12px 0 5px;font-weight:700;color:var(--text)}.chips{display:flex;flex-wrap:wrap;gap:5px}.chip{padding:4px 6px;border-radius:5px;background:#182338;color:#aebbd0}.hyp-bar{height:4px;background:#1b2639;margin-top:9px;border-radius:99px;overflow:hidden}.hyp-bar span{display:block;height:100%;background:var(--accent)}
 .timeline{display:grid;gap:8px;max-height:460px;overflow:auto;padding-right:3px}.timeline-item{display:grid;grid-template-columns:10px 1fr auto;gap:12px;align-items:start;padding:12px;background:var(--panel2);border:1px solid #1c2940;border-radius:9px}.timeline-dot{width:9px;height:9px;border-radius:50%;background:var(--good);margin-top:5px;box-shadow:0 0 8px rgba(94,214,160,.35)}.timeline-dot.error{background:var(--danger);box-shadow:0 0 8px rgba(255,133,133,.35)}.timeline-node{font-weight:800;font-size:12px}.timeline-meta{font-size:10px;color:var(--muted);margin-top:3px}.timeline-keys{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}.timeline-key{font-size:9px;padding:3px 5px;border-radius:4px;background:#182338;color:#aebbd0}.timeline-duration{font-size:11px;font-weight:800;color:#b7c3d6}.trace{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:10px;color:#8d9ab0;overflow-wrap:anywhere;margin-top:8px}.evidence{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;max-height:520px;overflow:auto;padding-right:3px}.evidence-item{padding:13px;background:var(--panel2);border:1px solid #1c2940;border-radius:9px}.evidence-top{display:flex;justify-content:space-between;gap:8px}.type{font-size:10px;font-weight:850;color:var(--accent);text-transform:uppercase}.source{font-size:11px;color:var(--muted);overflow-wrap:anywhere}.observation{font-size:12px;margin-top:7px}.time{font-size:10px;color:#68768d;margin-top:8px}
 @media(max-width:900px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}.evidence{grid-template-columns:1fr}}@media(max-width:620px){header{padding:15px 18px}.sub{display:none}main{width:calc(100% - 24px);padding-top:18px}.toolbar{flex-direction:column}.toolbar button{width:100%}.incident-head{align-items:flex-start;flex-direction:column}.facts{grid-template-columns:1fr}.step{grid-template-columns:30px 1fr}.step .badge{grid-column:2;justify-self:start}.hyp-head{grid-template-columns:38px 1fr 42px}.incident-id{font-size:27px}}
+
+.graph-wrap{overflow-x:auto;padding-bottom:8px}
+.graph-canvas{position:relative;width:1200px;height:630px;min-width:1200px;border:1px solid #1c2940;border-radius:12px;background:radial-gradient(circle at 48% 50%,rgba(42,65,103,.16),transparent 48%),#0b1321}
+.graph-lines{position:absolute;inset:0;width:1200px;height:630px;pointer-events:none}
+.graph-lines path{fill:none;stroke:#40516c;stroke-width:1.7;opacity:.8;marker-end:url(#graph-arrow)}
+.graph-lines path.loop{stroke:#536b91;stroke-dasharray:5 5}
+.graph-node{position:absolute;width:160px;min-height:50px;padding:9px 11px;text-align:left;border:1px solid #31425d;border-radius:9px;background:#111d30;color:var(--text);min-width:0;cursor:pointer;z-index:2}
+.graph-node:hover,.graph-node.selected{border-color:var(--accent);box-shadow:0 0 0 2px rgba(110,168,254,.13)}
+.graph-node .node-name{display:block;font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.04em}
+.graph-node .node-state{display:block;margin-top:4px;font-size:9px;color:var(--muted);text-transform:uppercase}
+.graph-node .node-count{position:absolute;right:8px;top:8px;font-size:9px;color:#9eb4d5}
+.graph-node.completed{border-color:#32765f;background:#10251f}.graph-node.completed .node-state{color:var(--good)}
+.graph-node.failed,.graph-node.blocked{border-color:#81434b;background:#2a171d}.graph-node.failed .node-state,.graph-node.blocked .node-state{color:#ff9b9b}
+.graph-node.waiting{border-color:#806b31;background:#2b2516}.graph-node.waiting .node-state{color:var(--warn)}
+.graph-node.running{border-color:#4777b8;background:#14243a}.graph-node.running .node-state{color:#8fc0ff}
+.graph-node.start,.graph-node.end{width:100px;min-height:42px;text-align:center;border-radius:999px;background:#172338}
+.graph-node.history{left:180px;top:288px}.graph-node.supervisor{left:410px;top:282px;width:170px;min-height:62px}
+.graph-node.start{left:25px;top:294px}.graph-node.end{left:1040px;top:280px}
+.graph-node.agent{left:720px}
+.graph-node.agent[data-node="telemetry"]{top:24px}.graph-node.agent[data-node="knowledge"]{top:94px}.graph-node.agent[data-node="deployment"]{top:164px}.graph-node.agent[data-node="root_cause"]{top:234px}.graph-node.agent[data-node="critic"]{top:304px}.graph-node.agent[data-node="adjudication"]{top:374px}.graph-node.agent[data-node="recovery"]{top:444px}.graph-node.agent[data-node="safety"]{top:514px}
+.graph-node.approval-node{left:990px;top:514px;width:180px}
+.graph-legend{display:flex;flex-wrap:wrap;gap:14px;margin:12px 0 16px;font-size:10px;color:var(--muted)}
+.legend-item{display:flex;align-items:center;gap:6px}.legend-dot{width:8px;height:8px;border-radius:50%;background:#53627a}.legend-dot.done{background:var(--good)}.legend-dot.wait{background:var(--warn)}.legend-dot.fail{background:var(--danger)}
+.graph-inspector{margin-top:14px;padding:15px;border:1px solid #263650;border-radius:10px;background:#0b1423}
+.graph-inspector h3{font-size:12px;margin:0 0 7px}.inspector-meta{font-size:11px;color:var(--muted);margin-bottom:10px}.inspector-list{display:grid;gap:7px}.inspector-event{font-size:11px;padding:9px;background:#111d30;border-radius:7px;color:#c7d2e2}.inspector-evidence{font-size:11px;padding:8px 0;border-top:1px solid #223149;color:#c7d2e2}.graph-note{font-size:10px;color:var(--muted);margin-top:10px}
 </style></head>
 <body>
 <header><div><div class="brand">SENTINELOPS</div><div class="sub">AI-powered incident investigation & safe recovery</div></div><div id="health" class="sub">Checking API…</div></header>
 <main><div class="toolbar"><input id="incident" value="INC-002" aria-label="Incident ID"><button id="run">Investigate</button></div><div id="error" class="error"></div>
 <section id="result" hidden><div class="card incident-head"><div><div class="eyebrow">Incident</div><div id="incident-id" class="incident-id"></div><div class="muted">Evidence-backed investigation</div></div><div id="status" class="status"></div></div>
-<div class="grid"><div class="card"><h2>Root Cause</h2><div id="root"></div></div><div class="card"><h2>Safety Decision</h2><div id="safety"></div></div><div id="approval-card" class="card wide approval-card" hidden><h2>Human Approval Required</h2><div class="muted">Review the proposed recovery plan before allowing the investigation to proceed.</div><input id="reviewer" class="reviewer" placeholder="Reviewer name" aria-label="Reviewer name"><div class="approval-actions"><button id="approve" class="approve">Approve Recovery</button><button id="reject" class="reject">Reject Recovery</button></div></div><div class="card wide"><h2>Recovery Plan</h2><div id="recovery"></div></div><div class="card wide"><h2>Agent Execution Timeline</h2><div id="timeline"></div></div><div class="card wide"><h2>Competing Hypotheses</h2><div id="hypotheses"></div></div><div class="card wide"><h2>Evidence</h2><div id="evidence" class="evidence"></div></div></div></section></main>
+<div class="grid"><div class="card"><h2>Root Cause</h2><div id="root"></div></div><div class="card"><h2>Safety Decision</h2><div id="safety"></div></div><div id="approval-card" class="card wide approval-card" hidden><h2>Human Approval Required</h2><div class="muted">Review the proposed recovery plan before allowing the investigation to proceed.</div><input id="reviewer" class="reviewer" placeholder="Reviewer name" aria-label="Reviewer name"><div class="approval-actions"><button id="approve" class="approve">Approve Recovery</button><button id="reject" class="reject">Reject Recovery</button></div></div><div class="card wide"><h2>Recovery Plan</h2><div id="recovery"></div></div><div class="card wide"><h2>Interactive Agent Execution Graph</h2><div class="muted" style="font-size:11px;margin:-8px 0 14px">Execution topology and node outcomes for this investigation. Select any node to inspect its events and evidence.</div><div class="graph-legend"><span class="legend-item"><i class="legend-dot done"></i>Completed</span><span class="legend-item"><i class="legend-dot wait"></i>Awaiting approval</span><span class="legend-item"><i class="legend-dot fail"></i>Failed / blocked</span><span class="legend-item"><i class="legend-dot"></i>Not executed</span></div><div class="graph-wrap"><div class="graph-canvas" id="graph-canvas"><svg class="graph-lines" viewBox="0 0 1200 630" aria-hidden="true"><defs><marker id="graph-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="#536b91"/></marker></defs><path d="M125 315 L180 315"/><path d="M330 315 L410 315"/><path d="M580 313 C635 313 650 49 720 49"/><path class="loop" d="M720 49 C650 49 650 313 580 313"/><path d="M580 313 C635 313 650 119 720 119"/><path class="loop" d="M720 119 C650 119 650 313 580 313"/><path d="M580 313 C635 313 650 189 720 189"/><path class="loop" d="M720 189 C650 189 650 313 580 313"/><path d="M580 313 C635 313 650 259 720 259"/><path class="loop" d="M720 259 C650 259 650 313 580 313"/><path d="M580 313 C635 313 650 329 720 329"/><path class="loop" d="M720 329 C650 329 650 313 580 313"/><path d="M580 313 C635 313 650 399 720 399"/><path class="loop" d="M720 399 C650 399 650 313 580 313"/><path d="M580 313 C635 313 650 469 720 469"/><path class="loop" d="M720 469 C650 469 650 313 580 313"/><path d="M580 313 C635 313 650 539 720 539"/><path d="M880 539 L990 539"/><path d="M880 539 C945 539 960 301 1040 301"/></svg><button class="graph-node start" data-node="__start"><span class="node-name">START</span><span class="node-state">Entry</span></button><button class="graph-node history" data-node="historical_memory"><span class="node-name">Historical Memory</span><span class="node-state">Prior incidents</span></button><button class="graph-node supervisor" data-node="supervisor"><span class="node-name">Supervisor</span><span class="node-state">Workflow routing</span><span class="node-count" id="supervisor-count"></span></button><button class="graph-node agent" data-node="telemetry"><span class="node-name">Telemetry Agent</span><span class="node-state">Pending</span></button><button class="graph-node agent" data-node="knowledge"><span class="node-name">Knowledge Agent · RAG</span><span class="node-state">Pending</span></button><button class="graph-node agent" data-node="deployment"><span class="node-name">Deployment Agent</span><span class="node-state">Pending</span></button><button class="graph-node agent" data-node="root_cause"><span class="node-name">Root Cause Agent</span><span class="node-state">Pending</span></button><button class="graph-node agent" data-node="critic"><span class="node-name">Critic Agent</span><span class="node-state">Pending</span></button><button class="graph-node agent" data-node="adjudication"><span class="node-name">Adjudication Agent</span><span class="node-state">Pending</span></button><button class="graph-node agent" data-node="recovery"><span class="node-name">Recovery Agent</span><span class="node-state">Pending</span></button><button class="graph-node agent" data-node="safety"><span class="node-name">Safety Agent</span><span class="node-state">Pending</span></button><button class="graph-node approval-node" data-node="human_approval"><span class="node-name">Human Approval</span><span class="node-state">Checkpoint</span></button><button class="graph-node end" data-node="__end"><span class="node-name">END</span><span class="node-state">Terminal</span></button></div></div><div class="graph-inspector" id="graph-inspector"><h3>Supervisor</h3><div class="inspector-meta">Select a node to inspect execution details.</div></div><div class="graph-note">This view is reconstructed from recorded node events and the configured LangGraph topology after the API response. It is not a live streaming trace.</div></div><div class="card wide"><h2>Agent Execution Timeline</h2><div id="timeline"></div></div><div class="card wide"><h2>Competing Hypotheses</h2><div id="hypotheses"></div></div><div class="card wide"><h2>Evidence</h2><div id="evidence" class="evidence"></div></div></div></section></main>
 <script>
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pct=v=>Math.round(Number(v||0)*100);
 const label=v=>String(v??"").replaceAll("_"," ");
-function render(data){
+
+const graphNodeNames={historical_memory:"Historical Memory",supervisor:"Supervisor",telemetry:"Telemetry Agent",knowledge:"Knowledge Agent · RAG",deployment:"Deployment Agent",root_cause:"Root Cause Agent",critic:"Critic Agent",adjudication:"Adjudication Agent",recovery:"Recovery Agent",safety:"Safety Agent",human_approval:"Human Approval"};
+let graphData=null,selectedGraphNode="supervisor";
+function graphStatus(node,data,events){
+  const matches=events.filter(e=>e.node===node);
+  if(matches.some(e=>e.status==="error"))return "failed";
+  if(node==="human_approval"){
+    if(data.status==="awaiting_human_approval")return "waiting";
+    if(data.status==="blocked")return "blocked";
+    if(data.status==="approved_for_execution")return "completed";
+    if(data.status==="complete")return data.approval_required?"waiting":"completed";
+    return "pending";
+  }
+  if(matches.length)return "completed";
+  return "pending";
+}
+function renderExecutionGraph(data){
+  graphData=data;const events=data.observability_events||[];
+  document.querySelectorAll(".graph-node").forEach(el=>{
+    const node=el.dataset.node;if(node.startsWith("__"))return;
+    const status=graphStatus(node,data,events);el.classList.remove("completed","failed","blocked","waiting","running","selected");el.classList.add(status);
+    const state=el.querySelector(".node-state");if(state)state.textContent=status.replaceAll("_"," ");
+    const count=events.filter(e=>e.node===node).length;
+    const countEl=el.querySelector(".node-count");if(countEl)countEl.textContent=count?count+" calls":"";
+  });
+  $("supervisor-count").textContent=(events.filter(e=>e.node==="supervisor").length||0)+" calls";
+  const end=$('graph-canvas').querySelector('[data-node="__end"]');end.classList.toggle("completed",["complete","approved_for_execution","blocked"].includes(data.status));
+  if(data.status==="awaiting_human_approval")end.classList.remove("completed");
+  selectGraphNode(selectedGraphNode);
+}
+function selectGraphNode(node){
+  selectedGraphNode=node;
+  document.querySelectorAll(".graph-node").forEach(el=>el.classList.toggle("selected",el.dataset.node===node));
+  if(!graphData)return;
+  const events=graphData.observability_events||[],name=graphNodeNames[node]||node;
+  const matched=events.filter(e=>e.node===node);
+  const evidence=node==="knowledge"?graphData.evidence.filter(e=>e.evidence_type==="knowledge"):graphData.evidence.filter(e=>e.agent===node);
+  const status=graphStatus(node,graphData,events);
+  let html='<h3>'+esc(name)+'</h3><div class="inspector-meta">Status: '+esc(status.replaceAll("_"," "))+' · '+matched.length+' recorded event(s)'+(matched.length?' · '+matched.reduce((n,e)=>n+Number(e.duration_ms||0),0).toFixed(2)+' ms total':'')+'</div>';
+  if(matched.length)html+='<div class="inspector-list">'+matched.map(e=>'<div class="inspector-event"><b>'+esc((e.status||"").toUpperCase())+'</b> · '+esc(e.timestamp||"")+' · '+Number(e.duration_ms||0).toFixed(2)+' ms<div class="timeline-keys">'+(e.output_keys||[]).map(k=>'<span class="timeline-key">'+esc(k)+'</span>').join("")+'</div>'+(e.error?'<div class="error">'+esc(e.error)+'</div>':"")+'</div>').join("")+'</div>';
+  else html+='<div class="inspector-meta">No traced event was recorded for this node. The human-approval checkpoint is represented from the returned investigation status.</div>';
+  if(node==="knowledge")html+='<div class="inspector-meta" style="margin-top:12px">Retrieved knowledge evidence (RAG)</div>';
+  if(evidence.length)html+='<div style="margin-top:8px">'+evidence.map(e=>'<div class="inspector-evidence"><b>'+esc(e.source)+'</b><div>'+esc(e.observation)+'</div>'+(e.relevance!=null?'<div class="timeline-meta">Relevance: '+Number(e.relevance).toFixed(2)+'</div>':"")+'</div>').join("")+'</div>';
+  else if(["telemetry","knowledge","deployment","root_cause","critic","adjudication","recovery","safety"].includes(node))html+='<div class="inspector-meta" style="margin-top:8px">No evidence items are attributed directly to this agent in the response.</div>';
+  $("graph-inspector").innerHTML=html;
+}
+\nfunction render(data){
   $("result").hidden=false;$("incident-id").textContent=data.incident_id;$("status").textContent=label(data.status).toUpperCase();$("approval-card").hidden=!(data.status==="awaiting_human_approval"&&data.approval_required);
   const r=data.root_cause;
   if(r){
@@ -73,7 +144,7 @@ async function investigate(){
   try{const res=await fetch("/api/v1/investigations",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({incident_id:$("incident").value.trim()})});const data=await res.json();if(!res.ok)throw new Error(data.detail||"Investigation failed");render(data)}
   catch(e){$("error").textContent=e.message}finally{$("run").disabled=false;$("run").textContent="Investigate"}
 }
-$("run").addEventListener("click",investigate);$("approve").addEventListener("click",()=>submitApproval(true));$("reject").addEventListener("click",()=>submitApproval(false));
+$("graph-canvas").addEventListener("click",e=>{const node=e.target.closest(".graph-node");if(node)selectGraphNode(node.dataset.node)});\n$("run").addEventListener("click",investigate);$("approve").addEventListener("click",()=>submitApproval(true));$("reject").addEventListener("click",()=>submitApproval(false));
 fetch("/health").then(r=>r.ok?$("health").innerHTML='<span class="online"><span class="dot"></span>API online</span>':Promise.reject()).catch(()=>$("health").textContent="API unavailable");
 investigate();
 </script></body></html>

@@ -162,6 +162,29 @@ def investigate(request: InvestigationRequest) -> InvestigationResponse:
             detail=f"Unknown incident_id: {request.incident_id}",
         ) from exc
 
+    # A thread is keyed by incident ID. Before starting a new run, distinguish
+    # a genuinely paused approval from a stale terminal checkpoint that still
+    # carries awaiting_human_approval in its values.
+    config = _config(request.incident_id)
+    previous = _GRAPH.get_state(config)
+    if previous.values.get("investigation_status") == "awaiting_human_approval":
+        has_live_interrupt = any(
+            bool(task.interrupts) for task in previous.tasks
+        )
+        if has_live_interrupt and "human_approval" in previous.next:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "This incident already has an investigation waiting for "
+                    "human approval. Submit the approval decision before starting "
+                    "another investigation."
+                ),
+            )
+
+    # Reuse of an incident ID must not inherit completed_tasks, plan, or other
+    # state from a previous run. Approval requests continue using this thread.
+    _CHECKPOINTER.delete_thread(request.incident_id)
+
     initial_state = {
         "incident_id": evidence.incident.incident_id,
         "incident_summary": evidence.incident.description,

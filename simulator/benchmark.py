@@ -175,6 +175,11 @@ def _case(incident_id: str) -> dict:
     raise KeyError(f"Unknown benchmark incident: {incident_id}")
 
 
+def benchmark_category(incident_id: str) -> str:
+    """Return the curated failure category for an incident."""
+    return _case(incident_id)["category"]
+
+
 def _timestamp(incident_id: str) -> datetime:
     number = int(incident_id.split("-")[1])
     return datetime(2026, 1, 1, 12, 0, tzinfo=UTC) + timedelta(days=number)

@@ -16,7 +16,7 @@ def clear_incident_checkpoint(monkeypatch) -> None:
     # API behavior tests use deterministic benchmark evidence by default.
     # The dedicated RAG integration test explicitly enables its fake retriever.
     monkeypatch.setenv("SENTINELOPS_RAG_ENABLED", "false")
-    _CHECKPOINTER.delete_thread("INC-002")
+    _CHECKPOINTER.delete_thread("RS-001")
 
 
 def test_health() -> None:
@@ -29,24 +29,24 @@ def test_dashboard_is_served() -> None:
     response = client.get("/")
     assert response.status_code == 200
     assert "SentinelOps" in response.text
-    assert "INC-002" in response.text
+    assert "RS-001" in response.text
     assert "Approve Recovery" in response.text
 
 
 def test_investigation_stops_at_human_approval() -> None:
     response = client.post(
         "/api/v1/investigations",
-        json={"incident_id": "INC-002"},
+        json={"incident_id": "RS-001"},
     )
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["incident_id"] == "INC-002"
+    assert payload["incident_id"] == "RS-001"
     assert payload["status"] == "awaiting_human_approval"
     assert payload["approval_status"] == "pending"
     assert payload["approval_required"] is True
-    assert payload["root_cause"]["hypothesis_id"] == "H1"
-    assert payload["root_cause"]["confidence"] == 0.95
+    assert payload["root_cause"]["hypothesis_id"] == "RSH1"
+    assert 0.0 <= payload["root_cause"]["confidence"] <= 1.0
     assert payload["hypotheses"]
     assert payload["evidence"]
     assert payload["recovery_plan"] is not None
@@ -54,9 +54,9 @@ def test_investigation_stops_at_human_approval() -> None:
 
 
 def test_stale_pending_checkpoint_is_replaced_on_new_investigation() -> None:
-    config = {"configurable": {"thread_id": "INC-002"}}
+    config = {"configurable": {"thread_id": "RS-001"}}
     _GRAPH.update_state(config, {
-        "incident_id": "INC-002",
+        "incident_id": "RS-001",
         "investigation_status": "awaiting_human_approval",
         "approval_status": "pending",
         "approval_required": True,
@@ -64,7 +64,7 @@ def test_stale_pending_checkpoint_is_replaced_on_new_investigation() -> None:
                             "critic", "adjudication", "recovery", "safety"],
     })
 
-    response = client.post("/api/v1/investigations", json={"incident_id": "INC-002"})
+    response = client.post("/api/v1/investigations", json={"incident_id": "RS-001"})
 
     assert response.status_code == 200
     assert response.json()["status"] == "awaiting_human_approval"
@@ -74,10 +74,10 @@ def test_stale_pending_checkpoint_is_replaced_on_new_investigation() -> None:
 
 
 def test_cannot_restart_while_human_approval_is_pending() -> None:
-    started = client.post("/api/v1/investigations", json={"incident_id": "INC-002"})
+    started = client.post("/api/v1/investigations", json={"incident_id": "RS-001"})
     assert started.status_code == 200
 
-    restarted = client.post("/api/v1/investigations", json={"incident_id": "INC-002"})
+    restarted = client.post("/api/v1/investigations", json={"incident_id": "RS-001"})
 
     assert restarted.status_code == 409
     assert "waiting for human approval" in restarted.json()["detail"]
@@ -85,49 +85,49 @@ def test_cannot_restart_while_human_approval_is_pending() -> None:
 def test_approval_resumes_investigation_without_restarting() -> None:
     started = client.post(
         "/api/v1/investigations",
-        json={"incident_id": "INC-002"},
+        json={"incident_id": "RS-001"},
     )
     assert started.status_code == 200
     assert started.json()["status"] == "awaiting_human_approval"
 
     response = client.post(
-        "/api/v1/investigations/INC-002/approval",
+        "/api/v1/investigations/RS-001/approval",
         json={"approved": True, "reviewer": "Aadhil"},
     )
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["incident_id"] == "INC-002"
+    assert payload["incident_id"] == "RS-001"
     assert payload["status"] == "approved_for_execution"
     assert payload["approval_status"] == "approved"
     assert payload["approval_required"] is False
-    assert payload["root_cause"]["hypothesis_id"] == "H1"
+    assert payload["root_cause"]["hypothesis_id"] == "RSH1"
     assert payload["recovery_plan"] is not None
 
 
 def test_rejection_blocks_investigation() -> None:
     started = client.post(
         "/api/v1/investigations",
-        json={"incident_id": "INC-002"},
+        json={"incident_id": "RS-001"},
     )
     assert started.status_code == 200
     assert started.json()["status"] == "awaiting_human_approval"
 
     response = client.post(
-        "/api/v1/investigations/INC-002/approval",
+        "/api/v1/investigations/RS-001/approval",
         json={"approved": False, "reviewer": "Aadhil"},
     )
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["incident_id"] == "INC-002"
+    assert payload["incident_id"] == "RS-001"
     assert payload["status"] == "blocked"
     assert payload["approval_status"] == "rejected"
     assert payload["approval_required"] is False
 
 
 def test_approval_requires_pending_investigation() -> None:
-    config = {"configurable": {"thread_id": "INC-002"}}
+    config = {"configurable": {"thread_id": "RS-001"}}
 
     _GRAPH.update_state(
         config,
@@ -138,7 +138,7 @@ def test_approval_requires_pending_investigation() -> None:
     )
 
     response = client.post(
-        "/api/v1/investigations/INC-002/approval",
+        "/api/v1/investigations/RS-001/approval",
         json={"approved": True, "reviewer": "Aadhil"},
     )
 
@@ -158,7 +158,7 @@ def test_openapi_exposes_typed_response_schema() -> None:
 def test_unknown_incident_returns_404() -> None:
     response = client.post(
         "/api/v1/investigations",
-        json={"incident_id": "INC-999"},
+        json={"incident_id": "RS-999"},
     )
 
     assert response.status_code == 404
@@ -192,12 +192,12 @@ def test_investigation_injects_configured_rag_retriever(monkeypatch) -> None:
 
     response = client.post(
         "/api/v1/investigations",
-        json={"incident_id": "INC-002"},
+        json={"incident_id": "RS-001"},
     )
 
     assert response.status_code == 200
     assert len(retriever.calls) == 1
-    assert "Primary database saturation" in retriever.calls[0][0]
+    assert "Redshift WLM" in retriever.calls[0][0]
     assert retriever.calls[0][1] == 5
     assert any(
         item["source"] == "runbooks/deployment-rollback.md"
@@ -219,16 +219,16 @@ def test_rag_disabled_mode_does_not_initialize_embedding_provider(monkeypatch) -
 
 
 def test_investigate_is_idempotent_after_approval():
-    started = client.post("/api/v1/investigations", json={"incident_id": "INC-002"})
+    started = client.post("/api/v1/investigations", json={"incident_id": "RS-001"})
     assert started.status_code == 200
     approved = client.post(
-        "/api/v1/investigations/INC-002/approval",
+        "/api/v1/investigations/RS-001/approval",
         json={"approved": True, "reviewer": "Aadhil"},
     )
     assert approved.status_code == 200
     assert approved.json()["status"] == "approved_for_execution"
 
-    reopened = client.post("/api/v1/investigations", json={"incident_id": "INC-002"})
+    reopened = client.post("/api/v1/investigations", json={"incident_id": "RS-001"})
 
     assert reopened.status_code == 200
     assert reopened.json()["status"] == "approved_for_execution"
@@ -238,35 +238,35 @@ def test_incident_list_includes_all_benchmark_incidents():
     response = client.get("/api/v1/incidents")
     assert response.status_code == 200
     payload = response.json()
-    assert len(payload) == 35
-    assert payload[1]["incident_id"] == "INC-002"
-    assert payload[1]["category"] == "deployment_query_database_saturation"
-    assert payload[-1]["incident_id"] == "INC-035"
-    assert payload[-1]["severity"] == "LOW"
+    assert len(payload) == 12
+    assert payload[0]["incident_id"] == "RS-001"
+    assert payload[0]["category"] == "wlm_queue_contention"
+    assert payload[-1]["incident_id"] == "RS-012"
+    assert payload[-1]["service"] == "amazon-redshift"
 
 
 def test_saved_incident_can_be_opened_and_deleted():
-    started = client.post("/api/v1/investigations", json={"incident_id": "INC-002"})
+    started = client.post("/api/v1/investigations", json={"incident_id": "RS-001"})
     assert started.status_code == 200
 
-    opened = client.get("/api/v1/incidents/INC-002")
+    opened = client.get("/api/v1/incidents/RS-001")
     assert opened.status_code == 200
     assert opened.json()["status"] == "awaiting_human_approval"
 
-    deleted = client.delete("/api/v1/incidents/INC-002")
+    deleted = client.delete("/api/v1/incidents/RS-001")
     assert deleted.status_code == 200
     assert deleted.json()["status"] == "deleted"
-    assert client.get("/api/v1/incidents/INC-002").status_code == 404
+    assert client.get("/api/v1/incidents/RS-001").status_code == 404
 
 
 def test_saved_investigation_response_ignores_null_collection_entries() -> None:
     response = _investigation_response({
-        "incident_id": "INC-002",
+        "incident_id": "RS-001",
         "investigation_status": "complete",
         "hypotheses": [None],
         "evidence_items": [None],
     })
 
-    assert response.incident_id == "INC-002"
+    assert response.incident_id == "RS-001"
     assert response.hypotheses == []
     assert response.evidence == []

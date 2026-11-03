@@ -26,7 +26,7 @@ def ask(system: str, user: str, *, max_tokens: int = 300) -> str | None:
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
         "stream": False,
         "think": False,
-        "options": {"temperature": 0, "num_predict": max_tokens, "num_ctx": 2048},
+        "options": {"temperature": 0, "num_predict": min(max_tokens, int(os.getenv("SENTINELOPS_LLM_MAX_TOKENS", "160"))), "num_ctx": int(os.getenv("SENTINELOPS_LLM_CONTEXT", "1536"))},
     }
     request = Request(
         host + "/api/chat",
@@ -43,10 +43,10 @@ def ask(system: str, user: str, *, max_tokens: int = 300) -> str | None:
         return None
 
 
-def evidence_context(state, *, limit: int = 18) -> str:
+def evidence_context(state, *, limit: int = 10) -> str:
     """Only pass bounded observed evidence, not hidden ground-truth labels."""
     items = list(state.get("evidence_items", ()))[:limit]
     return "\n".join(
-        f"[{str(item.source)[:100]}] {str(item.observation)[:350]}"
+        f"[{str(item.source)[:100]}] {str(item.observation)[:200]}"
         for item in items
-    )[:5500]
+    )[:3000]

@@ -123,22 +123,32 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
         status = hypothesis.status
         relationship_roles = {relationship.role for relationship in hypothesis.causal_relationships}
 
-        if hypothesis.hypothesis_id == "H1":
-            # Generic database symptoms and a generic deployment record do not
-            # establish deployment causality. Only reward H1 when the change
-            # record itself describes a database/query/release change.
-            direct_deployment_trigger = any(
-                item.evidence_type in {"deployment", "deployment_change"}
-                and any(
-                    term in item.observation.lower()
-                    for term in ("query", "database", "db_", "release", "schema")
-                )
-                and not any(
-                    term in item.observation.lower()
-                    for term in ("rollback", "restart", "recovery", "throttle", "protect")
-                )
-                for item in items
+        direct_deployment_trigger = any(
+            item.evidence_type in {"deployment", "deployment_change"}
+            and any(
+                term in item.observation.lower()
+                for term in ("query", "database", "db_", "release", "schema")
             )
+            and not any(
+                term in item.observation.lower()
+                for term in ("rollback", "restart", "recovery", "throttle", "protect")
+            )
+            for item in items
+        )
+        direct_migration_trigger = any(
+            item.evidence_type in {"deployment", "deployment_change", "log"}
+            and any(
+                term in item.observation.lower()
+                for term in ("migration", "schema change", "alter table")
+            )
+            and not any(
+                term in item.observation.lower()
+                for term in ("rollback", "restart", "recovery")
+            )
+            for item in items
+        )
+
+        if hypothesis.hypothesis_id == "H1":
             if direct_deployment_trigger:
                 confidence = min(
                     1.0,
@@ -147,11 +157,17 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
                     + (0.15 if causal else 0.0)
                     + (0.10 if recovery else 0.0),
                 )
-            status = "strong_candidate" if confidence >= 0.75 else "supported"
+            else:
+                # Do not let shared database symptoms establish deployment causality.
+                confidence = min(confidence, 0.59)
+                status = "candidate"
+            status = "strong_candidate" if confidence >= 0.75 else status
         elif hypothesis.hypothesis_id == "H2":
-            # Preserve the root-cause agent's score and add a bounded bonus
-            # only when direct traffic/request-volume telemetry is present.
             confidence = min(1.0, confidence + (0.10 if traffic_direct else 0.0))
+            # Traffic can be a contributing condition; a directly observed
+            # migration trigger is more discriminating for H6.
+            if direct_migration_trigger:
+                confidence = max(0.0, confidence - 0.20)
             status = "supported" if traffic_direct and confidence >= 0.6 else (
                 hypothesis.status if confidence >= 0.6 else "insufficient_evidence"
             )
@@ -160,6 +176,10 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
             status = "supported" if network_direct and confidence >= 0.6 else (
                 hypothesis.status if confidence >= 0.6 else "insufficient_evidence"
             )
+        elif hypothesis.hypothesis_id == "H6":
+            if direct_migration_trigger:
+                confidence = min(1.0, confidence + 0.20)
+                status = "supported" if confidence >= 0.6 else hypothesis.status
         adjudicated.append(
             Hypothesis(
                 hypothesis_id=hypothesis.hypothesis_id,

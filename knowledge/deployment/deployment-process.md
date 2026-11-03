@@ -1,8 +1,13 @@
-# Production Deployment Process
+# Redshift Change Validation
 
-Production deployments should record the service, new version, previous version, deployment timestamp, change summary, and rollout status.
+## Before change
 
-## Investigation use
-When an incident follows a deployment, compare the deployment timestamp with the first abnormal telemetry. Inspect the change summary and identify components that could plausibly affect the failing request path.
+Validate SQL and EXPLAIN plans, WLM behavior, workload concurrency, table design/statistics, COPY/UNLOAD options, external schema access, IAM/KMS permissions, and network reachability in a representative non-production environment.
 
-Deployment timing is correlation evidence, not proof of causation. Combine it with telemetry and traces showing a corresponding behavior change.
+## After change
+
+Monitor query execution and queue time, WLM queue depth, compute utilization, spill, load errors, cluster events, and relevant S3/Glue/IAM/KMS/VPC signals.
+
+## Regression detection
+
+Preserve before/after evidence around the change window. A temporal association is not sufficient: establish the Redshift-specific mechanism and workload impact before attributing root cause.

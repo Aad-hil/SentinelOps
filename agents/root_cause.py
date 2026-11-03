@@ -21,6 +21,7 @@ class Hypothesis:
     """A candidate explanation evaluated against shared evidence."""
 
     hypothesis_id: str
+    display_name: str
     statement: str
     supporting_evidence: tuple[str, ...]
     contradicting_evidence: tuple[str, ...]
@@ -30,6 +31,22 @@ class Hypothesis:
     causal_evidence: tuple[str, ...] = ()
     causal_relationships: tuple[CausalEvidenceRelationship, ...] = ()
 
+
+# Human-readable labels are presentation metadata; H1-H12 remain stable internal IDs.
+_HYPOTHESIS_NAMES = {
+    "H1": "Deployment-Induced Database Saturation",
+    "H2": "Traffic-Driven Database Overload",
+    "H3": "Network or Dependency Degradation",
+    "H4": "Database Connection Pool Exhaustion",
+    "H5": "Slow Query and Lock Contention",
+    "H6": "Migration-Induced Database Contention",
+    "H7": "Database Primary Failure or Failover Instability",
+    "H8": "Database Write or Schema Regression",
+    "H9": "API Data-Shape-Induced Write Amplification",
+    "H10": "Query-Driven Replication Lag",
+    "H11": "Infrastructure Upgrade Regression",
+    "H12": "Inefficient Query and Background Queue Backlog"
+}
 
 # Generic causal patterns; these are not benchmark ground truth.
 _HYPOTHESES = (
@@ -411,6 +428,7 @@ def generate_hypotheses(state: InvestigationState) -> list[Hypothesis]:
         hypotheses.append(
             Hypothesis(
                 hypothesis_id=hypothesis_id,
+                display_name=_HYPOTHESIS_NAMES[hypothesis_id],
                 statement=statement,
                 supporting_evidence=supporting_sources,
                 contradicting_evidence=tuple(item.source for item in contradictions),

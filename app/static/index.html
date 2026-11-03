@@ -44,12 +44,15 @@ h2{font-size:14px;margin:0 0 17px}.muted{color:var(--muted)}.error{color:var(--d
 .graph-inspector h3{font-size:12px;margin:0 0 7px}.inspector-meta{font-size:11px;color:var(--muted);margin-bottom:10px}.inspector-list{display:grid;gap:7px}.inspector-event{font-size:11px;padding:9px;background:#111d30;border-radius:7px;color:#c7d2e2}.inspector-evidence{font-size:11px;padding:8px 0;border-top:1px solid #223149;color:#c7d2e2}.graph-note{font-size:10px;color:var(--muted);margin-top:10px}
 
 .home-panel{margin-bottom:24px}.home-title{font-size:26px;font-weight:850;margin:0 0 5px}.home-description{color:var(--muted);font-size:13px;margin-bottom:18px}.incident-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:13px}.incident-card{background:linear-gradient(180deg,rgba(16,24,39,.98),rgba(12,20,34,.98));border:1px solid var(--line);border-radius:12px;padding:17px}.incident-card h3{font-size:14px;margin:8px 0 5px}.incident-card p{font-size:11px;color:var(--muted);min-height:34px}.incident-meta{font-size:10px;color:var(--muted);display:flex;justify-content:space-between}.incident-actions{display:flex;gap:7px;margin-top:13px}.incident-actions button{min-width:0;flex:1;padding:9px;font-size:11px}.incident-actions .delete-btn{background:#321d25;border-color:#75414a;color:#ff9b9b}.severity{font-size:9px;color:var(--warn);letter-spacing:.1em;font-weight:850}.back-btn{margin-bottom:14px;min-width:0}.empty-state{padding:24px;text-align:center;color:var(--muted)}
+
+/* Unified graph + timeline: event-ordered, responsive and keyboard accessible */
+.flow-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}.flow-heading h2{margin-bottom:8px}.flow-controls{display:flex;gap:7px;flex-wrap:wrap}.flow-controls button{min-width:42px;padding:9px 12px;font-size:11px}.flow-controls button:disabled{opacity:.4;cursor:not-allowed}.flow-overview{display:flex;gap:16px;flex-wrap:wrap;margin:18px 0 10px;font-size:11px;color:#b8c8df}.flow-overview b{color:var(--text)}.flow-progress{height:5px;background:#1b2940;border-radius:20px;overflow:hidden}.flow-progress span{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}.flow-legend{display:flex;gap:15px;flex-wrap:wrap;font-size:10px;color:var(--muted);margin:14px 0}.flow-scroll{overflow-x:auto;overflow-y:hidden;padding:8px 2px 18px;scroll-behavior:smooth}.flow-track{display:flex;align-items:stretch;gap:0;min-height:170px;width:max-content;max-width:none}.flow-step{position:relative;display:flex;align-items:center;flex-shrink:0}.flow-node{position:relative;display:flex;flex-direction:column;gap:7px;text-align:left;width:174px;min-height:146px;padding:14px;background:#111d30;border:1px solid #344762;border-radius:13px;color:var(--text);cursor:pointer;transition:background .2s,border-color .2s,transform .2s}.flow-node:hover{border-color:#88b5ff;transform:translateY(-2px)}.flow-node:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.flow-node.active{border-color:var(--accent);background:#172b47;box-shadow:0 0 0 2px rgba(110,168,254,.18)}.flow-node.done{border-color:#367b65}.flow-node.error,.flow-node.blocked{border-color:#ae5b65}.flow-node.waiting{border-color:#ad8b43}.flow-node.future{opacity:.48}.flow-number{font-size:10px;color:#91a5c4;font-weight:800;letter-spacing:.07em}.flow-name{font-size:12px;font-weight:800;line-height:1.45}.flow-status{font-size:10px;color:var(--muted)}.flow-node.done .flow-status{color:var(--good)}.flow-node.error .flow-status,.flow-node.blocked .flow-status{color:var(--danger)}.flow-node.waiting .flow-status{color:var(--warn)}.flow-duration{margin-top:auto;font-size:11px;color:#b9c8df;font-variant-numeric:tabular-nums}.flow-arrow{display:flex;align-items:center;justify-content:center;width:36px;color:#6787b3;font-size:21px}.flow-inspector{padding:17px;border:1px solid #2b3e5c;border-radius:12px;background:#0b1423;margin-top:10px}.flow-inspector h3{font-size:15px;margin:0 0 9px}.flow-inspector .inspector-list{max-height:300px;overflow:auto}.flow-inspector .inspector-evidence{max-height:230px;overflow:auto}.flow-inspector .inspector-event{overflow-wrap:anywhere}.flow-inspector .inspector-meta{line-height:1.6}.flow-inspector .inspector-evidence{margin-top:10px}@media(max-width:620px){.flow-heading{display:block}.flow-controls{margin-top:12px}.flow-node{width:150px;min-height:140px}.flow-arrow{width:25px}}
 </style></head>
 <body>
 <header><div><div class="brand">SENTINELOPS</div><div class="sub">Amazon Redshift incident investigation & safe recovery</div></div><div id="health" class="sub">Checking API…</div></header>
 <main><section id="home" class="home-panel"><div class="home-title">Redshift Incident Command Center</div><div class="home-description">Select a synthetic Redshift incident to investigate, reopen its saved results, or remove its saved investigation.</div><div id="incident-list" class="incident-grid"><div class="empty-state">Loading incidents…</div></div></section><button id="back-home" class="back-btn" hidden>← All incidents</button><div class="toolbar" hidden><input id="incident" value="RS-001" aria-label="Incident ID"><button id="run">Investigate</button></div><div id="error" class="error"></div>
 <section id="result" hidden><div class="card incident-head"><div><div class="eyebrow">Incident</div><div id="incident-id" class="incident-id"></div><div class="muted">Evidence-backed investigation</div></div><div id="status" class="status"></div></div>
-<div class="grid"><div class="card"><h2>Root Cause</h2><div id="root"></div></div><div class="card"><h2>Safety Decision</h2><div id="safety"></div></div><div id="approval-card" class="card wide approval-card" hidden><h2>Human Approval Required</h2><div class="muted">Review the proposed recovery plan before allowing the investigation to proceed.</div><input id="reviewer" class="reviewer" placeholder="Reviewer name" aria-label="Reviewer name"><div class="approval-actions"><button id="approve" class="approve">Approve Recovery</button><button id="reject" class="reject">Reject Recovery</button></div></div><div class="card wide"><h2>Recovery Plan</h2><div id="recovery"></div></div><div class="card wide"><h2>Interactive Agent Execution Graph</h2><div class="muted" style="font-size:11px;margin:-8px 0 14px">Execution topology and node outcomes for this investigation. Select any node to inspect its events and evidence.</div><div class="graph-legend"><span class="legend-item"><i class="legend-dot done"></i>Completed</span><span class="legend-item"><i class="legend-dot wait"></i>Awaiting approval</span><span class="legend-item"><i class="legend-dot fail"></i>Failed / blocked</span><span class="legend-item"><i class="legend-dot"></i>Not executed</span></div><div class="graph-wrap"><div class="graph-canvas" id="graph-canvas"><svg class="graph-lines" viewBox="0 0 1200 630" aria-hidden="true"><defs><marker id="graph-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="#536b91"/></marker></defs><path d="M125 315 L180 315"/><path d="M330 315 L410 315"/><path d="M580 313 C635 313 650 49 720 49"/><path class="loop" d="M720 49 C650 49 650 313 580 313"/><path d="M580 313 C635 313 650 119 720 119"/><path class="loop" d="M720 119 C650 119 650 313 580 313"/><path d="M580 313 C635 313 650 189 720 189"/><path class="loop" d="M720 189 C650 189 650 313 580 313"/><path d="M580 313 C635 313 650 259 720 259"/><path class="loop" d="M720 259 C650 259 650 313 580 313"/><path d="M580 313 C635 313 650 329 720 329"/><path class="loop" d="M720 329 C650 329 650 313 580 313"/><path d="M580 313 C635 313 650 399 720 399"/><path class="loop" d="M720 399 C650 399 650 313 580 313"/><path d="M580 313 C635 313 650 469 720 469"/><path class="loop" d="M720 469 C650 469 650 313 580 313"/><path d="M580 313 C635 313 650 539 720 539"/><path d="M880 539 L990 539"/><path d="M1080 514 C1160 430 1160 370 1090 322"/></svg><button class="graph-node start" data-node="__start"><span class="node-name">START</span><span class="node-state">Entry</span></button><button class="graph-node history" data-node="historical_memory"><span class="node-name">Historical Memory</span><span class="node-state">Prior incidents</span></button><button class="graph-node supervisor" data-node="supervisor"><span class="node-name">Supervisor</span><span class="node-state">Workflow routing</span><span class="node-count" id="supervisor-count"></span></button><button class="graph-node agent" data-node="telemetry"><span class="node-name">Telemetry Agent</span><span class="node-state">Pending</span></button><button class="graph-node agent" data-node="knowledge"><span class="node-name">Knowledge Agent · RAG</span><span class="node-state">Pending</span></button><button class="graph-node agent" data-node="deployment"><span class="node-name">Deployment Agent</span><span class="node-state">Pending</span></button><button class="graph-node agent" data-node="root_cause"><span class="node-name">Root Cause Agent</span><span class="node-state">Pending</span></button><button class="graph-node agent" data-node="critic"><span class="node-name">Critic Agent</span><span class="node-state">Pending</span></button><button class="graph-node agent" data-node="adjudication"><span class="node-name">Adjudication Agent</span><span class="node-state">Pending</span></button><button class="graph-node agent" data-node="recovery"><span class="node-name">Recovery Agent</span><span class="node-state">Pending</span></button><button class="graph-node agent" data-node="safety"><span class="node-name">Safety Agent</span><span class="node-state">Pending</span></button><button class="graph-node approval-node" data-node="human_approval"><span class="node-name">Human Approval</span><span class="node-state">Checkpoint</span></button><button class="graph-node end" data-node="__end"><span class="node-name">END</span><span class="node-state">Terminal</span></button></div></div><div class="graph-inspector" id="graph-inspector"><h3>Supervisor</h3><div class="inspector-meta">Select a node to inspect execution details.</div></div><div class="graph-note">This view is reconstructed from recorded node events and the configured LangGraph topology after the API response. It is not a live streaming trace.</div></div><div class="card wide"><h2>Agent Execution Timeline</h2><div id="timeline"></div></div><div class="card wide"><h2>Competing Hypotheses</h2><div id="hypotheses"></div></div><div class="card wide"><h2>Evidence</h2><div id="evidence" class="evidence"></div></div></div></section></main>
+<div class="grid"><div class="card"><h2>Root Cause</h2><div id="root"></div></div><div class="card"><h2>Safety Decision</h2><div id="safety"></div></div><div id="approval-card" class="card wide approval-card" hidden><h2>Human Approval Required</h2><div class="muted">Review the proposed recovery plan before allowing the investigation to proceed.</div><input id="reviewer" class="reviewer" placeholder="Reviewer name" aria-label="Reviewer name"><div class="approval-actions"><button id="approve" class="approve">Approve Recovery</button><button id="reject" class="reject">Reject Recovery</button></div></div><div class="card wide"><h2>Recovery Plan</h2><div id="recovery"></div></div><div class="card wide"><div class="flow-heading"><div><h2>Agent Execution Flow</h2><div class="muted" style="font-size:11px">One interactive journey combining the agent graph and execution timeline. Follow each recorded step and inspect its evidence.</div></div><div class="flow-controls"><button id="flow-prev" type="button" title="Previous step">←</button><button id="flow-play" type="button">▶ Play</button><button id="flow-next" type="button" title="Next step">→</button><button id="flow-all" type="button">Show all</button></div></div><div class="flow-overview" id="flow-overview" aria-live="polite"></div><div class="flow-progress"><span id="flow-progress-bar"></span></div><div class="flow-legend"><span>● Completed</span><span>◉ Selected step</span><span>◌ Not executed</span><span>⚠ Blocked / review</span></div><div class="flow-scroll" id="flow-scroll"><div class="flow-track" id="flow-track" role="list" aria-label="Recorded agent execution steps"></div></div><div class="flow-inspector" id="graph-inspector" aria-live="polite"><div class="muted">Select an execution step to inspect its trace and evidence.</div></div><div class="graph-note">Playback replays saved execution events; it does not execute agents or stream live activity. Supervisor may appear multiple times because it routes the workflow between agents.</div></div><div class="card wide"><h2>Competing Hypotheses</h2><div id="hypotheses"></div></div><div class="card wide"><h2>Evidence</h2><div id="evidence" class="evidence"></div></div></div></section></main>
 <script>
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -57,49 +60,80 @@ const pct=v=>Math.round(Number(v||0)*100);
 const label=v=>String(v??"").replaceAll("_"," ");
 
 const graphNodeNames={historical_memory:"Historical Memory",supervisor:"Supervisor",telemetry:"Telemetry Agent",knowledge:"Knowledge Agent · RAG",deployment:"Deployment Agent",root_cause:"Root Cause Agent",critic:"Critic Agent",adjudication:"Adjudication Agent",recovery:"Recovery Agent",safety:"Safety Agent",human_approval:"Human Approval"};
-let graphData=null,selectedGraphNode="supervisor";
-function graphStatus(node,data,events){
-  const matches=events.filter(e=>e.node===node);
-  if(matches.some(e=>e.status==="error"))return "failed";
-  if(node==="human_approval"){
-    if(data.status==="awaiting_human_approval")return "waiting";
-    if(data.status==="blocked")return "blocked";
-    if(data.status==="approved_for_execution")return "completed";
-    if(data.status==="complete")return data.approval_required?"waiting":"completed";
-    return "pending";
+const flowOrder=["historical_memory","supervisor","telemetry","knowledge","deployment","root_cause","critic","adjudication","recovery","safety","human_approval"];
+let graphData=null,flowSteps=[],flowIndex=0,flowTimer=null,flowShowAll=false;
+function stopFlow(){if(flowTimer!==null){clearInterval(flowTimer);flowTimer=null}$("flow-play").textContent="▶ Play"}
+function buildFlowSteps(data){
+  const events=data.observability_events||[];
+  const steps=events.map((event,i)=>({node:event.node,event,index:i,kind:"event"}));
+  // The approval checkpoint is not instrumented as a traced node.
+  if(steps.length&&data.safety_decision){
+    const status=data.status==="awaiting_human_approval"?"waiting":data.status==="approved_for_execution"?"done":data.status==="blocked"?"blocked":"skipped";
+    steps.push({node:"human_approval",kind:"checkpoint",status,index:steps.length});
   }
-  if(matches.length)return "completed";
-  return "pending";
+  if(steps.length)steps.push({node:"__end",kind:"terminal",status:data.status,index:steps.length});
+  return steps;
 }
 function renderExecutionGraph(data){
-  graphData=data;const events=data.observability_events||[];
-  document.querySelectorAll(".graph-node").forEach(el=>{
-    const node=el.dataset.node;if(node.startsWith("__"))return;
-    const status=graphStatus(node,data,events);el.classList.remove("completed","failed","blocked","waiting","running","selected");el.classList.add(status);
-    const state=el.querySelector(".node-state");if(state)state.textContent=status.replaceAll("_"," ");
-    const count=events.filter(e=>e.node===node).length;
-    const countEl=el.querySelector(".node-count");if(countEl)countEl.textContent=count?count+" calls":"";
-  });
-  $("supervisor-count").textContent=(events.filter(e=>e.node==="supervisor").length||0)+" calls";
-  const end=$('graph-canvas').querySelector('[data-node="__end"]');end.classList.toggle("completed",["complete","approved_for_execution","blocked"].includes(data.status));
-  if(data.status==="awaiting_human_approval")end.classList.remove("completed");
-  selectGraphNode(selectedGraphNode);
+  stopFlow();graphData=data;flowSteps=buildFlowSteps(data);flowIndex=Math.max(0,flowSteps.length-1);flowShowAll=false;
+  renderFlow();
 }
-function selectGraphNode(node){
-  selectedGraphNode=node;
-  document.querySelectorAll(".graph-node").forEach(el=>el.classList.toggle("selected",el.dataset.node===node));
-  if(!graphData)return;
-  const events=graphData.observability_events||[],name=graphNodeNames[node]||node;
-  const matched=events.filter(e=>e.node===node);
-  const evidence=node==="knowledge"?graphData.evidence.filter(e=>e.evidence_type==="knowledge"):graphData.evidence.filter(e=>e.agent===node);
-  const status=graphStatus(node,graphData,events);
-  let html='<h3>'+esc(name)+'</h3><div class="inspector-meta">Status: '+esc(status.replaceAll("_"," "))+' · '+matched.length+' recorded event(s)'+(matched.length?' · '+matched.reduce((n,e)=>n+Number(e.duration_ms||0),0).toFixed(2)+' ms total':'')+'</div>';
-  if(matched.length)html+='<div class="inspector-list">'+matched.map(e=>'<div class="inspector-event"><b>'+esc((e.status||"").toUpperCase())+'</b> · '+esc(e.timestamp||"")+' · '+Number(e.duration_ms||0).toFixed(2)+' ms<div class="timeline-keys">'+(e.output_keys||[]).map(k=>'<span class="timeline-key">'+esc(k)+'</span>').join("")+'</div>'+(e.error?'<div class="error">'+esc(e.error)+'</div>':"")+'</div>').join("")+'</div>';
-  else html+='<div class="inspector-meta">No traced event was recorded for this node. The human-approval checkpoint is represented from the returned investigation status.</div>';
-  if(node==="knowledge")html+='<div class="inspector-meta" style="margin-top:12px">Retrieved knowledge evidence (RAG)</div>';
-  if(evidence.length)html+='<div style="margin-top:8px">'+evidence.map(e=>'<div class="inspector-evidence"><b>'+esc(e.source)+'</b><div>'+esc(e.observation)+'</div>'+(e.relevance!=null?'<div class="timeline-meta">Relevance: '+Number(e.relevance).toFixed(2)+'</div>':"")+'</div>').join("")+'</div>';
-  else if(["telemetry","knowledge","deployment","root_cause","critic","adjudication","recovery","safety"].includes(node))html+='<div class="inspector-meta" style="margin-top:8px">No evidence items are attributed directly to this agent in the response.</div>';
+function renderFlow(){
+  const events=graphData?.observability_events||[];
+  const total=events.reduce((sum,e)=>sum+Number(e.duration_ms||0),0);
+  const selected=flowSteps[flowIndex];
+  $("flow-overview").innerHTML='<span><b>'+flowSteps.length+'</b> flow steps</span><span><b>'+events.length+'</b> recorded events</span><span><b>'+total.toFixed(1)+' ms</b> summed node durations</span><span>Outcome: <b>'+esc(label(graphData?.status||"not started"))+'</b></span>';
+  $("flow-progress-bar").style.width=(flowSteps.length?100*(flowIndex+1)/flowSteps.length:0)+'%';
+  $("flow-prev").disabled=!flowSteps.length||flowIndex===0;
+  $("flow-next").disabled=!flowSteps.length||flowIndex===flowSteps.length-1;
+  $("flow-play").disabled=flowSteps.length<2;
+  $("flow-all").textContent=flowShowAll?"Focus selected":"Show all";
+  if(!flowSteps.length){$("flow-track").innerHTML='<div class="empty-state">No recorded agent events available for this investigation.</div>';$("graph-inspector").innerHTML='<div class="muted">No execution trace available.</div>';return}
+  $("flow-track").innerHTML=flowSteps.map((step,i)=>{
+    const isActive=i===flowIndex;
+    const isFuture=!flowShowAll&&i>flowIndex;
+    const state=step.kind==="event"?(step.event.status==="error"?"error":"done"):step.status;
+    const title=step.node==="__end"?"Investigation Result":graphNodeNames[step.node]||label(step.node);
+    const status=step.kind==="event"?(step.event.status||"recorded"):step.kind==="checkpoint"?(step.status==="skipped"?"No approval requested":label(step.status)):label(step.status);
+    const duration=step.kind==="event"?Number(step.event.duration_ms||0).toFixed(1)+" ms":step.kind==="checkpoint"?"Human decision gate":"Final state";
+    return '<div class="flow-step" role="listitem"><button type="button" class="flow-node '+esc(state)+' '+(isActive?"active ":"")+(isFuture?"future":"")+'" data-flow-index="'+i+'" aria-current="'+(isActive?"step":"false")+'" aria-label="Step '+(i+1)+': '+esc(title)+'"><span class="flow-number">STEP '+String(i+1).padStart(2,"0")+'</span><span class="flow-name">'+esc(title)+'</span><span class="flow-status">'+esc(status)+'</span><span class="flow-duration">'+esc(duration)+'</span></button>'+(i<flowSteps.length-1?'<span class="flow-arrow" aria-hidden="true">→</span>':"")+'</div>';
+  }).join("");
+  const current=$("flow-track").querySelector('[data-flow-index="'+flowIndex+'"]');
+  if(current)current.scrollIntoView({behavior:"smooth",block:"nearest",inline:"center"});
+  inspectFlowStep(selected);
+}
+function inspectFlowStep(step){
+  const name=step.node==="__end"?"Investigation Result":graphNodeNames[step.node]||label(step.node);
+  const events=graphData.observability_events||[];
+  const matched=events.filter(e=>e.node===step.node);
+  const evidence=(graphData.evidence||[]).filter(e=>step.node==="knowledge"?e.evidence_type==="knowledge":e.agent===step.node);
+  let html='<h3>'+esc(name)+'</h3>';
+  if(step.kind==="event"){
+    const e=step.event;
+    html+='<div class="inspector-meta">Recorded event '+(step.index+1)+' of '+events.length+' · '+esc((e.status||"unknown").toUpperCase())+' · '+Number(e.duration_ms||0).toFixed(2)+' ms</div>';
+    html+='<div class="inspector-event"><b>Timestamp:</b> '+esc(e.timestamp||"unavailable")+'<div class="trace">Trace: '+esc(e.trace_id||graphData.trace_id||"unavailable")+'</div><div class="timeline-keys">'+(e.output_keys||[]).map(k=>'<span class="timeline-key">'+esc(k)+'</span>').join("")+'</div>'+(e.error?'<div class="error">'+esc(e.error)+'</div>':"")+'</div>';
+    if(matched.length>1)html+='<div class="inspector-meta" style="margin-top:10px">This agent ran '+matched.length+' times. Each invocation is a separate step in the flow.</div>';
+  }else if(step.kind==="checkpoint"){
+    html+='<div class="inspector-meta">Human checkpoint: '+esc(label(step.status))+'. '+(step.status==="blocked"?"Recovery remains blocked; no action was executed.":step.status==="waiting"?"An operator decision is required.":step.status==="skipped"?"No approval was required by the safety decision.":"Approval only authorizes a proposal; SentinelOps does not execute production recovery.")+'</div>';
+  }else{
+    html+='<div class="inspector-meta">Investigation status: '+esc(label(graphData.status))+' · Safety: '+esc(label(graphData.safety_decision?.decision||"unavailable"))+'. This is a recorded result, not an automatic remediation.</div>';
+  }
+  if(evidence.length)html+='<div class="inspector-evidence"><b>Related evidence ('+evidence.length+')</b>'+evidence.map(e=>'<div class="inspector-evidence"><b>'+esc(e.source)+'</b><div>'+esc(e.observation)+'</div></div>').join("")+'</div>';
+  else if(step.kind==="event")html+='<div class="inspector-meta" style="margin-top:12px">No evidence items are directly attributed to this agent in the API response.</div>';
   $("graph-inspector").innerHTML=html;
+}
+function selectFlowIndex(index){if(index<0||index>=flowSteps.length)return;flowIndex=index;renderFlow()}
+function toggleFlowPlay(){
+  if(flowTimer!==null){stopFlow();return}
+  if(!flowSteps.length)return;
+  if(flowIndex>=flowSteps.length-1)flowIndex=0;
+  $("flow-play").textContent="Ⅱ Pause";
+  renderFlow();
+  flowTimer=setInterval(()=>{
+    if(flowIndex>=flowSteps.length-1){stopFlow();return}
+    flowIndex++;renderFlow();
+    if(flowIndex===flowSteps.length-1)stopFlow();
+  },850);
 }
 
 function render(data){
@@ -116,14 +150,6 @@ function render(data){
   }else $("root").innerHTML="<span class='muted'>No adjudicated root cause.</span>";
   const s=data.safety_decision;
   $("safety").innerHTML=s?'<div class="safety-decision">'+esc(label(s.decision).toUpperCase())+'</div><span class="risk">'+esc(s.risk_level)+' risk</span><div class="safety-text">'+esc(s.rationale)+'</div>'+(s.approval_required?'<div class="approval">⚠ Explicit human approval required</div>':'<div class="ok">✓ No human approval required</div>'):"<span class='muted'>No safety decision.</span>";
-  const events=data.observability_events||[];
-  if(events.length){
-    const total=events.reduce((sum,e)=>sum+Number(e.duration_ms||0),0);
-    $("timeline").innerHTML='<div class="muted" style="margin-bottom:10px">'+events.length+' agent/node events · '+total.toFixed(1)+' ms total</div><div class="trace">Trace: '+esc(data.trace_id||events[0].trace_id||"unavailable")+'</div><div class="timeline">'+events.map(e=>{
-      const keys=(e.output_keys||[]).map(k=>'<span class="timeline-key">'+esc(k)+'</span>').join("");
-      return '<div class="timeline-item"><span class="timeline-dot '+(e.status==="error"?"error":"")+'"></span><div><div class="timeline-node">'+esc(label(e.node))+'</div><div class="timeline-meta">'+esc(e.status.toUpperCase())+' · '+esc(e.timestamp||"")+'</div><div class="timeline-keys">'+keys+'</div>'+(e.error?'<div class="error" style="margin:7px 0 0">'+esc(e.error)+'</div>':"")+'</div><div class="timeline-duration">'+Number(e.duration_ms||0).toFixed(1)+' ms</div></div>';
-    }).join("")+'</div>';
-  }else $("timeline").innerHTML="<span class='muted'>No execution events recorded.</span>";
   const p=data.recovery_plan;
   if(p){
     let steps=p.steps.map((x,i)=>'<div class="step"><div class="step-num">'+(i+1)+'</div><div><div class="step-title">'+esc(x.action)+'</div><div class="step-purpose">'+esc(x.purpose)+'</div></div><span class="badge '+(x.requires_approval?"warn":"")+'">'+esc(x.risk)+(x.requires_approval?" · approval":"")+'</span></div>').join("");
@@ -193,7 +219,11 @@ $("incident-list").addEventListener("click",e=>{
 });
 $("back-home").addEventListener("click",()=>{$("result").hidden=true;$("home").hidden=false;$("back-home").hidden=true;$("error").textContent="";loadIncidents()});
 
-$("graph-canvas").addEventListener("click",e=>{const node=e.target.closest(".graph-node");if(node)selectGraphNode(node.dataset.node)});
+$("flow-track").addEventListener("click",e=>{const node=e.target.closest("[data-flow-index]");if(node){stopFlow();selectFlowIndex(Number(node.dataset.flowIndex))}});
+$("flow-prev").addEventListener("click",()=>{stopFlow();selectFlowIndex(flowIndex-1)});
+$("flow-next").addEventListener("click",()=>{stopFlow();selectFlowIndex(flowIndex+1)});
+$("flow-play").addEventListener("click",toggleFlowPlay);
+$("flow-all").addEventListener("click",()=>{flowShowAll=!flowShowAll;renderFlow()});
 $("run").addEventListener("click",investigate);$("approve").addEventListener("click",()=>submitApproval(true));$("reject").addEventListener("click",()=>submitApproval(false));
 fetch("/health").then(r=>r.ok?$("health").innerHTML='<span class="online"><span class="dot"></span>API online</span>':Promise.reject()).catch(()=>$("health").textContent="API unavailable");
 loadIncidents();

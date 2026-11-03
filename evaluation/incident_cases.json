@@ -568,5 +568,110 @@
       "database connection utilization reached 100 percent"
     ],
     "expected_hypothesis_id": "H6"
+  },
+  {
+    "incident_id": "INC-031",
+    "title": "Checkout connection pool nearing warning threshold",
+    "category": "database_connection_pool",
+    "expected_hypothesis_id": "H4",
+    "expected_root_cause": "A small increase in checkout worker concurrency raised database connection usage but the pool remains below exhaustion.",
+    "expected_trigger": "A routine traffic increase during a worker rollout",
+    "expected_affected_component": "Checkout worker connection pool",
+    "expected_mitigation": "Observe pool utilization and apply a small reversible worker concurrency reduction only if the warning persists.",
+    "required_evidence": [
+      "connection pool utilization increased modestly",
+      "no sustained connection acquisition failures occurred",
+      "request error rate remained near baseline"
+    ],
+    "source_type": "synthetic_low_risk",
+    "ground_truth_source": "SentinelOps synthetic low-risk scenario library",
+    "source_url": null,
+    "public_facts_note": "Original synthetic low-severity scenario for testing safe monitoring and reversible mitigations.",
+    "severity": "LOW",
+    "risk_level": "LOW"
+  },
+  {
+    "incident_id": "INC-032",
+    "title": "Search query latency warning without saturation",
+    "category": "deployment_query_database_saturation",
+    "expected_hypothesis_id": "H1",
+    "expected_root_cause": "A search query plan became slightly less efficient, increasing latency without saturating the database.",
+    "expected_trigger": "A low-volume search feature configuration change",
+    "expected_affected_component": "Search API query path",
+    "expected_mitigation": "Capture an explain plan and tune the query in a test environment before considering rollout.",
+    "required_evidence": [
+      "search query latency increased modestly",
+      "database CPU remained below saturation",
+      "request errors stayed near baseline"
+    ],
+    "source_type": "synthetic_low_risk",
+    "ground_truth_source": "SentinelOps synthetic low-risk scenario library",
+    "source_url": null,
+    "public_facts_note": "Original synthetic low-severity scenario for testing safe monitoring and reversible mitigations.",
+    "severity": "LOW",
+    "risk_level": "LOW"
+  },
+  {
+    "incident_id": "INC-033",
+    "title": "Webhook queue growth during a short traffic burst",
+    "category": "inefficient_query_background_load",
+    "expected_hypothesis_id": "H12",
+    "expected_root_cause": "A brief webhook burst temporarily increased queue depth while workers continued processing normally.",
+    "expected_trigger": "A short-lived increase in webhook event volume",
+    "expected_affected_component": "Webhook background queue",
+    "expected_mitigation": "Monitor queue drain rate and apply a conservative rate limit only if backlog continues growing.",
+    "required_evidence": [
+      "webhook event rate briefly increased",
+      "queue depth rose then began stabilizing",
+      "worker completion rate remained healthy"
+    ],
+    "source_type": "synthetic_low_risk",
+    "ground_truth_source": "SentinelOps synthetic low-risk scenario library",
+    "source_url": null,
+    "public_facts_note": "Original synthetic low-severity scenario for testing safe monitoring and reversible mitigations.",
+    "severity": "LOW",
+    "risk_level": "LOW"
+  },
+  {
+    "incident_id": "INC-034",
+    "title": "Read replica lag crosses advisory threshold",
+    "category": "database_replication_lag_query_amplification",
+    "expected_hypothesis_id": "H10",
+    "expected_root_cause": "A small increase in read traffic caused transient replication lag on one replica without affecting primary writes.",
+    "expected_trigger": "A scheduled analytics polling interval",
+    "expected_affected_component": "Analytics read replica",
+    "expected_mitigation": "Temporarily serve freshness-sensitive reads from the primary only when required and monitor replica catch-up.",
+    "required_evidence": [
+      "replica lag crossed an advisory threshold",
+      "primary write latency remained normal",
+      "replica lag recovered without failover"
+    ],
+    "source_type": "synthetic_low_risk",
+    "ground_truth_source": "SentinelOps synthetic low-risk scenario library",
+    "source_url": null,
+    "public_facts_note": "Original synthetic low-severity scenario for testing safe monitoring and reversible mitigations.",
+    "severity": "LOW",
+    "risk_level": "LOW"
+  },
+  {
+    "incident_id": "INC-035",
+    "title": "Database connection utilization advisory",
+    "category": "migration_peak_load_connection_saturation",
+    "expected_hypothesis_id": "H6",
+    "expected_root_cause": "A scheduled low-volume data validation job briefly increased database connection utilization.",
+    "expected_trigger": "A validation job overlapping with normal application traffic",
+    "expected_affected_component": "Database connection pool",
+    "expected_mitigation": "Reschedule or slightly throttle the validation job if utilization remains elevated.",
+    "required_evidence": [
+      "validation job was running",
+      "connection utilization rose but stayed below saturation",
+      "application request errors did not increase"
+    ],
+    "source_type": "synthetic_low_risk",
+    "ground_truth_source": "SentinelOps synthetic low-risk scenario library",
+    "source_url": null,
+    "public_facts_note": "Original synthetic low-severity scenario for testing safe monitoring and reversible mitigations.",
+    "severity": "LOW",
+    "risk_level": "LOW"
   }
 ]

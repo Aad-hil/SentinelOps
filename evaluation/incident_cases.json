@@ -283,5 +283,290 @@
       "database connection capacity saturated and query contention increased"
     ],
     "expected_hypothesis_id": "H6"
+  },
+  {
+    "incident_id": "INC-016",
+    "title": "Checkout worker connection leak",
+    "source_type": "synthetic_expansion",
+    "ground_truth_source": "SentinelOps synthetic scenario library",
+    "source_url": null,
+    "public_facts_note": "Original synthetic scenario created for SentinelOps testing; not attributed to a public postmortem.",
+    "category": "database_connection_pool",
+    "expected_root_cause": "A worker pool failed to release database connections after processing retries, gradually exhausting the shared connection pool.",
+    "expected_trigger": "A retry storm after a worker deployment",
+    "expected_affected_component": "Checkout worker pool and order database connections",
+    "expected_mitigation": "Stop the retry storm, recycle affected workers, and restore safe pool limits.",
+    "required_evidence": [
+      "worker retry count increased",
+      "connections remained checked out after requests completed",
+      "pool utilization reached saturation"
+    ],
+    "expected_hypothesis_id": "H4"
+  },
+  {
+    "incident_id": "INC-017",
+    "title": "Search API query regression",
+    "source_type": "synthetic_expansion",
+    "ground_truth_source": "SentinelOps synthetic scenario library",
+    "source_url": null,
+    "public_facts_note": "Original synthetic scenario created for SentinelOps testing; not attributed to a public postmortem.",
+    "category": "deployment_query_database_saturation",
+    "expected_root_cause": "A search API deployment introduced an unbounded query pattern that saturated the primary database.",
+    "expected_trigger": "Search API deployment enabling an unbounded query",
+    "expected_affected_component": "Primary database query execution path",
+    "expected_mitigation": "Disable the query path or roll back the deployment, then add query bounds.",
+    "required_evidence": [
+      "search query volume increased after deployment",
+      "primary database CPU and queue depth increased",
+      "search request latency and errors rose"
+    ],
+    "expected_hypothesis_id": "H1"
+  },
+  {
+    "incident_id": "INC-018",
+    "title": "Artifact metadata read amplification",
+    "source_type": "synthetic_expansion",
+    "ground_truth_source": "SentinelOps synthetic scenario library",
+    "source_url": null,
+    "public_facts_note": "Original synthetic scenario created for SentinelOps testing; not attributed to a public postmortem.",
+    "category": "database_cpu_query_load",
+    "expected_root_cause": "A metadata lookup change caused repeated database reads and sustained CPU saturation.",
+    "expected_trigger": "Artifact metadata lookup change",
+    "expected_affected_component": "Container Registry metadata database",
+    "expected_mitigation": "Cache repeated metadata reads and roll back the inefficient lookup.",
+    "required_evidence": [
+      "metadata read volume increased",
+      "database CPU stayed above 90 percent",
+      "manifest request latency increased"
+    ],
+    "expected_hypothesis_id": "H2"
+  },
+  {
+    "incident_id": "INC-019",
+    "title": "Concurrent inventory update contention",
+    "source_type": "synthetic_expansion",
+    "ground_truth_source": "SentinelOps synthetic scenario library",
+    "source_url": null,
+    "public_facts_note": "Original synthetic scenario created for SentinelOps testing; not attributed to a public postmortem.",
+    "category": "query_lock_contention",
+    "expected_root_cause": "A transaction change held row locks longer during concurrent inventory updates, increasing lock waits.",
+    "expected_trigger": "Gradual rollout of longer inventory transactions",
+    "expected_affected_component": "Inventory database hot rows",
+    "expected_mitigation": "Disable the transaction change and reduce lock duration.",
+    "required_evidence": [
+      "concurrent inventory updates increased",
+      "row lock wait time climbed",
+      "transaction latency and errors increased"
+    ],
+    "expected_hypothesis_id": "H5"
+  },
+  {
+    "incident_id": "INC-020",
+    "title": "Index rebuild competing with live traffic",
+    "source_type": "synthetic_expansion",
+    "ground_truth_source": "SentinelOps synthetic scenario library",
+    "source_url": null,
+    "public_facts_note": "Original synthetic scenario created for SentinelOps testing; not attributed to a public postmortem.",
+    "category": "schema_change_database_contention",
+    "expected_root_cause": "An online index rebuild competed with production queries for database resources and connections.",
+    "expected_trigger": "Index rebuild started during a busy traffic window",
+    "expected_affected_component": "Database index and connection resources",
+    "expected_mitigation": "Pause the index rebuild and reschedule it during a low-traffic window.",
+    "required_evidence": [
+      "index rebuild was active",
+      "database CPU and connection utilization increased",
+      "query latency rose during rebuild"
+    ],
+    "expected_hypothesis_id": "H6"
+  },
+  {
+    "incident_id": "INC-021",
+    "title": "Unbounded reporting query during maintenance",
+    "source_type": "synthetic_expansion",
+    "ground_truth_source": "SentinelOps synthetic scenario library",
+    "source_url": null,
+    "public_facts_note": "Original synthetic scenario created for SentinelOps testing; not attributed to a public postmortem.",
+    "category": "maintenance_slow_query",
+    "expected_root_cause": "A reporting query scanned a large historical range while maintenance reduced available database capacity.",
+    "expected_trigger": "Reporting job overlapped with database maintenance",
+    "expected_affected_component": "Reporting database workload",
+    "expected_mitigation": "Cancel the report, restore capacity, and enforce query time limits.",
+    "required_evidence": [
+      "reporting query scanned an unusually large range",
+      "query runtime increased during maintenance",
+      "database CPU and latency spiked"
+    ],
+    "expected_hypothesis_id": "H5"
+  },
+  {
+    "incident_id": "INC-022",
+    "title": "Bulk permission synchronization overload",
+    "source_type": "synthetic_expansion",
+    "ground_truth_source": "SentinelOps synthetic scenario library",
+    "source_url": null,
+    "public_facts_note": "Original synthetic scenario created for SentinelOps testing; not attributed to a public postmortem.",
+    "category": "expensive_query_write_latency",
+    "expected_root_cause": "A bulk permission synchronization generated oversized write transactions and caused downstream timeouts.",
+    "expected_trigger": "Bulk permission synchronization job",
+    "expected_affected_component": "Permissions database write path",
+    "expected_mitigation": "Pause the bulk job, process smaller batches, and add write throttling.",
+    "required_evidence": [
+      "bulk synchronization batch size increased",
+      "database write latency climbed",
+      "dependent API requests timed out"
+    ],
+    "expected_hypothesis_id": "H9"
+  },
+  {
+    "incident_id": "INC-023",
+    "title": "Stale connection pool after database restart",
+    "source_type": "synthetic_expansion",
+    "ground_truth_source": "SentinelOps synthetic scenario library",
+    "source_url": null,
+    "public_facts_note": "Original synthetic scenario created for SentinelOps testing; not attributed to a public postmortem.",
+    "category": "database_connection_failure",
+    "expected_root_cause": "Application instances continued using stale pooled connections after a database restart, causing connection failures.",
+    "expected_trigger": "Database primary restart",
+    "expected_affected_component": "GitHub Packages application connection pools",
+    "expected_mitigation": "Recycle stale pools and validate connection health before restoring traffic.",
+    "required_evidence": [
+      "database restart completed",
+      "application instances reported stale connection errors",
+      "package requests failed until pools were refreshed"
+    ],
+    "expected_hypothesis_id": "H4"
+  },
+  {
+    "incident_id": "INC-024",
+    "title": "Replica promotion split-brain risk",
+    "source_type": "synthetic_expansion",
+    "ground_truth_source": "SentinelOps synthetic scenario library",
+    "source_url": null,
+    "public_facts_note": "Original synthetic scenario created for SentinelOps testing; not attributed to a public postmortem.",
+    "category": "database_failover",
+    "expected_root_cause": "A network partition caused competing primary-election attempts and repeated failover instability.",
+    "expected_trigger": "Network partition during primary election",
+    "expected_affected_component": "Database cluster leader-election path",
+    "expected_mitigation": "Fence the former primary and restore a single authoritative leader.",
+    "required_evidence": [
+      "primary health checks became inconsistent",
+      "multiple promotion attempts occurred",
+      "write errors persisted during failover"
+    ],
+    "expected_hypothesis_id": "H7"
+  },
+  {
+    "incident_id": "INC-025",
+    "title": "Seasonal traffic surge exhausts database headroom",
+    "source_type": "synthetic_expansion",
+    "ground_truth_source": "SentinelOps synthetic scenario library",
+    "source_url": null,
+    "public_facts_note": "Original synthetic scenario created for SentinelOps testing; not attributed to a public postmortem.",
+    "category": "peak_load_database_headroom",
+    "expected_root_cause": "A sudden seasonal traffic surge exhausted database headroom and amplified inefficient query load.",
+    "expected_trigger": "Seasonal request surge",
+    "expected_affected_component": "Primary database cluster",
+    "expected_mitigation": "Apply admission control, optimize the hottest queries, and add database capacity.",
+    "required_evidence": [
+      "request rate sharply exceeded baseline",
+      "database headroom approached zero",
+      "query latency and write errors increased"
+    ],
+    "expected_hypothesis_id": "H2"
+  },
+  {
+    "incident_id": "INC-026",
+    "title": "Read-only migration role used for writes",
+    "source_type": "synthetic_expansion",
+    "ground_truth_source": "SentinelOps synthetic scenario library",
+    "source_url": null,
+    "public_facts_note": "Original synthetic scenario created for SentinelOps testing; not attributed to a public postmortem.",
+    "category": "database_migration_permissions",
+    "expected_root_cause": "A migration switched application writes to a target cluster using a role missing insert privileges.",
+    "expected_trigger": "Write cutover to the target database cluster",
+    "expected_affected_component": "Target database write permissions",
+    "expected_mitigation": "Switch writes back to the source cluster and grant the least-privilege insert permission.",
+    "required_evidence": [
+      "write cutover completed",
+      "insert operations failed with permission errors",
+      "read operations continued to succeed"
+    ],
+    "expected_hypothesis_id": "H8"
+  },
+  {
+    "incident_id": "INC-027",
+    "title": "Webhook fan-out creates queue backlog",
+    "source_type": "synthetic_expansion",
+    "ground_truth_source": "SentinelOps synthetic scenario library",
+    "source_url": null,
+    "public_facts_note": "Original synthetic scenario created for SentinelOps testing; not attributed to a public postmortem.",
+    "category": "inefficient_query_background_load",
+    "expected_root_cause": "A webhook fan-out change generated repeated database lookups and overwhelmed background workers.",
+    "expected_trigger": "Webhook fan-out configuration change",
+    "expected_affected_component": "Webhook query path and worker queue",
+    "expected_mitigation": "Throttle fan-out, optimize lookups, and drain the backlog safely.",
+    "required_evidence": [
+      "webhook event volume increased",
+      "database query latency increased",
+      "background queue depth continued growing"
+    ],
+    "expected_hypothesis_id": "H12"
+  },
+  {
+    "incident_id": "INC-028",
+    "title": "Analytics polling amplifies replica lag",
+    "source_type": "synthetic_expansion",
+    "ground_truth_source": "SentinelOps synthetic scenario library",
+    "source_url": null,
+    "public_facts_note": "Original synthetic scenario created for SentinelOps testing; not attributed to a public postmortem.",
+    "category": "database_replication_lag_query_amplification",
+    "expected_root_cause": "A new polling client repeatedly queried replicas and amplified read load until replication lag exceeded freshness limits.",
+    "expected_trigger": "Analytics client polling frequency increase",
+    "expected_affected_component": "Read replicas serving analytics requests",
+    "expected_mitigation": "Reduce polling frequency, cache responses, and protect replicas with rate limits.",
+    "required_evidence": [
+      "analytics polling rate increased",
+      "replication lag rose across read replicas",
+      "stale-read responses and latency increased"
+    ],
+    "expected_hypothesis_id": "H10"
+  },
+  {
+    "incident_id": "INC-029",
+    "title": "Storage engine upgrade causes I/O contention",
+    "source_type": "synthetic_expansion",
+    "ground_truth_source": "SentinelOps synthetic scenario library",
+    "source_url": null,
+    "public_facts_note": "Original synthetic scenario created for SentinelOps testing; not attributed to a public postmortem.",
+    "category": "data_store_upgrade_resource_contention",
+    "expected_root_cause": "A storage engine upgrade changed I/O behavior and created resource contention across dependent data stores.",
+    "expected_trigger": "Storage engine version upgrade",
+    "expected_affected_component": "Data-store I/O and query execution resources",
+    "expected_mitigation": "Roll back the storage engine upgrade and validate I/O behavior before retrying.",
+    "required_evidence": [
+      "storage engine upgrade preceded the incident",
+      "I/O wait and resource contention increased",
+      "dependent queries timed out"
+    ],
+    "expected_hypothesis_id": "H11"
+  },
+  {
+    "incident_id": "INC-030",
+    "title": "Backfill job overlaps with peak API traffic",
+    "source_type": "synthetic_expansion",
+    "ground_truth_source": "SentinelOps synthetic scenario library",
+    "source_url": null,
+    "public_facts_note": "Original synthetic scenario created for SentinelOps testing; not attributed to a public postmortem.",
+    "category": "migration_peak_load_connection_saturation",
+    "expected_root_cause": "A large backfill job consumed database connections while normal API traffic was approaching its peak.",
+    "expected_trigger": "Backfill migration started before peak traffic",
+    "expected_affected_component": "Primary database connection pool",
+    "expected_mitigation": "Pause or throttle the backfill and reserve connection capacity for live traffic.",
+    "required_evidence": [
+      "backfill job was active",
+      "live request rate increased",
+      "database connection utilization reached 100 percent"
+    ],
+    "expected_hypothesis_id": "H6"
   }
 ]

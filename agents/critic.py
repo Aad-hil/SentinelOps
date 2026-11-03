@@ -121,7 +121,7 @@ def run_critic_agent(state: InvestigationState) -> dict:
         finding = AgentFinding(agent="critic_llm", category="llm_critique",
             summary=llm_challenge, evidence=critique.supporting_evidence,
             confidence=critique.confidence)
-    if (explanation if "explanation" in locals() else llm_challenge):
+    if llm_challenge:
         result = append_finding({**state, **result}, finding)
     result.update({
         "critique": critique,

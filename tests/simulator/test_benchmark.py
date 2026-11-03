@@ -1,52 +1,31 @@
-"""Tests for the expanded 35-incident synthetic benchmark."""
-
-from simulator.benchmark import build_all_benchmark_incidents, build_benchmark_incident
-from simulator.scenarios import build_benchmark_evidence
-
-
-def test_all_benchmark_incidents_are_deterministic_and_complete() -> None:
-    scenarios = build_all_benchmark_incidents()
-
-    assert len(scenarios) == 35
-    assert [scenario.incident.incident_id for scenario in scenarios] == [
-        f"INC-{number:03d}" for number in range(1, 36)
-    ]
-
-    for scenario in scenarios:
-        assert scenario.logs
-        assert scenario.metrics
-        assert scenario.deployments
-        assert scenario.traces
-        assert scenario.ground_truth.root_cause
+"""Tests for the Redshift-only deterministic simulator."""
+from simulator.redshift import (
+    build_all_redshift_incidents,
+    build_redshift_incident,
+    redshift_case_ids,
+    build_redshift_evidence_bundle,
+)
 
 
-def test_public_benchmark_scenarios_use_synthetic_timestamps() -> None:
-    scenarios = build_all_benchmark_incidents()
+def test_all_redshift_incidents_are_deterministic_and_complete():
+    first = build_all_redshift_incidents()
+    second = build_all_redshift_incidents()
+    assert len(first) == 12
+    assert first == second
+    assert tuple(item.incident.incident_id for item in first) == redshift_case_ids()
+    for item in first:
+        assert item.incident.service == "amazon-redshift"
+        assert item.logs and item.metrics and item.deployments and item.traces
+        assert item.ground_truth.root_cause
 
-    # INC-002 intentionally preserves its existing realistic reconstruction,
-    # including the documented 2025 incident date. New benchmark scenarios
-    # use synthetic 2026 timestamps.
-    assert scenarios[1].incident.started_at.year == 2025
-    for scenario in scenarios[2:]:
-        assert scenario.incident.started_at.year == 2026
 
-
-def test_agent_evidence_does_not_include_ground_truth() -> None:
-    evidence = build_benchmark_evidence("INC-004")
-
+def test_redshift_evidence_bundle_excludes_ground_truth():
+    evidence = build_redshift_evidence_bundle("RS-004")
+    assert evidence.incident.incident_id == "RS-004"
     assert not hasattr(evidence, "ground_truth")
-    assert evidence.incident.incident_id == "INC-004"
 
 
-def test_incident_two_keeps_existing_realistic_generator() -> None:
-    scenario = build_benchmark_incident("INC-002")
-
-    assert scenario.incident.incident_id == "INC-002"
-    assert any("q7f2" in log.message for log in scenario.logs)
-
-
-
-def test_low_risk_incidents_have_low_severity() -> None:
-    for incident_id in ("INC-031", "INC-032", "INC-033", "INC-034", "INC-035"):
-        scenario = build_benchmark_incident(incident_id)
-        assert scenario.incident.severity == "LOW"
+def test_legacy_incident_ids_are_not_supported():
+    import pytest
+    with pytest.raises(KeyError):
+        build_redshift_incident("INC-002")

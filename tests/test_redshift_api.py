@@ -44,3 +44,34 @@ def test_invalid_incident_and_approval_guard(api):
     with pytest.raises(HTTPException) as exc:
         api.approve_investigation("RS-001", api.ApprovalRequest(approved=True, reviewer="operator"))
     assert exc.value.status_code == 409
+
+
+def test_rs002_requires_human_approval(api):
+    result = api.investigate(api.InvestigationRequest(incident_id="RS-002"))
+    assert result.root_cause.hypothesis_id == "RSH2"
+    assert result.root_cause.temporal_support
+    assert result.root_cause.causal_support
+    assert result.root_cause.recovery_support
+    assert result.safety_decision.decision == "review_required"
+    assert result.status == "awaiting_human_approval"
+    assert result.approval_required is True
+    approved = api.approve_investigation(
+        "RS-002", api.ApprovalRequest(approved=True, reviewer="demo-operator")
+    )
+    assert approved.status == "approved_for_execution"
+    assert approved.approval_status == "approved"
+    assert approved.approval_required is False
+
+
+def test_rs006_low_risk_recovered_without_approval(api):
+    result = api.investigate(api.InvestigationRequest(incident_id="RS-006"))
+    assert result.root_cause.hypothesis_id == "RSH6"
+    assert result.root_cause.temporal_support
+    assert result.root_cause.causal_support
+    assert result.root_cause.recovery_support
+    assert result.recovery_plan.readiness == "ready_for_review"
+    assert all(step.risk == "low" and not step.requires_approval for step in result.recovery_plan.steps)
+    assert result.safety_decision.decision == "no_approval_needed"
+    assert result.status == "complete"
+    assert result.approval_required is False
+    assert any(item.evidence_type == "recovery" for item in result.evidence)

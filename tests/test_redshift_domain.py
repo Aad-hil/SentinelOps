@@ -82,8 +82,9 @@ def test_redshift_hypothesis_engine_selects_case_specific_candidates():
             "incident_summary": evidence.incident.description,
             "evidence": evidence,
         }
-        state.update(run_telemetry_agent(state))
-        state.update(run_deployment_agent({**state, **run_telemetry_agent(state)}))
+        telemetry_update = run_telemetry_agent(state)
+        state.update(telemetry_update)
+        state.update(run_deployment_agent(state))
         hypotheses = generate_hypotheses(state)
         assert hypotheses[0].hypothesis_id == expected_id, (
             incident_id,

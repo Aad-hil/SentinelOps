@@ -30,7 +30,7 @@ def _load_local_env() -> None:
 _load_local_env()
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from langgraph.types import Command
 from pydantic import BaseModel, Field
 

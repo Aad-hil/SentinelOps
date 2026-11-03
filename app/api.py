@@ -101,10 +101,12 @@ def _investigation_response(state: dict[str, Any]) -> InvestigationResponse:
         hypotheses=[
             HypothesisResponse.model_validate(_jsonable(hypothesis))
             for hypothesis in state.get("hypotheses", [])
+            if hypothesis is not None
         ],
         evidence=[
             EvidenceResponse.model_validate(_jsonable(item))
             for item in state.get("evidence_items", [])
+            if item is not None
         ],
         recovery_plan=(
             RecoveryPlanResponse.model_validate(_jsonable(state["recovery_plan"]))

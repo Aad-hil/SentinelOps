@@ -5,7 +5,7 @@ os.environ.setdefault("SENTINELOPS_CHECKPOINT_BACKEND", "memory")
 import pytest
 from fastapi.testclient import TestClient
 
-from app.api import _CHECKPOINTER, _GRAPH, app
+from app.api import _CHECKPOINTER, _GRAPH, _investigation_response, app
 
 client = TestClient(app)
 
@@ -257,3 +257,16 @@ def test_saved_incident_can_be_opened_and_deleted():
     assert deleted.status_code == 200
     assert deleted.json()["status"] == "deleted"
     assert client.get("/api/v1/incidents/INC-002").status_code == 404
+
+
+def test_saved_investigation_response_ignores_null_collection_entries() -> None:
+    response = _investigation_response({
+        "incident_id": "INC-002",
+        "investigation_status": "complete",
+        "hypotheses": [None],
+        "evidence_items": [None],
+    })
+
+    assert response.incident_id == "INC-002"
+    assert response.hypotheses == []
+    assert response.evidence == []

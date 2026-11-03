@@ -5,7 +5,7 @@
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% -20%,#172541 0,#080d18 42%);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.45}
 header{position:sticky;top:0;z-index:10;background:rgba(8,13,24,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:18px clamp(20px,4vw,56px);display:flex;justify-content:space-between;align-items:center}
 .brand{font-size:16px;font-weight:850;letter-spacing:.12em}.sub{color:var(--muted);font-size:12px;margin-top:3px}.online{color:var(--good);display:flex;align-items:center;gap:7px}.dot{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 12px var(--good)}
-main{width:min(1440px,calc(100% - 40px));margin:0 auto;padding:30px 0 64px}.toolbar{display:flex;gap:10px;margin-bottom:22px}.toolbar input{flex:1;min-width:0}
+main{width:min(1440px,calc(100% - 40px));margin:0 auto;padding:30px 0 64px}.toolbar{display:flex;gap:10px;margin-bottom:22px}.toolbar[hidden]{display:none}.toolbar input{flex:1;min-width:0}
 input,button{font:inherit;border:1px solid var(--line);border-radius:9px;padding:12px 14px;background:#0d1626;color:var(--text)}input:focus{outline:2px solid rgba(110,168,254,.25);border-color:var(--accent)}button{cursor:pointer;background:linear-gradient(180deg,#1c3152,#15243d);font-weight:700;min-width:120px}button:hover{border-color:var(--accent)}button:disabled{opacity:.55;cursor:wait}
 .incident-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:24px;margin-bottom:18px}.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:700}.incident-id{font-size:32px;line-height:1.1;margin:6px 0 5px}.status{display:inline-flex;padding:6px 10px;border-radius:999px;background:#493d16;color:var(--warn);font-size:11px;font-weight:800;letter-spacing:.06em}
 .grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,.65fr);gap:18px}.card{background:linear-gradient(180deg,rgba(16,24,39,.98),rgba(12,20,34,.98));border:1px solid var(--line);border-radius:13px;padding:21px;box-shadow:0 8px 30px rgba(0,0,0,.12)}.wide{grid-column:1/-1}
@@ -107,7 +107,10 @@ function render(data){
   $("result").hidden=false;$("incident-id").textContent=data.incident_id;$("status").textContent=label(data.status).toUpperCase();$("approval-card").hidden=!(data.status==="awaiting_human_approval"&&data.approval_required);
   const r=data.root_cause;
   if(r){
-    const h=data.hypotheses.find(x=>x.hypothesis_id===r.hypothesis_id);
+    const h=(data.hypotheses||[]).find(x=>x&&x.hypothesis_id===r.hypothesis_id);
+    const rootName=r.display_name||(h&&h.display_name)||("Root cause "+r.hypothesis_id);
+    const rootStatement=r.statement||(h&&h.statement)||r.rationale;
+    $("root").innerHTML='<div class="root-id">'+esc(r.hypothesis_id)+'</div><div class="root-title">'+esc(rootName) + '</div><div class="rationale">'+esc(rootStatement)+'</div>'+undefined
     $("root").innerHTML='<div class="root-id">'+esc(r.hypothesis_id)+'</div><div class="root-title">'+esc(h?h.display_name:"Adjudicated root-cause hypothesis") + '</div><div class="rationale">'+esc(h?h.statement:r.rationale)+'</div><div class="confidence-row"><div class="confidence">'+pct(r.confidence)+'%</div><div class="confidence-label">Evidence score</div></div><div class="progress"><span style="width:'+pct(r.confidence)+'%"></span></div><div class="facts"><div class="fact"><b class="'+(r.temporal_support?"ok":"")+'">'+(r.temporal_support?"✓":"—")+'</b><span>Temporal support</span></div><div class="fact"><b class="'+(r.causal_support?"ok":"")+'">'+(r.causal_support?"✓":"—")+'</b><span>Causal support</span></div><div class="fact"><b class="'+(r.recovery_support?"ok":"")+'">'+(r.recovery_support?"✓":"—")+'</b><span>Recovery support</span></div></div>';
   }else $("root").innerHTML="<span class='muted'>No adjudicated root cause.</span>";
   const s=data.safety_decision;

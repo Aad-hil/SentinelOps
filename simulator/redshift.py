@@ -242,12 +242,31 @@ def build_redshift_incident(incident_id: str) -> IncidentScenario:
         previous_version=f"redshift-config-{index:02d}-previous",
         changes=case["trigger"],
     )
+    # Two explicit demo cases have a complete synthetic causal chain and observed recovery.
+    # The remaining scenarios intentionally retain their original evidence gaps.
+    demo_mechanisms = {
+        "RS-002": "EXPLAIN query plan scan increased after SQL revision; query runtime degraded",
+        "RS-006": "Stale statistics and data skew increased scan work on fact_events",
+    }
+    demo_recoveries = {
+        "RS-002": "Recovery observation: query runtime returned toward baseline after an independently simulated SQL rollback; no action was executed by SentinelOps",
+        "RS-006": "Recovery observation: query runtime returned toward baseline after scheduled statistics maintenance; no action was executed by SentinelOps",
+    }
+    mechanism_log = (
+        (LogEvent(started + timedelta(minutes=1), service, "ERROR", demo_mechanisms[incident_id]),)
+        if incident_id in demo_mechanisms else ()
+    )
+    recovery_log = (
+        (LogEvent(started + timedelta(minutes=12), service, "INFO", demo_recoveries[incident_id]),)
+        if incident_id in demo_recoveries else ()
+    )
     logs = (
         LogEvent(started - timedelta(minutes=3), service, "INFO", f"Redshift change observed: {case['trigger']}"),
         LogEvent(started, service, "WARN", f"{case['category']} signal increased during {case['operation']}"),
         LogEvent(started + timedelta(minutes=3), service, "ERROR", f"Redshift query or workload impact observed: {case['operation']}"),
         LogEvent(started + timedelta(minutes=8), service, "INFO", "Synthetic observation window ended; no remediation was executed"),
     )
+    logs = (*logs, *mechanism_log, *recovery_log)
     metrics = tuple(
         MetricPoint(
             timestamp=started + timedelta(minutes=minute * 2),

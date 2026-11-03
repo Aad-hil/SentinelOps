@@ -24,14 +24,17 @@ from app.schemas import (
 from graph.investigation import build_investigation_graph
 from memory.checkpoint import create_checkpointer
 from rag.retrieval import create_knowledge_retriever_from_env
-from simulator.scenarios import build_benchmark_evidence
-from simulator.benchmark import benchmark_category, build_all_benchmark_incidents
+from simulator.redshift import (
+    build_all_redshift_incidents,
+    build_redshift_evidence_bundle,
+    redshift_case_ids,
+)
 
 
 app = FastAPI(
     title="SentinelOps API",
     version="0.1.0",
-    description="API for evidence-backed incident investigation and safe recovery planning.",
+    description="API for evidence-backed Amazon Redshift incident investigation and safe recovery planning.",
 )
 
 _DASHBOARD_PATH = Path(__file__).parent / "static" / "index.html"
@@ -49,7 +52,7 @@ class InvestigationRequest(BaseModel):
 
     incident_id: str = Field(
         min_length=1,
-        description="Benchmark incident identifier, e.g. INC-002",
+        description="Synthetic Amazon Redshift incident identifier, e.g. RS-001",
     )
 
 
@@ -157,14 +160,14 @@ def dashboard() -> FileResponse:
 @app.get("/api/v1/incidents")
 def list_incidents() -> list[dict[str, Any]]:
     """List benchmark incidents with their persisted investigation status."""
-    incidents = build_all_benchmark_incidents()
+    incidents = build_all_redshift_incidents()
     results = []
     for scenario in incidents:
         snapshot = _GRAPH.get_state(_config(scenario.incident.incident_id))
         values = snapshot.values or {}
         results.append({
             "incident_id": scenario.incident.incident_id,
-            "category": benchmark_category(scenario.incident.incident_id),
+            "category": scenario.ground_truth.contributing_factors[0],
             "title": scenario.incident.title,
             "service": scenario.incident.service,
             "severity": scenario.incident.severity,
@@ -181,7 +184,7 @@ def list_incidents() -> list[dict[str, Any]]:
 def get_incident(incident_id: str) -> InvestigationResponse:
     """Return the saved investigation for one incident without running agents."""
     try:
-        build_benchmark_evidence(incident_id)
+        build_redshift_evidence_bundle(incident_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=f"Unknown incident_id: {incident_id}") from exc
     snapshot = _GRAPH.get_state(_config(incident_id))
@@ -208,7 +211,7 @@ def delete_incident(incident_id: str) -> dict[str, str]:
 def investigate(request: InvestigationRequest) -> InvestigationResponse:
     """Start only if no saved investigation exists; otherwise return its current result."""
     try:
-        evidence = build_benchmark_evidence(request.incident_id)
+        evidence = build_redshift_evidence_bundle(request.incident_id)
     except KeyError as exc:
         raise HTTPException(
             status_code=404,

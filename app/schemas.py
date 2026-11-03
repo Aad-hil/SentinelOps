@@ -39,6 +39,8 @@ class HypothesisResponse(BaseModel):
 
 class AdjudicationResponse(BaseModel):
     hypothesis_id: str
+    display_name: str
+    statement: str
     rationale: str
     temporal_support: bool
     causal_support: bool

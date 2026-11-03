@@ -328,6 +328,16 @@ async function opsRenderApprovals(){
 function opsResultHeader(data){
   return '<div class="ops-banner"><b>'+esc(data.incident_id)+'</b> · '+esc(label(data.status))+' · '+esc(data.root_cause?.display_name||"No adjudicated root cause")+'<div class="ops-note">Investigation findings are based on synthetic evidence. Recovery remains human-controlled.</div></div>';
 }
+function opsRenderLLMFindings(){
+  const pane=opsContainer("ops-results");
+  let section=$("ops-llm-findings");
+  if(!section){section=document.createElement("section");section.id="ops-llm-findings";pane.appendChild(section)}
+  const findings=opsLastResult?.llm_findings||[];
+  section.innerHTML='<div class="card"><h2>Local LLM analysis · Qwen3 4B</h2>'+
+    (findings.length ? findings.map(f=>'<div class="ops-bubble"><b>'+esc(f.agent==="root_cause_llm"?"Root Cause · LLM reasoning":"Critic · LLM review")+'</b><p>'+esc(f.summary)+'</p><small>AI-generated interpretation; safety and confidence remain deterministic.</small></div>').join("") :
+    '<p class="ops-note">No LLM output is saved for this investigation. Confirm Ollama is enabled and running, then delete and rerun this incident.</p>')+
+    '</div>';
+}
 function opsRenderResultSummary(){
   const pane=opsContainer("ops-results");
   let header=$("ops-results-header");if(!header){header=document.createElement("div");header.id="ops-results-header";pane.prepend(header)}
@@ -397,7 +407,7 @@ function opsOnResult(data){
   opsLastResult=data;
   $("result").hidden=true;
   document.querySelectorAll(".ops-no-result").forEach(el=>el.hidden=true);
-  opsRenderAnalytics();opsRenderEvidence();opsRenderResultSummary();
+  opsRenderAnalytics();opsRenderEvidence();opsRenderResultSummary();opsRenderLLMFindings();
   opsSwitch("results");
   opsRefreshOverview();
   opsRenderApprovals();

@@ -1,5 +1,5 @@
-# Network Latency Investigation Runbook
+# Redshift Client Connectivity Runbook
 
-When requests slow down, check network latency between the application and its dependencies. Inspect connection errors, packet loss, transport retries, and latency across the affected path.
+For Redshift connection failures, inspect endpoint and DNS resolution, VPC routing, security groups, network ACLs, subnet placement, VPC endpoints where applicable, and client-side connection errors. Correlate network evidence with Redshift connection/query history and cluster events.
 
-If network indicators remain stable while database query execution time and database resource consumption increase, prioritize database workload investigation over network remediation.
+Do not infer a VPC cause from query latency alone. Confirm that the connection path failed before query execution or that network telemetry supports the proposed mechanism. Use RSH9 when supported; otherwise retain RSH12.

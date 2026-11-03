@@ -274,7 +274,7 @@ def run_root_cause_agent(state: InvestigationState) -> dict:
     if explanation:
         finding = AgentFinding(agent="root_cause_llm", category="llm_explanation",
             summary=explanation, evidence=best.supporting_evidence, confidence=best.confidence)
-    if (explanation if "explanation" in locals() else llm_challenge):
+    if explanation:
         result = append_finding({**state, **result}, finding)
     result.update({
         "hypotheses": hypotheses,

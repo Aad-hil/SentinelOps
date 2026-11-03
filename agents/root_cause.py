@@ -104,9 +104,11 @@ def _evidence_text(item: EvidenceItem) -> str:
 
 
 def _matches_signal(item: EvidenceItem, signal: str) -> bool:
+    """Match signal phrases across common telemetry/key naming conventions."""
     text = _evidence_text(item)
-    normalized = signal.lower().replace("_", " ")
-    return signal.lower() in text or normalized in text
+    normalized_text = text.replace("_", " ").replace("-", " ")
+    normalized_signal = signal.lower().replace("_", " ").replace("-", " ")
+    return signal.lower() in text or normalized_signal in normalized_text
 
 
 def _timestamp_key(item: EvidenceItem) -> datetime:

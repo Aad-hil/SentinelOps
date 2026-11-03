@@ -8,11 +8,11 @@ from memory.persistence import persist_completed_investigation
 from memory.postgres import PostgresIncidentMemoryRepository
 from memory.semantic import QdrantIncidentMemoryRepository
 from observability.tracing import configure_telemetry, initialize_investigation_trace
-from simulator.scenarios import build_incident_001_evidence, build_incident_002_evidence
+from simulator.redshift import build_redshift_evidence_bundle, redshift_case_ids
 
 _SCENARIOS = {
-    "INC-001": build_incident_001_evidence,
-    "INC-002": build_incident_002_evidence,
+    incident_id: (lambda selected_id=incident_id: build_redshift_evidence_bundle(selected_id))
+    for incident_id in redshift_case_ids()
 }
 
 
@@ -25,7 +25,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--incident-id",
         required=True,
         choices=tuple(_SCENARIOS),
-        help="Incident scenario to investigate.",
+        help="Synthetic Amazon Redshift incident scenario to investigate.",
     )
     return parser
 

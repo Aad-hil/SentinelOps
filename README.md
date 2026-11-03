@@ -2,371 +2,100 @@
 
 # SentinelOps
 
-**SentinelOps** is an evidence-backed, multi-agent incident investigation and safe recovery planning platform.
+**SentinelOps** is a Redshift-focused, evidence-led multi-agent incident investigation and safe recovery planning system.
 
-It simulates production incidents and coordinates specialized agents to collect telemetry, retrieve relevant knowledge and historical incidents, inspect deployment context, generate competing root-cause hypotheses, critique them, adjudicate the evidence, build a recovery plan, and enforce a human approval checkpoint before any production-changing action could proceed.
+It coordinates specialized agents to inspect operational evidence, retrieve relevant runbooks, rank competing Redshift failure hypotheses, critique and adjudicate the evidence, and prepare recovery proposals with safety checks and a human approval checkpoint.
 
-> **Safety boundary:** SentinelOps does **not** execute remediation actions against production systems. Recovery steps are proposed for review, and potentially impactful steps require explicit human approval.
+> **Safety boundary:** SentinelOps does not execute production remediation. Potentially disruptive actions remain proposals for operator review.
 
-## Project status
+## Scope: Amazon Redshift only
 
-**Phase 7 — API, dashboard, durable state, HITL, observability, and evaluation complete.**
+Amazon Redshift is the only supported incident domain. Direct dependencies are considered only when they affect a Redshift workload: Amazon S3, AWS Glue Data Catalog, IAM, KMS, VPC, and CloudWatch.
 
-Current investigation flow:
+The active taxonomy contains twelve Redshift hypotheses:
 
-`Historical Memory → Supervisor → Telemetry → Knowledge → Deployment → Root Cause → Critic → Adjudication → Recovery → Safety → Human Approval`
-
-The dashboard exposes the investigation result, evidence, competing hypotheses, recovery plan, safety decision, and a structured agent execution timeline.
-
-## What SentinelOps demonstrates
-
-- **True multi-agent orchestration** — specialized agents have separate responsibilities and tools.
-- **RAG** — knowledge and historical incident retrieval feed the investigation.
-- **Evidence-backed RCA** — hypotheses are supported by normalized evidence and causal relationships.
-- **Competing hypotheses** — the system does not immediately collapse to one explanation.
-- **Critique and adjudication** — candidate explanations are challenged and evaluated against temporal/causal evidence.
-- **Recovery planning** — remediation is proposed as structured, evidence-aware steps.
-- **Safety controls** — risk and approval requirements are evaluated before recovery.
-- **Human-in-the-loop** — investigations can pause at a durable approval checkpoint.
-- **Durable state** — PostgreSQL-backed LangGraph checkpoints persist investigation state across API restarts.
-- **Observability** — OpenTelemetry traces plus a local execution timeline expose agent/node execution.
-- **Deterministic evaluation** — a 35-incident synthetic benchmark measures hypothesis, evidence, RCA, and recovery performance.
-
-## Architecture
-
-See [docs/architecture.md](docs/architecture.md) for the full architecture and Mermaid diagram.
-
-At a high level:
-
-```text
-                         ┌──────────────────────┐
-                         │   FastAPI + Dashboard │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │  LangGraph Supervisor│
-                         └──────────┬───────────┘
-                                    │
-              ┌─────────────────────┼─────────────────────┐
-              ▼                     ▼                     ▼
-        Telemetry Agent       Knowledge/RAG Agent    Deployment Agent
-              │                     │                     │
-              └─────────────────────┼─────────────────────┘
-                                    ▼
-                           Root Cause Agent
-                                    │
-                                    ▼
-                              Critic Agent
-                                    │
-                                    ▼
-                           Adjudication Layer
-                                    │
-                                    ▼
-                           Recovery Planner
-                                    │
-                                    ▼
-                              Safety Agent
-                                    │
-                                    ▼
-                         Human Approval Checkpoint
-```
-
-Supporting infrastructure includes PostgreSQL for durable state and incident memory, Qdrant for semantic retrieval, and OpenTelemetry/Jaeger for tracing.
-
-## Agents and responsibilities
-
-| Component | Responsibility |
+| ID | Failure mode |
 |---|---|
-| Historical Memory | Retrieves relevant prior incident context. |
-| Supervisor | Plans and coordinates the investigation sequence. |
-| Telemetry Agent | Examines metrics, traces, logs, and operational signals. |
-| Knowledge Agent | Retrieves relevant documentation/knowledge through RAG. |
-| Deployment Agent | Correlates deployment/change history with incident timing. |
-| Root Cause Agent | Generates and scores competing hypotheses using evidence and causal relationships. |
-| Critic Agent | Challenges the leading explanation and identifies gaps/contradictions. |
-| Adjudication | Consolidates temporal and causal support into the selected hypothesis. |
-| Recovery Planner | Produces structured, evidence-aware remediation steps. |
-| Safety Agent | Evaluates risk and determines whether human approval is required. |
-| Human Approval | Explicitly approves or blocks the proposed recovery path. |
+| RSH1 | WLM queue contention / workload concurrency |
+| RSH2 | Inefficient SQL / query-plan regression |
+| RSH3 | Compute capacity / cluster sizing pressure |
+| RSH4 | COPY / UNLOAD data-loading bottleneck |
+| RSH5 | Redshift Spectrum / external-data dependency |
+| RSH6 | Table design, data skew, statistics, or maintenance |
+| RSH7 | Storage pressure / query spill |
+| RSH8 | IAM, KMS, or authorization failure |
+| RSH9 | VPC connectivity / client connection path |
+| RSH10 | Cluster health, maintenance, or infrastructure event |
+| RSH11 | Data sharing producer/consumer issue |
+| RSH12 | Unknown or compound Redshift failure |
 
-## Technology stack
+RSH12 is an intentional fallback. SentinelOps should report insufficient evidence rather than force a diagnosis. Confidence is a heuristic ranking score, not a calibrated probability.
 
-- **Python 3.13**
-- **FastAPI**
-- **LangGraph**
-- **PostgreSQL**
-- **Qdrant**
-- **OpenTelemetry**
-- **Jaeger**
-- **pytest**
-- **Docker Compose** for supporting local observability services
-- AWS Bedrock embeddings where configured
-- OpenAI API where configured for generation
-- Optional LangSmith tracing
+## Investigation flow
 
-The default development path is designed to avoid paid infrastructure. External model/API usage can incur provider charges when enabled.
+`Supervisor → Telemetry → Knowledge → Deployment/Change Context → Root Cause → Critic → Adjudication → Recovery Planning → Safety → Human Approval`
 
-## Local setup
+LangGraph coordinates the workflow and shared investigation state. Checkpointing supports resumable investigations and approval interrupts. The dashboard displays incident evidence, ranked hypotheses, recovery proposals, safety decisions, and recorded agent execution events.
 
-### 1. Clone the repository
+## Run locally
 
-```powershell
-git clone https://github.com/Aad-hil/SentinelOps.git
-cd SentinelOps
-```
-
-### 2. Create and activate a Python environment
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
-
-### 3. Install the project
-
-```powershell
-python -m pip install --upgrade pip
-python -m pip install -e .
-python -m pip install pytest pytest-cov ruff
-```
-
-### 4. Configure environment variables
+Python 3.12+ is recommended. Create and activate a virtual environment, install the project dependencies, then:
 
 ```powershell
 Copy-Item .env.example .env
-```
-
-Fill in the values required by the features you intend to run.
-
-For isolated tests and the deterministic benchmark, use:
-
-```env
-SENTINELOPS_CHECKPOINT_BACKEND=memory
-```
-
-For the API's normal durable state, PostgreSQL is the default:
-
-```env
-SENTINELOPS_CHECKPOINT_BACKEND=postgres
-```
-
-See [.env.example](.env.example) for PostgreSQL, Qdrant, AWS Bedrock, OpenAI, LangSmith, and OpenTelemetry settings.
-
-
-### Enable local RAG (optional, no paid API)
-
-The API runs without semantic RAG by default. To enable the local retrieval pipeline, start Qdrant and use the local Sentence Transformers embedding model:
-
-```powershell
-docker run -d --name sentinelops-qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant
-```
-
-Set these values in `.env`:
-
-```env
-SENTINELOPS_RAG_ENABLED=true
-SENTINELOPS_EMBEDDING_PROVIDER=local
-SENTINELOPS_LOCAL_EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
-QDRANT_URL=http://localhost:6333
-QDRANT_COLLECTION=sentinelops_knowledge_local_384
-```
-
-Index the repository's Markdown knowledge corpus:
-
-```powershell
-python -m rag.indexer
-```
-
-Then start/restart the API:
-
-```powershell
+$env:SENTINELOPS_CHECKPOINT_BACKEND="memory"
 python -m uvicorn app.api:app --reload
 ```
 
-The first local embedding run downloads the model weights; it does not call a paid embedding API. Keep the embedding provider, model, vector dimension, and Qdrant collection consistent between indexing and API retrieval. If you select Bedrock instead, set `SENTINELOPS_EMBEDDING_PROVIDER=bedrock` and use a separate 1024-dimensional collection such as `sentinelops_knowledge_bedrock_1024`; Bedrock usage may incur AWS charges.
+Open the dashboard at http://127.0.0.1:8000/ and API docs at http://127.0.0.1:8000/docs.
 
-## Run the API and dashboard
+The local deterministic simulator and benchmark do not require an AWS account. All generated evidence is synthetic and must not be represented as live AWS telemetry.
+
+## Investigate an incident
+
+```http
+POST /api/v1/investigations
+Content-Type: application/json
+
+{"incident_id":"RS-001"}
+```
+
+List available cases with `GET /api/v1/incidents`. The simulator provides RS-001 through RS-012.
+
+For an investigation awaiting review:
+
+```http
+POST /api/v1/investigations/RS-001/approval
+Content-Type: application/json
+
+{"approved":true,"reviewer":"Demo Reviewer"}
+```
+
+Approval records the human decision; it does not execute AWS changes.
+
+## Evaluate
 
 ```powershell
-python -m uvicorn app.api:app --reload
+python -m evaluation.redshift_runner
 ```
 
-Open:
+The evaluator runs 12 deterministic Redshift scenarios and compares the ranked hypothesis with simulator labels only after candidate generation. It evaluates the hypothesis-ranking component, not end-to-end real-world diagnostic accuracy.
 
-- Dashboard: http://127.0.0.1:8000/
-- Swagger UI: http://127.0.0.1:8000/docs
-
-The dashboard starts with a benchmark incident and lets you investigate another incident ID directly.
-
-## Human approval flow
-
-Some investigations stop at:
-
-```text
-awaiting_human_approval
-```
-
-The dashboard presents the proposed recovery plan and reviewer controls.
-
-The approval endpoint is:
-
-```text
-POST /api/v1/investigations/{incident_id}/approval
-```
-
-with:
-
-```json
-{
-  "approved": true,
-  "reviewer": "reviewer-name"
-}
-```
-
-Approval does not execute infrastructure changes. It records the human decision and lets the investigation graph reach its terminal state.
-
-## Observability
-
-SentinelOps records structured execution events for graph nodes, including:
-
-- trace ID
-- incident ID
-- node/agent name
-- status
-- timestamp
-- execution duration
-- state keys produced
-- error information when applicable
-
-The dashboard displays these events as an **Agent Execution Timeline**.
-
-For local Jaeger tracing, the repository includes:
-
-```powershell
-docker compose -f docker-compose.observability.yml up -d
-```
-
-Then open Jaeger at:
-
-http://127.0.0.1:16686
-
-Set the OTLP endpoint in `.env` when exporting SentinelOps spans to the local collector:
-
-```env
-SENTINELOPS_OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
-```
-
-## Evaluation
-
-SentinelOps includes 35 deterministic incident scenarios across 15 failure categories, including five low-severity operational warnings with expected root causes, evidence concepts, and recovery concepts.
-
-Historical 15-incident baseline (recorded before the dataset expansion; rerun the benchmark for current 30-incident results):
-
-| Metric | Latest result |
-|---|---:|
-| Incidents completed / awaiting approval | 15 / 15 |
-| Top-1 hypothesis accuracy | 11 / 15 (73.3%) |
-| Top-3 hypothesis recall | 13 / 15 (86.7%) |
-| Mean root-cause concept match | 78.3% |
-| Mean evidence coverage | 97.0% |
-| Mean recovery match | 71.1% |
-| Mean investigation duration | ~70 ms |
-
-Run the benchmark with:
-
-```powershell
-python -m evaluation.runner
-```
-
-Run the automated test suite with:
+Run tests with:
 
 ```powershell
 pytest
 ```
 
-The benchmark is deterministic and uses synthetic incident evidence. It is intended to measure SentinelOps' reasoning pipeline, not to claim production incident-resolution accuracy.
+## Architecture and demo
 
-## Benchmark provenance
+- [Redshift domain scope](docs/redshift-domain.md)
+- [Redshift demo guide](docs/demo.md)
 
-The benchmark contains controlled synthetic scenarios. Several scenarios are synthetic reconstructions of facts described in public GitHub availability reports; the repository explicitly labels their provenance and does not include private GitHub telemetry.
+## Limitations
 
-See [evaluation/incident_cases.json](evaluation/incident_cases.json) for the complete case definitions, expected hypotheses, required evidence, mitigations, and source notes.
-
-## Durable checkpointing
-
-PostgreSQL-backed LangGraph checkpoints are enabled by default for the API. The incident ID is used as the LangGraph `thread_id`, allowing an interrupted investigation to be resumed after an API process restart when the same PostgreSQL checkpoint store is available.
-
-The checkpointer creates its own LangGraph checkpoint tables through `PostgresSaver.setup()`; no application-specific migration file is required for those tables.
-
-For isolated tests/experiments, switch to:
-
-```env
-SENTINELOPS_CHECKPOINT_BACKEND=memory
-```
-
-## Optional LangSmith
-
-LangSmith is optional and disabled by default.
-
-```env
-LANGSMITH_TRACING=false
-LANGSMITH_API_KEY=
-LANGSMITH_PROJECT=sentinelops
-```
-
-The default observability path remains local OpenTelemetry + Jaeger so external observability accounts are not required.
-
-## Repository structure
-
-```text
-sentinelops/
-├── agents/             # Specialized investigation agents
-├── app/                # FastAPI API, schemas, and dashboard
-├── evaluation/         # Benchmark cases, metrics, and runner
-├── graph/              # LangGraph state and investigation graph
-├── memory/             # Historical memory and durable checkpoints
-├── observability/      # OpenTelemetry configuration/tracing
-├── rag/                # Retrieval and knowledge pipeline
-├── recovery/           # Recovery plan generation
-├── safety/              # Safety policy and human approval
-├── simulator/          # Deterministic incident/evidence simulator
-├── tests/              # Automated tests
-├── docs/               # Architecture and demo documentation
-├── .env.example
-├── pyproject.toml
-└── README.md
-```
-
-## Demo path
-
-A concise portfolio demo is documented in [docs/demo.md](docs/demo.md).
-
-Recommended flow:
-
-1. Start the API.
-2. Investigate `INC-002`.
-3. Show the evidence and competing hypotheses.
-4. Show the adjudicated root cause.
-5. Show the structured recovery plan.
-6. Show the safety decision and approval checkpoint.
-7. Show the Agent Execution Timeline.
-8. Demonstrate approve/reject through the HITL endpoint.
-
-## Project status and limitations
-
-SentinelOps is a portfolio/research project built around deterministic simulated incidents.
-
-It is **not** a production incident-management system and does not automatically modify production infrastructure.
-
-Known limitations include:
-
-- benchmark evidence is simulated;
-- model/provider integrations can be configured but the deterministic benchmark is designed to run locally;
-- recovery matching is concept-based rather than a production safety certification;
-- observability is intentionally lightweight;
-- the project does not claim that benchmark accuracy transfers directly to real-world incidents.
-
-## License
-
-TBD
+- Scenarios and evidence are synthetic.
+- No live Redshift/AWS telemetry is collected by the default local demo.
+- Benchmark results do not establish production accuracy.
+- Recovery steps are recommendations; production changes are not autonomously executed.
+- The RSH1-RSH12 taxonomy is a candidate set, not an exhaustive representation of every possible Redshift failure.

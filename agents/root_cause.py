@@ -261,11 +261,24 @@ def run_root_cause_agent(state: InvestigationState) -> dict:
         evidence=best.supporting_evidence if best else (),
         confidence=best.confidence if best else 0.0,
     )
+    from agents.llm import ask, evidence_context
+    explanation = ask(
+        "You are a Redshift RCA analyst. Explain only the supplied observed evidence. "
+        "The deterministic hypothesis ranking is authoritative. Never claim recovery is authorized. "
+        "Cite evidence sources exactly; distinguish inference from observation. Reply in under 120 words.",
+        f"Leading hypothesis: {best.hypothesis_id if best else 'none'}; "
+        f"statement: {best.statement if best else 'none'}; "
+        f"score: {best.confidence if best else 0}.\nEvidence:\n{evidence_context(state)}",
+    ) if best else None
+    if explanation:
+        finding = AgentFinding(agent="root_cause_llm", category="llm_explanation",
+            summary=explanation, evidence=best.supporting_evidence, confidence=best.confidence)
     result = append_finding(state, finding)
     result.update({
         "hypotheses": hypotheses,
         "messages": list(state.get("messages", [])) + [
             f"Root Cause Agent evaluated {len(hypotheses)} competing hypotheses with causal-chain scoring."
+            + (" Ollama provided an evidence explanation." if explanation else " Deterministic mode; no LLM explanation.")
         ],
         "investigation_status": "hypothesis_evaluation",
     })

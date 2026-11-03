@@ -146,9 +146,16 @@ async function submitApproval(approved){
 }
 async function investigate(incidentId){
   const id=(incidentId||$("incident").value).trim();
-  $("error").textContent="";$("run").disabled=true;$("run").textContent="Investigating…";
-  try{const res=await fetch("/api/v1/investigations",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({incident_id:id})});const data=await res.json();if(!res.ok)throw new Error(data.detail||"Investigation failed");$("home").hidden=true;$("back-home").hidden=false;$("result").hidden=false;render(data)}
-  catch(e){$("error").textContent=e.message}finally{$("run").disabled=false;$("run").textContent="Investigate"}
+  $("error").textContent="";$("result").hidden=true;$("home").hidden=true;$("back-home").hidden=false;
+  $("run").disabled=true;$("run").textContent="Investigating…";
+  try{
+    const res=await fetch("/api/v1/investigations",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({incident_id:id})});
+    const body=await res.text();let data;
+    try{data=body?JSON.parse(body):{}}catch{throw new Error("API returned a non-JSON response (HTTP "+res.status+"): "+body.slice(0,300))}
+    if(!res.ok)throw new Error(data.detail||data.message||"Investigation failed (HTTP "+res.status+")");
+    $("result").hidden=false;render(data);
+  }catch(e){$("error").textContent=e.message;$("result").hidden=true}
+  finally{$("run").disabled=false;$("run").textContent="Investigate"}
 }
 async function loadIncidents(){
   try{

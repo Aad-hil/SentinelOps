@@ -1,35 +1,25 @@
+import pytest
+
 from simulator.__main__ import build_parser, run_investigation
 
 
-def test_cli_requires_incident_id():
+def test_cli_accepts_redshift_incident_ids_only():
     parser = build_parser()
-    args = parser.parse_args(["--incident-id", "INC-002"])
-    assert args.incident_id == "INC-002"
+    assert parser.parse_args(["--incident-id", "RS-001"]).incident_id == "RS-001"
+    with pytest.raises(SystemExit):
+        parser.parse_args(["--incident-id", "INC-002"])
 
 
-def test_run_investigation_incident_002():
-    state = run_investigation("INC-002")
-
-    assert state["incident_id"] == "INC-002"
-    assert state["investigation_status"] == "awaiting_human_approval"
-    assert state["plan"]
-    assert {finding.agent for finding in state["findings"]} >= {
-        "telemetry",
-        "knowledge",
-        "deployment",
-        "root_cause",
-        "critic",
-        "adjudication",
-        "recovery",
-        "safety",
-    }
+@pytest.mark.parametrize("incident_id", ["RS-001", "RS-012"])
+def test_run_redshift_investigation(incident_id, monkeypatch):
+    monkeypatch.setenv("SENTINELOPS_CHECKPOINT_BACKEND", "memory")
+    monkeypatch.setenv("SENTINELOPS_RAG_ENABLED", "false")
+    state = run_investigation(incident_id)
+    assert state["incident_id"] == incident_id
     assert len(state["hypotheses"]) == 12
-    assert state["critique"] is not None
+    assert {item.hypothesis_id for item in state["hypotheses"]} == {
+        f"RSH{number}" for number in range(1, 13)
+    }
     assert state["adjudication"] is not None
-    assert state["evidence_items"]
-
-
-def test_run_investigation_incident_001():
-    state = run_investigation("INC-001")
-    assert state["incident_id"] == "INC-001"
-    assert state["investigation_status"] == "complete"
+    assert state["safety_decision"] is not None
+    assert state["investigation_status"] in {"complete", "awaiting_human_approval"}

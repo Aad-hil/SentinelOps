@@ -123,3 +123,15 @@ def test_redshift_unknown_case_recovery_is_diagnostic_only():
     })
     assert plan.readiness == "verification_required"
     assert all(step.risk == "low" and not step.requires_approval for step in plan.steps)
+
+
+def test_redshift_evaluation_runner_reports_all_cases():
+    from evaluation.redshift_runner import run_redshift_benchmark
+
+    report = run_redshift_benchmark()
+    assert len(report.cases) == 12
+    assert 0.0 <= report.top1_accuracy <= 1.0
+    assert 0.0 <= report.top3_recall <= 1.0
+    assert all(item.expected_hypothesis_id.startswith("RSH") for item in report.cases)
+    assert all(item.predicted_hypothesis_id is None or item.predicted_hypothesis_id.startswith("RSH")
+               for item in report.cases)

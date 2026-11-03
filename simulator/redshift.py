@@ -104,7 +104,7 @@ _REDSHIFT_CASES = (
         "category": "table_design_statistics",
         "title": "Redshift table skew and stale statistics",
         "description": "Uneven table distribution and stale statistics increased query work and execution time.",
-        "trigger": {"maintenance_state": "statistics stale", "table": "fact_events"},
+        "trigger": {"statistics_state": "statistics stale", "table": "fact_events"},
         "metrics": {
             "redshift_query_runtime_seconds": (4, 5, 8, 15, 28, 44, 49, 30),
             "redshift_cpu_utilization_percent": (45, 50, 61, 72, 83, 90, 92, 80),
@@ -250,7 +250,7 @@ def build_redshift_incident(incident_id: str) -> IncidentScenario:
     }
     demo_recoveries = {
         "RS-002": "Recovery observation: query runtime returned toward baseline after an independently simulated SQL rollback; no action was executed by SentinelOps",
-        "RS-006": "Recovery observation: query runtime returned toward baseline after scheduled statistics maintenance; no action was executed by SentinelOps",
+        "RS-006": "Recovery observation: query runtime returned toward baseline after independent statistics refresh; no action was executed by SentinelOps",
     }
     mechanism_log = (
         (LogEvent(started + timedelta(minutes=1), service, "ERROR", demo_mechanisms[incident_id]),)

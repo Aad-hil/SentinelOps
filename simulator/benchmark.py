@@ -205,7 +205,7 @@ def build_benchmark_incident(incident_id: str) -> IncidentScenario:
     incident = Incident(
         incident_id=incident_id,
         service=profile["service"],
-        severity="HIGH",
+        severity=case.get("severity", "HIGH"),
         title=case["title"],
         description=profile["description"],
         started_at=start,

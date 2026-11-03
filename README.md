@@ -30,7 +30,7 @@ The dashboard exposes the investigation result, evidence, competing hypotheses, 
 - **Human-in-the-loop** — investigations can pause at a durable approval checkpoint.
 - **Durable state** — PostgreSQL-backed LangGraph checkpoints persist investigation state across API restarts.
 - **Observability** — OpenTelemetry traces plus a local execution timeline expose agent/node execution.
-- **Deterministic evaluation** — a 15-incident synthetic benchmark measures hypothesis, evidence, RCA, and recovery performance.
+- **Deterministic evaluation** — a 30-incident synthetic benchmark measures hypothesis, evidence, RCA, and recovery performance.
 
 ## Architecture
 
@@ -259,9 +259,9 @@ SENTINELOPS_OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
 
 ## Evaluation
 
-SentinelOps includes 15 deterministic incident scenarios with expected root causes, evidence concepts, and recovery concepts.
+SentinelOps includes 30 deterministic incident scenarios across 15 failure categories (two scenarios per category) with expected root causes, evidence concepts, and recovery concepts.
 
-Latest benchmark snapshot:
+Historical 15-incident baseline (recorded before the dataset expansion; rerun the benchmark for current 30-incident results):
 
 | Metric | Latest result |
 |---|---:|

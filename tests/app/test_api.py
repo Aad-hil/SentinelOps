@@ -238,10 +238,11 @@ def test_incident_list_includes_all_benchmark_incidents():
     response = client.get("/api/v1/incidents")
     assert response.status_code == 200
     payload = response.json()
-    assert len(payload) == 30
+    assert len(payload) == 35
     assert payload[1]["incident_id"] == "INC-002"
     assert payload[1]["category"] == "deployment_query_database_saturation"
-    assert payload[-1]["incident_id"] == "INC-030"
+    assert payload[-1]["incident_id"] == "INC-035"
+    assert payload[-1]["severity"] == "LOW"
 
 
 def test_saved_incident_can_be_opened_and_deleted():

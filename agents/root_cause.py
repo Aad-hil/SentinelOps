@@ -443,6 +443,37 @@ def _generate_redshift_hypotheses(state: InvestigationState) -> list[Hypothesis]
             causal_evidence=causal_sources,
             causal_relationships=relationships,
         ))
+    best_known_coverage = max(
+        (
+            sum(
+                any(any(_matches_signal(item, signal) for signal in stage) for item in items)
+                for stage in (
+                    definition.trigger_signals,
+                    definition.mechanism_signals,
+                    definition.impact_signals,
+                )
+            )
+            for definition in REDSHIFT_HYPOTHESES
+            if definition.hypothesis_id != "RSH12"
+        ),
+        default=0,
+    )
+    if best_known_coverage < 2:
+        results = [
+            Hypothesis(
+                hypothesis_id=item.hypothesis_id,
+                display_name=item.display_name,
+                statement=item.statement,
+                supporting_evidence=item.supporting_evidence,
+                contradicting_evidence=item.contradicting_evidence,
+                confidence=0.68 if item.hypothesis_id == "RSH12" else min(item.confidence, 0.35),
+                status="candidate",
+                causal_score=item.causal_score,
+                causal_evidence=item.causal_evidence,
+                causal_relationships=item.causal_relationships,
+            )
+            for item in results
+        ]
     return sorted(results, key=lambda h: (-h.confidence, h.hypothesis_id))
 
 

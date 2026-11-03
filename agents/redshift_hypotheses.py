@@ -23,7 +23,7 @@ REDSHIFT_HYPOTHESES: tuple[RedshiftHypothesisDefinition, ...] = (
         "Concurrent workloads saturated a Redshift workload-management queue.",
         ("concurrent", "concurrency", "queue", "priority"),
         ("queued", "slot", "wlm", "queue wait"),
-        ("query latency", "timeout", "query error"),
+        ("query latency", "timeout", "query error", "duration", "runtime", "latency", "error"),
         ("redshift_system_views", "cloudwatch", "query_history"),
     ),
     RedshiftHypothesisDefinition(
@@ -31,7 +31,7 @@ REDSHIFT_HYPOTHESES: tuple[RedshiftHypothesisDefinition, ...] = (
         "A SQL change or inefficient execution plan increased query work.",
         ("query change", "sql revision", "query version"),
         ("scan", "join", "query plan", "spill", "runtime"),
-        ("latency", "timeout", "query error", "cpu"),
+        ("latency", "timeout", "query error", "cpu", "duration", "runtime", "error"),
         ("query_history", "explain_plan", "cloudwatch", "deployment"),
     ),
     RedshiftHypothesisDefinition(
@@ -39,7 +39,7 @@ REDSHIFT_HYPOTHESES: tuple[RedshiftHypothesisDefinition, ...] = (
         "Workload demand exceeded available Redshift compute capacity.",
         ("workload growth", "traffic", "concurrency", "capacity"),
         ("cpu", "queue", "compute", "headroom"),
-        ("latency", "timeout", "query error"),
+        ("latency", "timeout", "query error", "duration", "runtime", "error"),
         ("cloudwatch", "redshift_cluster_metrics", "query_history"),
     ),
     RedshiftHypothesisDefinition(
@@ -47,7 +47,7 @@ REDSHIFT_HYPOTHESES: tuple[RedshiftHypothesisDefinition, ...] = (
         "A Redshift data load or unload operation failed or degraded.",
         ("copy", "unload", "load job", "s3 object"),
         ("load error", "file format", "manifest", "throughput"),
-        ("failed file", "load failure", "query error", "job delay"),
+        ("failed file", "load failure", "query error", "job delay", "error", "duration"),
         ("redshift_load_history", "stl_load_errors", "s3", "cloudtrail"),
     ),
     RedshiftHypothesisDefinition(
@@ -55,7 +55,7 @@ REDSHIFT_HYPOTHESES: tuple[RedshiftHypothesisDefinition, ...] = (
         "Spectrum or external catalog/data access failed for a Redshift query.",
         ("spectrum", "external schema", "glue catalog"),
         ("catalog lookup", "s3 access", "partition", "external table"),
-        ("query error", "scan failure", "latency"),
+        ("query error", "scan failure", "latency", "error", "duration"),
         ("spectrum_query_history", "glue", "s3", "cloudtrail"),
     ),
     RedshiftHypothesisDefinition(
@@ -63,7 +63,7 @@ REDSHIFT_HYPOTHESES: tuple[RedshiftHypothesisDefinition, ...] = (
         "Table distribution, sort design, or stale statistics increased query cost.",
         ("table change", "maintenance", "statistics", "distribution"),
         ("data skew", "unsorted", "stale statistics", "scan"),
-        ("query latency", "cpu", "query runtime"),
+        ("query latency", "cpu", "query runtime", "latency", "duration", "error"),
         ("svv_table_info", "query_history", "analyze_history", "cloudwatch"),
     ),
     RedshiftHypothesisDefinition(
@@ -71,7 +71,7 @@ REDSHIFT_HYPOTHESES: tuple[RedshiftHypothesisDefinition, ...] = (
         "A query exceeded available execution memory and spilled intermediate data.",
         ("large query", "workload change", "join"),
         ("disk spill", "temporary storage", "intermediate result"),
-        ("query latency", "timeout", "query error"),
+        ("query latency", "timeout", "query error", "duration", "runtime", "error"),
         ("query_monitoring_rules", "query_history", "cloudwatch"),
     ),
     RedshiftHypothesisDefinition(
@@ -79,7 +79,7 @@ REDSHIFT_HYPOTHESES: tuple[RedshiftHypothesisDefinition, ...] = (
         "An IAM role, S3 policy, or KMS key policy blocked a Redshift workflow.",
         ("iam policy", "role change", "kms policy", "permission change"),
         ("access denied", "assume role", "decrypt", "s3 authorization"),
-        ("copy failure", "unload failure", "spectrum error"),
+        ("copy failure", "unload failure", "spectrum error", "error", "failure"),
         ("cloudtrail", "iam", "kms", "s3", "redshift"),
     ),
     RedshiftHypothesisDefinition(
@@ -87,7 +87,7 @@ REDSHIFT_HYPOTHESES: tuple[RedshiftHypothesisDefinition, ...] = (
         "A network path or client connection change disrupted Redshift access.",
         ("security group", "route", "network change", "endpoint"),
         ("connection refused", "dns", "routing", "connect timeout"),
-        ("connection failure", "client timeout", "query unavailable"),
+        ("connection failure", "client timeout", "query unavailable", "error", "timeout"),
         ("vpc_flow_logs", "cloudwatch", "client_logs", "cloudtrail"),
     ),
     RedshiftHypothesisDefinition(
@@ -95,7 +95,7 @@ REDSHIFT_HYPOTHESES: tuple[RedshiftHypothesisDefinition, ...] = (
         "A Redshift cluster event or maintenance operation disrupted query service.",
         ("maintenance", "node replacement", "cluster event", "failover"),
         ("cluster unavailable", "node health", "recovery", "restart"),
-        ("query error", "unavailable", "latency"),
+        ("query error", "unavailable", "latency", "error", "duration"),
         ("redshift_cluster_events", "describe_clusters", "cloudwatch"),
     ),
     RedshiftHypothesisDefinition(
@@ -103,7 +103,7 @@ REDSHIFT_HYPOTHESES: tuple[RedshiftHypothesisDefinition, ...] = (
         "A data-share state or authorization issue blocked consumer access.",
         ("data share", "producer change", "consumer authorization"),
         ("share state", "grant", "namespace", "consumer access"),
-        ("query error", "access failure", "unavailable"),
+        ("query error", "access failure", "unavailable", "error", "failure"),
         ("redshift_datashares", "redshift_query_history", "cloudtrail"),
     ),
     RedshiftHypothesisDefinition(
@@ -111,7 +111,7 @@ REDSHIFT_HYPOTHESES: tuple[RedshiftHypothesisDefinition, ...] = (
         "Available evidence is insufficient or supports multiple interacting causes.",
         ("unknown", "unclassified", "multiple signals"),
         ("ambiguous", "conflicting evidence", "incomplete telemetry"),
-        ("query error", "latency", "workload degradation"),
+        ("query error", "latency", "workload degradation", "error", "duration", "runtime"),
         ("all_available_evidence",),
     ),
 )

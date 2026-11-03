@@ -576,8 +576,11 @@ def generate_hypotheses(state: InvestigationState) -> list[Hypothesis]:
     """Generate domain-specific candidates from observed evidence only."""
     evidence = state.get("evidence")
     incident = getattr(evidence, "incident", None)
-    if incident is not None and incident.service == "amazon-redshift":
-        return _generate_redshift_hypotheses(state)
+    if incident is None or incident.service != "amazon-redshift":
+        raise ValueError(
+            "SentinelOps currently supports Amazon Redshift incidents only."
+        )
+    return _generate_redshift_hypotheses(state)
 
     items = list(state.get("evidence_items", []))
     hypotheses: list[Hypothesis] = []

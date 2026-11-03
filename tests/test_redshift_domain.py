@@ -52,3 +52,77 @@ def test_redshift_agent_evidence_does_not_expose_answer_key():
     )
     assert not hasattr(evidence, "ground_truth")
     assert evidence.incident.incident_id == "RS-001"
+
+
+
+def test_redshift_hypothesis_engine_selects_case_specific_candidates():
+    from agents.deployment import run_deployment_agent
+    from agents.root_cause import generate_hypotheses
+    from agents.telemetry import run_telemetry_agent
+    from simulator.redshift import build_redshift_evidence_bundle
+
+    expected = {
+        "RS-001": "RSH1",
+        "RS-002": "RSH2",
+        "RS-003": "RSH3",
+        "RS-004": "RSH4",
+        "RS-005": "RSH5",
+        "RS-006": "RSH6",
+        "RS-007": "RSH7",
+        "RS-008": "RSH8",
+        "RS-009": "RSH9",
+        "RS-010": "RSH10",
+        "RS-011": "RSH11",
+        "RS-012": "RSH12",
+    }
+    for incident_id, expected_id in expected.items():
+        evidence = build_redshift_evidence_bundle(incident_id)
+        state = {
+            "incident_id": incident_id,
+            "incident_summary": evidence.incident.description,
+            "evidence": evidence,
+        }
+        state.update(run_telemetry_agent(state))
+        state.update(run_deployment_agent({**state, **run_telemetry_agent(state)}))
+        hypotheses = generate_hypotheses(state)
+        assert hypotheses[0].hypothesis_id == expected_id, (
+            incident_id,
+            [(item.hypothesis_id, item.confidence) for item in hypotheses[:4]],
+        )
+
+
+def test_redshift_unknown_case_recovery_is_diagnostic_only():
+    from agents.root_cause import Hypothesis
+    from recovery.planner import build_recovery_plan
+    from agents.adjudication import Adjudication
+    from simulator.redshift import build_redshift_evidence_bundle
+
+    evidence = build_redshift_evidence_bundle("RS-012")
+    adjudication = Adjudication(
+        hypothesis_id="RSH12",
+        display_name="Unknown or Compound Redshift Workload Failure",
+        statement="Available evidence is insufficient or supports multiple interacting causes.",
+        brief_explanation="Insufficient evidence.",
+        full_explanation="Insufficient evidence.",
+        rationale="No specific cause is established.",
+        temporal_support=False,
+        causal_support=False,
+        recovery_support=False,
+        alternative_gaps=("specific trigger",),
+        confidence=0.3,
+    )
+    plan = build_recovery_plan({
+        "incident_id": "RS-012",
+        "evidence": evidence,
+        "adjudication": adjudication,
+        "hypotheses": [Hypothesis(
+            hypothesis_id="RSH12",
+            display_name="Unknown",
+            statement="Unknown",
+            supporting_evidence=(),
+            contradicting_evidence=(),
+            confidence=0.3,
+        )],
+    })
+    assert plan.readiness == "verification_required"
+    assert all(step.risk == "low" and not step.requires_approval for step in plan.steps)

@@ -289,3 +289,21 @@ def build_redshift_incident(incident_id: str) -> IncidentScenario:
 
 def build_all_redshift_incidents() -> tuple[IncidentScenario, ...]:
     return tuple(build_redshift_incident(case_id) for case_id in redshift_case_ids())
+
+
+
+def build_redshift_evidence_bundle(incident_id: str):
+    """Return agent-facing evidence for a synthetic Redshift case.
+
+    Ground truth remains outside the bundle and is available only to tests/evaluation.
+    """
+    from simulator.evidence import build_evidence_bundle
+
+    scenario = build_redshift_incident(incident_id)
+    return build_evidence_bundle(
+        incident=scenario.incident,
+        logs=scenario.logs,
+        metrics=scenario.metrics,
+        deployments=scenario.deployments,
+        traces=scenario.traces,
+    )

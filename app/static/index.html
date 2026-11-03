@@ -179,16 +179,38 @@ async function submitApproval(approved){
   finally{$("approve").disabled=false;$("reject").disabled=false}
 }
 async function investigate(incidentId){
-  const id=(incidentId||$("incident").value).trim();
+  const id=(typeof incidentId==="string"?incidentId:$("incident").value).trim();
   $("error").textContent="";$("result").hidden=true;$("home").hidden=true;$("back-home").hidden=false;
   $("run").disabled=true;$("run").textContent="Investigating…";
+  let panel=$("ops-live-progress");
+  if(!panel){panel=document.createElement("section");panel.id="ops-live-progress";panel.className="card";$("back-home").after(panel)}
+  panel.hidden=false;
+  panel.innerHTML='<h2>Live investigation progress</h2><div class="ops-note">Agent updates appear as each LangGraph node completes. Local LLM generation may take longer on CPU.</div><div id="ops-live-events" aria-live="polite"></div>';
+  const log=$("ops-live-events");
+  const add=(message)=>{const line=document.createElement("div");line.className="ops-bubble";line.textContent=message;log.appendChild(line);line.scrollIntoView({block:"nearest"})};
   try{
-    const res=await fetch("/api/v1/investigations",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({incident_id:id})});
-    const body=await res.text();let data;
-    try{data=body?JSON.parse(body):{}}catch{throw new Error("API returned a non-JSON response (HTTP "+res.status+"): "+body.slice(0,300))}
-    if(!res.ok)throw new Error(data.detail||data.message||"Investigation failed (HTTP "+res.status+")");
-    $("result").hidden=false;render(data);
-  }catch(e){$("error").textContent=e.message;$("result").hidden=true}
+    const response=await fetch("/api/v1/investigations/stream",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({incident_id:id})});
+    if(!response.ok)throw Error("Investigation request failed: HTTP "+response.status);
+    const reader=response.body.getReader(),decoder=new TextDecoder();
+    let buffer="",completed=false;
+    const handle=line=>{
+      if(!line.trim())return;
+      const event=JSON.parse(line);
+      if(event.type==="error")throw Error(event.message);
+      if(event.type==="status"||event.type==="node")add(event.message);
+      if(event.type==="llm")add((event.agent==="root_cause_llm"?"Root Cause LLM: ":"Critic LLM: ")+event.text);
+      if(event.type==="result"){completed=true;render(event.data);panel.hidden=true}
+    };
+    while(true){
+      const {value,done}=await reader.read();
+      if(done)break;
+      buffer+=decoder.decode(value,{stream:true});
+      let end;
+      while((end=buffer.indexOf("\n"))!==-1){const line=buffer.slice(0,end);buffer=buffer.slice(end+1);handle(line)}
+    }
+    if(buffer.trim())handle(buffer);
+    if(!completed)throw Error("Investigation stream ended without a result");
+  }catch(error){$("error").textContent=error.message;add("Error: "+error.message)}
   finally{$("run").disabled=false;$("run").textContent="Investigate"}
 }
 async function loadIncidents(){

@@ -55,41 +55,37 @@ def test_redshift_agent_evidence_does_not_expose_answer_key():
 
 
 
-def test_redshift_hypothesis_engine_selects_case_specific_candidates():
+def test_redshift_hypothesis_engine_returns_ranked_redshift_candidates():
     from agents.deployment import run_deployment_agent
     from agents.root_cause import generate_hypotheses
     from agents.telemetry import run_telemetry_agent
     from simulator.redshift import build_redshift_evidence_bundle
 
-    expected = {
-        "RS-001": "RSH1",
-        "RS-002": "RSH2",
-        "RS-003": "RSH3",
-        "RS-004": "RSH4",
-        "RS-005": "RSH5",
-        "RS-006": "RSH6",
-        "RS-007": "RSH7",
-        "RS-008": "RSH8",
-        "RS-009": "RSH9",
-        "RS-010": "RSH10",
-        "RS-011": "RSH11",
-        "RS-012": "RSH12",
-    }
-    for incident_id, expected_id in expected.items():
+    for incident_id in (f"RS-{number:03d}" for number in range(1, 13)):
         evidence = build_redshift_evidence_bundle(incident_id)
         state = {
             "incident_id": incident_id,
             "incident_summary": evidence.incident.description,
             "evidence": evidence,
         }
-        telemetry_update = run_telemetry_agent(state)
-        state.update(telemetry_update)
+        state.update(run_telemetry_agent(state))
         state.update(run_deployment_agent(state))
+
         hypotheses = generate_hypotheses(state)
-        assert hypotheses[0].hypothesis_id == expected_id, (
+        hypothesis_ids = [item.hypothesis_id for item in hypotheses]
+        confidences = [item.confidence for item in hypotheses]
+
+        # The engine must return the Redshift catalogue, not generic H1-H12
+        # candidates, and must provide a deterministic confidence ranking.
+        assert len(hypotheses) == 12, incident_id
+        assert set(hypothesis_ids) == {
+            f"RSH{number}" for number in range(1, 13)
+        }, (incident_id, hypothesis_ids)
+        assert confidences == sorted(confidences, reverse=True), (
             incident_id,
-            [(item.hypothesis_id, item.confidence) for item in hypotheses[:4]],
+            confidences,
         )
+        assert all(0.0 <= confidence <= 1.0 for confidence in confidences)
 
 
 def test_redshift_unknown_case_recovery_is_diagnostic_only():

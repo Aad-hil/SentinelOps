@@ -204,7 +204,6 @@ _REDSHIFT_CASES = (
         "metrics": {
             "redshift_query_errors": (0, 0, 1, 3, 7, 9, 8, 5),
             "redshift_query_runtime_seconds": (4, 5, 8, 13, 19, 24, 22, 17),
-            "redshift_cpu_utilization_percent": (50, 54, 60, 66, 72, 76, 74, 71),
         },
         "operation": "execute warehouse query",
         "cause": "Insufficient evidence to distinguish a specific Redshift workload failure.",

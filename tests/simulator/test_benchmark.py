@@ -43,3 +43,10 @@ def test_incident_two_keeps_existing_realistic_generator() -> None:
 
     assert scenario.incident.incident_id == "INC-002"
     assert any("q7f2" in log.message for log in scenario.logs)
+
+
+
+def test_low_risk_incidents_have_low_severity() -> None:
+    for incident_id in ("INC-031", "INC-032", "INC-033", "INC-034", "INC-035"):
+        scenario = build_benchmark_incident(incident_id)
+        assert scenario.incident.severity == "LOW"

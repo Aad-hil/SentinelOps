@@ -270,10 +270,12 @@ def run_root_cause_agent(state: InvestigationState) -> dict:
         f"statement: {best.statement if best else 'none'}; "
         f"score: {best.confidence if best else 0}.\nEvidence:\n{evidence_context(state)}",
     ) if best else None
+    result = append_finding(state, finding)
     if explanation:
         finding = AgentFinding(agent="root_cause_llm", category="llm_explanation",
             summary=explanation, evidence=best.supporting_evidence, confidence=best.confidence)
-    result = append_finding(state, finding)
+    if (explanation if "explanation" in locals() else llm_challenge):
+        result = append_finding({**state, **result}, finding)
     result.update({
         "hypotheses": hypotheses,
         "messages": list(state.get("messages", [])) + [

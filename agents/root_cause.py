@@ -391,6 +391,61 @@ def _incident_context_trigger_strength(
     return min(1.0, matched / 2.0)
 
 
+def _generate_redshift_hypotheses(state: InvestigationState) -> list[Hypothesis]:
+    """Rank Redshift candidates from trigger, mechanism, and impact evidence."""
+    from agents.redshift_hypotheses import REDSHIFT_HYPOTHESES
+
+    items = list(state.get("evidence_items", []))
+    results: list[Hypothesis] = []
+    for definition in REDSHIFT_HYPOTHESES:
+        stages = (
+            definition.trigger_signals,
+            definition.mechanism_signals,
+            definition.impact_signals,
+        )
+        matches = [
+            [item for item in items if any(_matches_signal(item, signal) for signal in signals)]
+            for signals in stages
+        ]
+        # RSH12 is a fallback classification, never a keyword competitor.
+        if definition.hypothesis_id == "RSH12":
+            covered = sum(bool(stage) for stage in matches[:3])
+            score = 0.12 if covered < 2 else 0.08
+            relationships = ()
+        else:
+            covered = sum(bool(stage) for stage in matches)
+            score = covered / 3.0
+            relationships = tuple(
+                CausalEvidenceRelationship(
+                    source=item.source,
+                    role=role,
+                    hypothesis_id=definition.hypothesis_id,
+                    strength=0.75 if item.evidence_type in {"deployment", "deployment_change"} and role == "trigger" else 0.6,
+                    rationale=f"Evidence matches Redshift {role} signals for {definition.hypothesis_id}.",
+                )
+                for role, stage in zip(("trigger", "mechanism", "impact"), matches)
+                for item in stage
+            )
+        supporting = tuple(dict.fromkeys(item.source for stage in matches for item in stage))
+        causal_sources = tuple(dict.fromkeys(
+            relationship.source for relationship in relationships
+        ))
+        confidence = min(0.95, 0.10 + score * 0.78 + min(len(supporting), 5) * 0.015)
+        results.append(Hypothesis(
+            hypothesis_id=definition.hypothesis_id,
+            display_name=definition.name,
+            statement=definition.statement,
+            supporting_evidence=supporting,
+            contradicting_evidence=(),
+            confidence=round(confidence, 3),
+            status="supported" if covered == 3 and confidence >= 0.6 else "candidate",
+            causal_score=round(score, 3),
+            causal_evidence=causal_sources,
+            causal_relationships=relationships,
+        ))
+    return sorted(results, key=lambda h: (-h.confidence, h.hypothesis_id))
+
+
 def generate_hypotheses(state: InvestigationState) -> list[Hypothesis]:
     """Generate competing causal hypotheses from observed evidence only."""
     items = list(state.get("evidence_items", []))

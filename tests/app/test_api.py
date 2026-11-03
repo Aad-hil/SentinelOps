@@ -238,7 +238,7 @@ def test_incident_list_includes_all_benchmark_incidents():
     response = client.get("/api/v1/incidents")
     assert response.status_code == 200
     payload = response.json()
-    assert len(payload) == 15
+    assert len(payload) == 30
     assert payload[1]["incident_id"] == "INC-002"
 
 

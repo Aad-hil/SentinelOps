@@ -61,19 +61,6 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
         return [], None
 
     evidence_by_source = {item.source: item for item in items}
-    # Preserve the direct-signal checks used to distinguish broad symptom
-    # hypotheses from hypotheses supported by specific telemetry.
-    traffic_direct = any(
-        item.evidence_type in {"metric", "log", "trace"}
-        and _has_any([item], "request_rate", "request rate", "traffic", "request volume")
-        for item in items
-    )
-    network_direct = any(
-        item.evidence_type in {"metric", "log", "trace"}
-        and _has_any([item], "network", "downstream", "dependency", "connectivity")
-        for item in items
-    )
-
     def _utc_timestamp(item: EvidenceItem):
         timestamp = item.timestamp
         if timestamp is None:
@@ -140,61 +127,8 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
         confidence = hypothesis.confidence
         status = hypothesis.status
 
-        direct_deployment_trigger = any(
-            item.evidence_type in {"deployment", "deployment_change"}
-            and any(
-                term in item.observation.lower()
-                for term in ("query", "database", "db_", "release", "schema")
-            )
-            and not any(
-                term in item.observation.lower()
-                for term in ("rollback", "restart", "recovery", "throttle", "protect")
-            )
-            for item in items
-        )
-        direct_migration_trigger = any(
-            item.evidence_type in {"deployment", "deployment_change", "log"}
-            and any(
-                term in item.observation.lower()
-                for term in ("migration", "schema change", "alter table")
-            )
-            and not any(
-                term in item.observation.lower()
-                for term in ("rollback", "restart", "recovery")
-            )
-            for item in items
-        )
-
-        if hypothesis.hypothesis_id == "H1":
-            if direct_deployment_trigger:
-                # Preserve the full evidence-derived score. A directly observed,
-                # hypothesis-specific change must not be capped below a competing
-                # symptom hypothesis that accumulated many downstream metrics.
-                confidence = confidence
-            else:
-                # Missing deployment evidence weakens this explanation but does
-                # not make it impossible when other causal evidence exists.
-                confidence = max(0.0, confidence - 0.15)
-                status = "candidate"
-            status = "strong_candidate" if confidence >= 0.75 else status
-        elif hypothesis.hypothesis_id == "H2":
-            confidence = min(1.0, confidence + (0.10 if traffic_direct else 0.0))
-            # Traffic can be a contributing condition; a directly observed
-            # migration trigger is more discriminating for H6.
-            if direct_migration_trigger:
-                confidence = max(0.0, confidence - 0.20)
-            status = "supported" if traffic_direct and confidence >= 0.6 else (
-                hypothesis.status if confidence >= 0.6 else "insufficient_evidence"
-            )
-        elif hypothesis.hypothesis_id == "H3":
-            confidence = min(1.0, confidence + (0.10 if network_direct else 0.0))
-            status = "supported" if network_direct and confidence >= 0.6 else (
-                hypothesis.status if confidence >= 0.6 else "insufficient_evidence"
-            )
-        elif hypothesis.hypothesis_id == "H6":
-            if direct_migration_trigger:
-                confidence = min(1.0, confidence + 0.20)
-                status = "supported" if confidence >= 0.6 else hypothesis.status
+        # Redshift candidate scores are produced by the Redshift hypothesis engine.
+        # Adjudication adds no legacy-domain bonuses or ID-specific score overrides.
         adjudicated.append(
             Hypothesis(
                 hypothesis_id=hypothesis.hypothesis_id,
@@ -219,12 +153,8 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
         relationship.role for relationship in leading.causal_relationships
     }
     gaps: list[str] = []
-    if leading.hypothesis_id == "H1" and not recovery:
-        gaps.append("post-rollback recovery evidence")
-    if leading.hypothesis_id == "H2" and not traffic_direct:
-        gaps.append("direct request-volume evidence")
-    if leading.hypothesis_id == "H3" and not network_direct:
-        gaps.append("direct network or downstream evidence")
+    if not recovery:
+        gaps.append("post-impact recovery evidence")
     if len(leading_relationship_roles.intersection({"trigger", "mechanism", "impact"})) < 3:
         gaps.append("complete trigger-mechanism-impact relationship")
 

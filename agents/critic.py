@@ -116,11 +116,13 @@ def run_critic_agent(state: InvestigationState) -> dict:
         f"deterministic critique: {critique.challenge if critique else 'none'}.\n"
         f"Evidence:\n{evidence_context(state)}",
     ) if critique else None
+    result = append_finding(state, finding)
     if llm_challenge:
         finding = AgentFinding(agent="critic_llm", category="llm_critique",
             summary=llm_challenge, evidence=critique.supporting_evidence,
             confidence=critique.confidence)
-    result = append_finding(state, finding)
+    if (explanation if "explanation" in locals() else llm_challenge):
+        result = append_finding({**state, **result}, finding)
     result.update({
         "critique": critique,
         "messages": list(state.get("messages", [])) + [

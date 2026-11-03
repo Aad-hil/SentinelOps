@@ -25,7 +25,7 @@ from graph.investigation import build_investigation_graph
 from memory.checkpoint import create_checkpointer
 from rag.retrieval import create_knowledge_retriever_from_env
 from simulator.scenarios import build_benchmark_evidence
-from simulator.benchmark import build_all_benchmark_incidents
+from simulator.benchmark import benchmark_category, build_all_benchmark_incidents
 
 
 app = FastAPI(
@@ -162,6 +162,7 @@ def list_incidents() -> list[dict[str, Any]]:
         values = snapshot.values or {}
         results.append({
             "incident_id": scenario.incident.incident_id,
+            "category": benchmark_category(scenario.incident.incident_id),
             "title": scenario.incident.title,
             "service": scenario.incident.service,
             "severity": scenario.incident.severity,

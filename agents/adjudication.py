@@ -84,44 +84,65 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
             return None
         return timestamp.replace(tzinfo=timezone.utc) if timestamp.tzinfo is None else timestamp.astimezone(timezone.utc)
 
-    temporal = False
-    causal = False
-    recovery = False
-    if leading_for_evidence is not None:
+    def _support_for_hypothesis(hypothesis: Hypothesis) -> tuple[bool, bool, bool]:
+        """Evaluate causal, temporal, and recovery support for this candidate only."""
         role_evidence = {
             role: [
                 evidence_by_source[relationship.source]
-                for relationship in leading_for_evidence.causal_relationships
+                for relationship in hypothesis.causal_relationships
                 if relationship.role == role and relationship.source in evidence_by_source
             ]
             for role in ("trigger", "mechanism", "impact")
         }
-        causal = all(role_evidence[role] for role in ("trigger", "mechanism", "impact"))
-        if causal:
-            trigger_times = [t for item in role_evidence["trigger"] if (t := _utc_timestamp(item)) is not None]
-            mechanism_times = [t for item in role_evidence["mechanism"] if (t := _utc_timestamp(item)) is not None]
-            impact_times = [t for item in role_evidence["impact"] if (t := _utc_timestamp(item)) is not None]
-            if trigger_times and mechanism_times and impact_times:
-                first_trigger = min(trigger_times)
-                later_mechanisms = [t for t in mechanism_times if t >= first_trigger]
-                if later_mechanisms:
-                    first_mechanism = min(later_mechanisms)
-                    later_impacts = [t for t in impact_times if t >= first_mechanism]
-                    temporal = bool(later_impacts)
-                    if later_impacts:
-                        first_impact = min(later_impacts)
-                        recovery = any(
-                            item.evidence_type == "recovery"
-                            and (timestamp := _utc_timestamp(item)) is not None
-                            and timestamp >= first_impact
-                            for item in items
-                        )
+        causal_support = all(
+            role_evidence[role] for role in ("trigger", "mechanism", "impact")
+        )
+        if not causal_support:
+            return False, False, False
+
+        trigger_times = [
+            timestamp for item in role_evidence["trigger"]
+            if (timestamp := _utc_timestamp(item)) is not None
+        ]
+        mechanism_times = [
+            timestamp for item in role_evidence["mechanism"]
+            if (timestamp := _utc_timestamp(item)) is not None
+        ]
+        impact_times = [
+            timestamp for item in role_evidence["impact"]
+            if (timestamp := _utc_timestamp(item)) is not None
+        ]
+        if not (trigger_times and mechanism_times and impact_times):
+            return causal_support, False, False
+
+        first_trigger = min(trigger_times)
+        later_mechanisms = [timestamp for timestamp in mechanism_times if timestamp >= first_trigger]
+        if not later_mechanisms:
+            return causal_support, False, False
+
+        first_mechanism = min(later_mechanisms)
+        later_impacts = [timestamp for timestamp in impact_times if timestamp >= first_mechanism]
+        if not later_impacts:
+            return causal_support, False, False
+
+        first_impact = min(later_impacts)
+        recovery_support = any(
+            item.evidence_type == "recovery"
+            and (timestamp := _utc_timestamp(item)) is not None
+            and timestamp >= first_impact
+            for item in items
+        )
+        return causal_support, True, recovery_support
+
+    support_by_hypothesis = {
+        hypothesis.hypothesis_id: _support_for_hypothesis(hypothesis)
+        for hypothesis in hypotheses
+    }
 
     adjudicated: list[Hypothesis] = []
     for hypothesis in hypotheses:
         confidence = hypothesis.confidence
         status = hypothesis.status
-        relationship_roles = {relationship.role for relationship in hypothesis.causal_relationships}
 
         direct_deployment_trigger = any(
             item.evidence_type in {"deployment", "deployment_change"}
@@ -150,16 +171,13 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
 
         if hypothesis.hypothesis_id == "H1":
             if direct_deployment_trigger:
-                confidence = min(
-                    1.0,
-                    confidence * 0.55
-                    + (0.15 if temporal else 0.0)
-                    + (0.15 if causal else 0.0)
-                    + (0.10 if recovery else 0.0),
-                )
+                # Preserve the evidence-derived score; the direct change record
+                # validates the trigger but must not arbitrarily rescale confidence.
+                confidence = min(confidence, 0.95)
             else:
-                # Do not let shared database symptoms establish deployment causality.
-                confidence = min(confidence, 0.59)
+                # Missing deployment evidence weakens this explanation but does
+                # not make it impossible when other causal evidence exists.
+                confidence = max(0.0, confidence - 0.15)
                 status = "candidate"
             status = "strong_candidate" if confidence >= 0.75 else status
         elif hypothesis.hypothesis_id == "H2":
@@ -197,6 +215,9 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
 
     adjudicated.sort(key=lambda h: h.confidence, reverse=True)
     leading = adjudicated[0]
+    causal, temporal, recovery = support_by_hypothesis.get(
+        leading.hypothesis_id, (False, False, False)
+    )
     leading_relationship_roles = {
         relationship.role for relationship in leading.causal_relationships
     }

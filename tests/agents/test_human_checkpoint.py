@@ -2,11 +2,11 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.types import Command
 
 from graph.investigation import build_investigation_graph
-from simulator.scenarios import build_incident_002_evidence
+from simulator.redshift import build_redshift_evidence_bundle
 
 
 def _initial_state():
-    evidence = build_incident_002_evidence()
+    evidence = build_redshift_evidence_bundle("RS-001")
     return {
         "incident_id": evidence.incident.incident_id,
         "incident_summary": evidence.incident.description,

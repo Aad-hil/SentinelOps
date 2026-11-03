@@ -41,6 +41,8 @@ class AdjudicationResponse(BaseModel):
     hypothesis_id: str
     display_name: str | None = None
     statement: str | None = None
+    brief_explanation: str | None = None
+    full_explanation: str | None = None
     rationale: str
     temporal_support: bool
     causal_support: bool

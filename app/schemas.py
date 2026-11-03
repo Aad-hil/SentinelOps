@@ -107,6 +107,7 @@ class InvestigationResponse(BaseModel):
     recovery_plan: RecoveryPlanResponse | None = None
     safety_decision: SafetyDecisionResponse | None = None
     messages: list[str] = Field(default_factory=list)
+    llm_findings: list[dict[str, object]] = Field(default_factory=list)
     observability_events: list[ObservabilityEventResponse] = Field(default_factory=list)
     trace_id: str | None = None
 

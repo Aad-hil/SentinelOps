@@ -10,6 +10,8 @@ class Adjudication:
     """Final evidence-quality assessment of competing root-cause hypotheses."""
 
     hypothesis_id: str
+    display_name: str
+    statement: str
     rationale: str
     temporal_support: bool
     causal_support: bool
@@ -119,6 +121,8 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
     )
     adjudication = Adjudication(
         hypothesis_id=leading.hypothesis_id,
+        display_name=leading.display_name,
+        statement=leading.statement,
         rationale=rationale,
         temporal_support=temporal,
         causal_support=causal,

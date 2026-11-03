@@ -80,7 +80,7 @@ No infrastructure action is executed by this endpoint.
 
 A concise explanation of the architecture:
 
-> SentinelOps is a LangGraph-based multi-agent incident investigation system. A supervisor coordinates specialized agents for telemetry, knowledge retrieval, deployment analysis, root-cause generation, critique, adjudication, recovery planning, and safety. Evidence and causal relationships are kept in shared state, while PostgreSQL checkpoints make human approval interruptions durable. The dashboard exposes the investigation and OpenTelemetry execution timeline, and a deterministic 30-incident benchmark across 15 failure categories evaluates hypothesis accuracy, evidence coverage, RCA concepts, and recovery matching.
+> SentinelOps is a LangGraph-based multi-agent incident investigation system. A supervisor coordinates specialized agents for telemetry, knowledge retrieval, deployment analysis, root-cause generation, critique, adjudication, recovery planning, and safety. Evidence and causal relationships are kept in shared state, while PostgreSQL checkpoints make human approval interruptions durable. The dashboard exposes the investigation and OpenTelemetry execution timeline, and a deterministic 35-incident benchmark across 15 failure categories, including five low-severity cases evaluates hypothesis accuracy, evidence coverage, RCA concepts, and recovery matching.
 
 ## Useful API endpoints
 

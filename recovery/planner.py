@@ -5,6 +5,17 @@ from graph.state import InvestigationState
 # Conservative, hypothesis-driven recovery templates. These remain proposals only;
 # the Safety Agent and human approval checkpoint control production changes.
 _RECOVERY_TEMPLATES: dict[str, tuple[tuple[str, str, str, str, bool], ...]] = {
+    "RSH1": (("inspect-wlm", "Inspect Redshift WLM queue state, query priorities, and concurrency limits.", "Identify queued workloads.", "low", False), ("adjust-wlm", "Prepare a reversible WLM queue or workload-priority adjustment for human review.", "Relieve queue contention with operator approval.", "medium", True), ("verify-wlm", "Verify queue wait time and query latency return toward baseline.", "Confirm queue recovery.", "low", False)),
+    "RSH2": (("compare-query-plans", "Compare SQL revision, EXPLAIN plan, and Redshift query history.", "Validate query-plan regression.", "low", False), ("revert-sql", "Prepare a reviewed revert or correction of the SQL revision.", "Remove query regression with operator approval.", "medium", True), ("verify-query", "Verify scan volume, runtime, CPU, and errors return toward baseline.", "Confirm query recovery.", "low", False)),
+    "RSH3": (("inspect-capacity", "Inspect Redshift compute utilization, concurrency, queueing, and workload demand.", "Determine compute headroom.", "low", False), ("plan-capacity", "Prepare a controlled capacity or concurrency adjustment for human review.", "Restore compute headroom.", "medium", True), ("verify-capacity", "Verify utilization, queue depth, and latency return toward baseline.", "Confirm capacity recovery.", "low", False)),
+    "RSH4": (("inspect-load-errors", "Inspect Redshift load history, STL_LOAD_ERRORS, COPY options, manifests, and source files.", "Identify load failure.", "low", False), ("correct-load-input", "Prepare a validated correction to source files or COPY configuration for human review.", "Restore data loading.", "medium", True), ("verify-load", "Verify COPY errors, throughput, and job duration return toward baseline.", "Confirm pipeline health.", "low", False)),
+    "RSH5": (("inspect-spectrum", "Inspect Spectrum history, external schemas, Glue metadata, and S3 access.", "Locate external-data failure.", "low", False), ("restore-external-access", "Prepare a reviewed correction to external schema, catalog, partition, or S3 access.", "Restore external-data access.", "medium", True), ("verify-spectrum", "Verify Spectrum scans and external-table queries succeed.", "Confirm recovery.", "low", False)),
+    "RSH6": (("inspect-table-design", "Inspect SVV_TABLE_INFO, distribution skew, sort state, and statistics freshness.", "Validate table-design overhead.", "low", False), ("refresh-statistics", "Prepare ANALYZE or table-design correction for a maintenance window and human review.", "Improve optimizer information.", "medium", True), ("verify-table-performance", "Verify scan volume, runtime, and CPU return toward baseline.", "Confirm table recovery.", "low", False)),
+    "RSH7": (("inspect-query-spill", "Inspect query history, execution plans, and spill metrics.", "Identify query spill.", "low", False), ("optimize-memory-workload", "Prepare a reviewed query or workload-allocation change to reduce spill.", "Reduce spill pressure.", "medium", True), ("verify-spill", "Verify spill volume, runtime, and timeouts return toward baseline.", "Confirm recovery.", "low", False)),
+    "RSH8": (("inspect-authorizations", "Inspect Redshift IAM role, trust policy, S3 policy, and KMS key policy.", "Identify denied permission.", "low", False), ("restore-least-privilege", "Prepare the minimum required IAM, S3, or KMS permission correction for security review.", "Restore access safely.", "medium", True), ("verify-authorizations", "Verify the affected COPY, UNLOAD, or Spectrum operation succeeds.", "Confirm access recovery.", "low", False)),
+    "RSH9": (("inspect-network-path", "Inspect endpoint reachability, security groups, routes, DNS, and VPC flow logs.", "Identify network failure.", "low", False), ("correct-network-rule", "Prepare a narrowly scoped network correction for human review.", "Restore connectivity safely.", "medium", True), ("verify-connectivity", "Verify client connections and query requests succeed.", "Confirm connectivity recovery.", "low", False)),
+    "RSH10": (("inspect-cluster-events", "Inspect Redshift cluster events, node health, maintenance history, and service health.", "Establish cluster state.", "low", False), ("follow-cluster-runbook", "Prepare the documented Redshift recovery procedure for operator review.", "Restore service through the supported runbook.", "medium", True), ("verify-cluster", "Verify availability, query errors, and latency return toward baseline.", "Confirm cluster health.", "low", False)),
+    "RSH11": (("inspect-data-share", "Inspect producer and consumer data-share state, grants, namespace, and authorization.", "Identify sharing failure.", "low", False), ("restore-share-access", "Prepare a reviewed correction to data-share grants or consumer authorization.", "Restore consumer access.", "medium", True), ("verify-data-share", "Verify the consumer can query the shared dataset.", "Confirm data-sharing recovery.", "low", False)),
     "H1": (
         ("identify-query", "Identify and isolate the database query associated with the validated deployment change.", "Confirm the causal query before changing production state.", "low", False),
         ("rollback-deployment", "Roll back the deployment that introduced the database-impacting query.", "Remove the suspected trigger with a reversible deployment action.", "medium", True),
@@ -280,6 +291,19 @@ def build_recovery_plan(state: InvestigationState) -> RecoveryPlan:
     adjudication = state.get("adjudication")
     critique = state.get("critique")
     incident_id = state.get("incident_id") or state["evidence"].incident.incident_id
+
+    if adjudication is not None and adjudication.hypothesis_id == "RSH12":
+        return RecoveryPlan(
+            incident_id=incident_id,
+            hypothesis_id="RSH12",
+            confidence=float(adjudication.confidence),
+            readiness="verification_required",
+            rationale="Redshift evidence does not distinguish a specific failure mode. Collect targeted diagnostics before proposing remediation.",
+            steps=(
+                RecoveryStep(step_id="collect-redshift-diagnostics", action="Collect Redshift query history, WLM queue state, cluster events, CloudWatch metrics, and dependency authorization or network diagnostics.", purpose="Resolve the unknown or compound failure before selecting remediation.", risk="low", requires_approval=False),
+                RecoveryStep(step_id="validate-candidate-causes", action="Compare collected evidence against Redshift hypotheses and document remaining gaps.", purpose="Establish a defensible trigger-to-impact chain.", risk="low", requires_approval=False),
+            ),
+        )
 
     if adjudication is None:
         return RecoveryPlan(

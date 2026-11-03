@@ -65,6 +65,18 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
         None,
     ) if state.get("hypotheses") else None
     evidence_by_source = {item.source: item for item in items}
+    # Preserve the direct-signal checks used to distinguish broad symptom
+    # hypotheses from hypotheses supported by specific telemetry.
+    traffic_direct = any(
+        item.evidence_type in {"metric", "log", "trace"}
+        and _has_any([item], "request_rate", "request rate", "traffic", "request volume")
+        for item in items
+    )
+    network_direct = any(
+        item.evidence_type in {"metric", "log", "trace"}
+        and _has_any([item], "network", "downstream", "dependency", "connectivity")
+        for item in items
+    )
 
     def _utc_timestamp(item: EvidenceItem):
         timestamp = item.timestamp

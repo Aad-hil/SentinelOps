@@ -241,7 +241,7 @@ function opsPlaceCards(){
   const grid=$("result").querySelector(".grid");if(!grid)return;
   const cards=Array.from(grid.children).filter(x=>x.classList.contains("card"));
   const pick=prefix=>cards.find(c=>c.querySelector("h2")?.textContent.trim().startsWith(prefix));
-  const moves={agents:["Agent Execution Flow"],evidence:["Evidence","Competing Hypotheses"],recovery:["Safety Decision","Recovery Plan"],analytics:[],copilot:[]};
+  const moves={agents:["Agent Execution Flow"],evidence:["Evidence"],recovery:["Safety Decision","Recovery Plan"],analytics:[],copilot:[]};
   // Keep the root cause with the recovery decision for a single explainable view.
   moves.results=["Root Cause","Competing Hypotheses"];
   moves.recovery=[];

@@ -39,6 +39,12 @@ def install_streaming(graph, config_factory, evidence_factory, retriever_factory
                         else:
                             yield encode({"type":"node","node":node,
                                           "message":node.replace("_"," ").title()+" completed"})
+                            if node == "supervisor" and isinstance(delta, dict):
+                                next_agent = delta.get("next_agent")
+                                if next_agent and next_agent != "complete":
+                                    yield encode({"type":"status",
+                                                  "message":"Running "+next_agent.replace("_"," ").title()
+                                                  + (" (waiting for local Ollama response)" if next_agent in ("root_cause","critic") else "")})
                             if isinstance(delta, dict):
                                 for finding in delta.get("findings", []):
                                     if getattr(finding,"agent","") in ("root_cause_llm","critic_llm"):

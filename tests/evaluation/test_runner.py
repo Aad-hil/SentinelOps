@@ -1,14 +1,14 @@
-"""Tests for the local 15-incident evaluation runner."""
+"""Tests for the local 35-incident evaluation runner."""
 
 from evaluation.runner import EvaluationReport, format_report, run_benchmark
 
 
-def test_benchmark_runner_evaluates_all_fifteen_incidents() -> None:
+def test_benchmark_runner_evaluates_all_thirty_five_incidents() -> None:
     report = run_benchmark()
 
     assert isinstance(report, EvaluationReport)
-    assert report.incident_count == 15
-    assert len(report.incidents) == 15
+    assert report.incident_count == 35
+    assert len(report.incidents) == 35
     assert all(item.status for item in report.incidents)
     assert all(0.0 <= item.root_cause_concept_match <= 1.0 for item in report.incidents)
     assert all(0.0 <= item.evidence_coverage <= 1.0 for item in report.incidents)

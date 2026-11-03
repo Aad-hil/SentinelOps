@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import timezone
 
 from graph.evidence import EvidenceItem
 from graph.state import AgentFinding, InvestigationState, append_finding
@@ -59,17 +60,50 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
     if not hypotheses:
         return [], None
 
-    temporal = _has(items, "deployment", "web-2025.01.09.3") and _has(items, "deployment", "query")
-    causal = _has(items, "query_fingerprint") and _has(items, "query_path") and _has(items, "database")
-    recovery = _has_any(items, "rollback") and _has_any(items, "error rate", "baseline", "returned toward baseline")
-    traffic_direct = (
-        _has(items, "traffic")
-        or _has(items, "request volume")
-        or _has(items, "request rate")
-        or _has(items, "request_rate")
-        or _has(items, "requests per second")
-    )
-    network_direct = _has(items, "network") or _has(items, "downstream") or _has(items, "connection timeout")
+    leading_for_evidence = next(
+        (item for item in state.get("hypotheses", []) if item.hypothesis_id == state.get("hypotheses", [])[0].hypothesis_id),
+        None,
+    ) if state.get("hypotheses") else None
+    evidence_by_source = {item.source: item for item in items}
+
+    def _utc_timestamp(item: EvidenceItem):
+        timestamp = item.timestamp
+        if timestamp is None:
+            return None
+        return timestamp.replace(tzinfo=timezone.utc) if timestamp.tzinfo is None else timestamp.astimezone(timezone.utc)
+
+    temporal = False
+    causal = False
+    recovery = False
+    if leading_for_evidence is not None:
+        role_evidence = {
+            role: [
+                evidence_by_source[relationship.source]
+                for relationship in leading_for_evidence.causal_relationships
+                if relationship.role == role and relationship.source in evidence_by_source
+            ]
+            for role in ("trigger", "mechanism", "impact")
+        }
+        causal = all(role_evidence[role] for role in ("trigger", "mechanism", "impact"))
+        if causal:
+            trigger_times = [t for item in role_evidence["trigger"] if (t := _utc_timestamp(item)) is not None]
+            mechanism_times = [t for item in role_evidence["mechanism"] if (t := _utc_timestamp(item)) is not None]
+            impact_times = [t for item in role_evidence["impact"] if (t := _utc_timestamp(item)) is not None]
+            if trigger_times and mechanism_times and impact_times:
+                first_trigger = min(trigger_times)
+                later_mechanisms = [t for t in mechanism_times if t >= first_trigger]
+                if later_mechanisms:
+                    first_mechanism = min(later_mechanisms)
+                    later_impacts = [t for t in impact_times if t >= first_mechanism]
+                    temporal = bool(later_impacts)
+                    if later_impacts:
+                        first_impact = min(later_impacts)
+                        recovery = any(
+                            item.evidence_type == "recovery"
+                            and (timestamp := _utc_timestamp(item)) is not None
+                            and timestamp >= first_impact
+                            for item in items
+                        )
 
     adjudicated: list[Hypothesis] = []
     for hypothesis in hypotheses:

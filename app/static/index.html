@@ -52,7 +52,7 @@ h2{font-size:14px;margin:0 0 17px}.muted{color:var(--muted)}.error{color:var(--d
 body{background:radial-gradient(circle at 72% -20%,#192b49,#080d18 48%)}header{padding-left:245px}main{width:calc(100% - 280px);max-width:1600px;margin:0 20px 0 260px;padding-top:26px}.ops-sidebar{position:fixed;left:0;top:0;bottom:0;width:236px;background:#0b1424;border-right:1px solid #253651;z-index:20;padding:24px 14px;display:flex;flex-direction:column;gap:6px}.ops-logo{font-weight:900;letter-spacing:.13em;font-size:17px;padding:6px 12px 18px;color:#e6efff}.ops-logo small{display:block;color:#7f95b6;font-size:10px;font-weight:600;letter-spacing:.05em;margin-top:7px}.ops-nav{display:flex;align-items:center;gap:11px;width:100%;min-width:0;padding:12px 13px;text-align:left;background:transparent;border:1px solid transparent;font-size:12px;color:#9db0cc;border-radius:10px}.ops-nav:hover,.ops-nav.active{color:#f4f8ff;background:#192b47;border-color:#34537a}.ops-nav span{font-size:17px;width:21px}.ops-footer{margin-top:auto;padding:14px 12px;border-top:1px solid #263751;color:#91a6c6;font-size:11px;line-height:1.8}.ops-top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:20px}.ops-top h1{font-size:24px;margin:0 0 5px}.ops-kicker{font-size:11px;letter-spacing:.13em;color:#8eacd9;text-transform:uppercase;font-weight:800}.ops-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}.ops-metric{padding:18px;border:1px solid #293b55;border-radius:13px;background:linear-gradient(145deg,#17253b,#101b2d)}.ops-metric b{font-size:27px;display:block;color:#c4dbff}.ops-metric span{font-size:11px;color:#8fa3c1}.ops-view[hidden]{display:none!important}.ops-view>.card{margin-bottom:18px}.ops-view>.grid{margin-bottom:18px}.ops-banner{padding:15px 18px;border:1px solid #2b4363;border-radius:12px;background:#111f34;color:#a9c2e8;font-size:12px;margin-bottom:17px}.ops-toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px}.ops-toolbar input,.ops-toolbar select{background:#0c1627;color:#e7f0ff;border:1px solid #31445f;border-radius:8px;padding:10px;min-width:160px}.ops-toolbar input{flex:1}.ops-chart{display:grid;gap:13px}.ops-chart-row{display:grid;grid-template-columns:130px 1fr 45px;align-items:center;gap:12px;font-size:12px}.ops-chart-track{height:10px;border-radius:10px;background:#202f46;overflow:hidden}.ops-chart-fill{height:100%;background:linear-gradient(90deg,#467ad5,#75b4ff);border-radius:10px}.ops-split{display:grid;grid-template-columns:1fr 1fr;gap:16px}.ops-copilot-messages{max-height:350px;overflow:auto;display:grid;gap:10px;padding:12px;background:#0c1524;border:1px solid #263852;border-radius:10px;margin-bottom:12px}.ops-bubble{padding:12px;border-radius:10px;background:#192940;color:#d6e3f6;font-size:12px;line-height:1.65}.ops-bubble.user{background:#243b5e;margin-left:20%}.ops-questions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}.ops-questions button{min-width:0;padding:8px;font-size:11px}.ops-note{color:#8da3c1;font-size:11px}.ops-empty{padding:26px;border:1px dashed #34506f;border-radius:12px;color:#9eb3d1;text-align:center}.ops-section-title{font-size:19px;font-weight:800;margin:0 0 16px}@media(max-width:1100px){.ops-metrics{grid-template-columns:repeat(2,1fr)}.ops-split{grid-template-columns:1fr}}@media(max-width:780px){.ops-sidebar{position:sticky;top:0;width:100%;height:auto;flex-direction:row;overflow:auto;padding:8px;gap:5px}.ops-logo,.ops-footer{display:none}.ops-nav{width:auto;white-space:nowrap;padding:9px;min-width:0}.ops-nav span{display:none}header{padding:12px 18px}main{width:calc(100% - 24px);margin:0 auto}.ops-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.ops-chart-row{grid-template-columns:90px 1fr 30px}}
 </style></head>
 <body>
-<aside class="ops-sidebar" aria-label="Operations navigation"><div class="ops-logo">◈ SENTINELOPS<small>AI INCIDENT COMMAND</small></div><button class="ops-nav active" data-ops-tab="overview"><span>▦</span>Overview</button><button class="ops-nav" data-ops-tab="incidents"><span>⚑</span>Incidents</button><button class="ops-nav" data-ops-tab="agents"><span>◇</span>Agent Studio</button><button class="ops-nav" data-ops-tab="evidence"><span>⌕</span>Evidence Explorer</button><button class="ops-nav" data-ops-tab="analytics"><span>▥</span>Analytics</button><button class="ops-nav" data-ops-tab="recovery"><span>⬡</span>Recovery Center</button><button class="ops-nav" data-ops-tab="approvals"><span>✓</span>Approval Queue <b id="ops-approval-count" style="font-size:10px;color:#f4c95d"></b></button><button class="ops-nav" data-ops-tab="copilot"><span>✧</span>RCA Copilot</button><div class="ops-footer">● Local simulation<br>Amazon Redshift · 12 synthetic scenarios<br>No production remediation</div></aside>
+<aside class="ops-sidebar" aria-label="Operations navigation"><div class="ops-logo">◈ SENTINELOPS<small>AI INCIDENT COMMAND</small></div><button class="ops-nav active" data-ops-tab="overview"><span>▦</span>Overview</button><button class="ops-nav" data-ops-tab="incidents"><span>⚑</span>Incidents</button><button class="ops-nav" data-ops-tab="results"><span>▤</span>Investigation Results</button><button class="ops-nav" data-ops-tab="agents"><span>◇</span>Agent Studio</button><button class="ops-nav" data-ops-tab="evidence"><span>⌕</span>Evidence Explorer</button><button class="ops-nav" data-ops-tab="analytics"><span>▥</span>Analytics</button><button class="ops-nav" data-ops-tab="recovery"><span>⬡</span>Recovery Center</button><button class="ops-nav" data-ops-tab="approvals"><span>✓</span>Approval Queue <b id="ops-approval-count" style="font-size:10px;color:#f4c95d"></b></button><button class="ops-nav" data-ops-tab="copilot"><span>✧</span>RCA Copilot</button><div class="ops-footer">● Local simulation<br>Amazon Redshift · 12 synthetic scenarios<br>No production remediation</div></aside>
 <header><div><div class="brand">SENTINELOPS</div><div class="sub">Amazon Redshift incident investigation & safe recovery</div></div><div id="health" class="sub">Checking API…</div></header>
 <main><div class="ops-top"><div><div class="ops-kicker">Operations workspace</div><h1 id="ops-page-title">Overview</h1><div class="muted" style="font-size:12px" id="ops-page-subtitle">Redshift incident investigation and safety-first operations</div></div><span class="badge">SYNTHETIC DATA · LOCAL DEMO</span></div><section id="ops-overview" class="ops-view"><div class="ops-metrics" id="ops-metrics"></div><div class="ops-split"><div class="card"><h2>Incident distribution</h2><div id="ops-severity-chart" class="ops-chart"></div></div><div class="card"><h2>Investigation activity</h2><div id="ops-status-chart" class="ops-chart"></div></div></div><div class="card" style="margin-top:18px"><h2>Quick start</h2><p class="muted">Explore 12 synthetic Amazon Redshift incidents, run the agent investigation, and inspect evidence-backed decisions.</p><button id="ops-open-incidents">Browse incidents →</button></div></section><section id="home" class="home-panel"><div class="home-title">Redshift Incident Command Center</div><div class="home-description">Select a synthetic Redshift incident to investigate, reopen its saved results, or remove its saved investigation.</div><div id="incident-list" class="incident-grid"><div class="empty-state">Loading incidents…</div></div></section><button id="back-home" class="back-btn" hidden>← All incidents</button><div class="toolbar" hidden><input id="incident" value="RS-001" aria-label="Incident ID"><button id="run">Investigate</button></div><div id="error" class="error"></div>
 <section id="result" hidden><div class="card incident-head"><div><div class="eyebrow">Incident</div><div id="incident-id" class="incident-id"></div><div class="muted">Evidence-backed investigation</div></div><div id="status" class="status"></div></div>
@@ -233,8 +233,8 @@ fetch("/health").then(r=>r.ok?$("health").innerHTML='<span class="online"><span 
 loadIncidents();
 
 /* Multi-workspace UI: preserves the existing API, investigation rendering and safety gates. */
-const opsTabs=["overview","incidents","agents","evidence","analytics","recovery","approvals","copilot"];
-const opsTitles={overview:"Operations Overview",incidents:"Incident Command Center",agents:"Agent Orchestration Studio",evidence:"Evidence Explorer",analytics:"Investigation Analytics",recovery:"Recovery & Safety Center",approvals:"Human Approval Queue",copilot:"Investigation Copilot"};
+const opsTabs=["overview","incidents","results","agents","evidence","analytics","recovery","approvals","copilot"];
+const opsTitles={overview:"Operations Overview",incidents:"Incident Command Center",results:"Investigation Results",agents:"Agent Orchestration Studio",evidence:"Evidence Explorer",analytics:"Investigation Analytics",recovery:"Recovery & Safety Center",approvals:"Human Approval Queue",copilot:"Investigation Copilot"};
 let opsActive="overview",opsLastResult=null,opsIncidents=[],opsFilteredEvidence=[];
 function opsContainer(id){let el=$(id);if(!el){el=document.createElement("section");el.id=id;el.className="ops-view";el.hidden=true;document.querySelector("main").appendChild(el)}return el}
 function opsPlaceCards(){
@@ -243,9 +243,12 @@ function opsPlaceCards(){
   const pick=prefix=>cards.find(c=>c.querySelector("h2")?.textContent.trim().startsWith(prefix));
   const moves={agents:["Agent Execution Flow"],evidence:["Evidence","Competing Hypotheses"],recovery:["Safety Decision","Recovery Plan"],analytics:[],copilot:[]};
   // Keep the root cause with the recovery decision for a single explainable view.
-  moves.recovery.unshift("Root Cause");
+  moves.results=["Root Cause","Competing Hypotheses"];
+  moves.recovery=[];
   Object.entries(moves).forEach(([tab,names])=>names.forEach(name=>{const card=pick(name);if(card)opsContainer("ops-"+tab).appendChild(card)}));
   const approval=pick("Human Approval Required");if(approval)opsContainer("ops-approvals").appendChild(approval);
+  const recoveryNames=["Safety Decision","Recovery Plan"];
+  recoveryNames.forEach(name=>{const card=pick(name);if(card)opsContainer("ops-recovery").appendChild(card)});
   grid.remove();
   $("result").querySelector(".incident-head").after(document.createElement("div"));
   $("result").querySelector(".incident-head").hidden=true;
@@ -259,13 +262,15 @@ function opsSwitch(tab){
   document.querySelectorAll(".ops-view").forEach(el=>el.hidden=el.id!=="ops-"+tab);
   $("home").hidden=tab!=="incidents";$("result").hidden=true;
   $("back-home").hidden=true;
-  if(["agents","evidence","analytics","recovery","copilot"].includes(tab)&&!opsLastResult){
+  if(["results","agents","evidence","analytics","recovery","copilot"].includes(tab)&&!opsLastResult){
     const pane=opsContainer("ops-"+tab);
     let notice=pane.querySelector(".ops-no-result");
     if(!notice){notice=document.createElement("div");notice.className="ops-no-result ops-empty";notice.innerHTML='Run an investigation first to populate this workspace. <button type="button" data-open-incidents>Choose an incident →</button>';pane.prepend(notice)}
   }
   document.querySelectorAll(".ops-no-result").forEach(el=>el.hidden=!!opsLastResult);
   if(tab==="approvals")opsRenderApprovals();
+  if(tab==="recovery")opsRenderRecoverySelector();
+  if(tab==="results")opsRenderResultSummary();
   if(tab==="analytics")opsRenderAnalytics();
   if(tab==="evidence")opsRenderEvidence();
   window.scrollTo({top:0,behavior:"smooth"});
@@ -281,6 +286,7 @@ async function opsRefreshOverview(){
   const blocked=investigated.filter(x=>x.status==="complete"&&x.approval_required===false).length;
   const metrics=[[String(opsIncidents.length),"Synthetic scenarios"],[String(investigated.length),"Investigations saved"],[String(opsIncidents.filter(x=>x.status==="awaiting_human_approval").length),"Awaiting approval"],[String(opsIncidents.length-investigated.length),"Not investigated"]];
   $("ops-metrics").innerHTML=metrics.map(([value,name])=>'<div class="ops-metric"><b>'+esc(value)+'</b><span>'+esc(name)+'</span></div>').join("");
+  opsRenderRecoverySelector();
   opsChart("ops-severity-chart",opsCounts(opsIncidents,"severity"));opsChart("ops-status-chart",opsCounts(opsIncidents,"status"));
 }
 function opsRenderAnalytics(){
@@ -318,6 +324,46 @@ async function opsRenderApprovals(){
   const approval=$("approval-card");
   if(approval)approval.hidden=!(opsLastResult?.status==="awaiting_human_approval"&&opsLastResult?.approval_required);
 }
+
+function opsResultHeader(data){
+  return '<div class="ops-banner"><b>'+esc(data.incident_id)+'</b> · '+esc(label(data.status))+' · '+esc(data.root_cause?.display_name||"No adjudicated root cause")+'<div class="ops-note">Investigation findings are based on synthetic evidence. Recovery remains human-controlled.</div></div>';
+}
+function opsRenderResultSummary(){
+  const pane=opsContainer("ops-results");
+  let header=$("ops-results-header");if(!header){header=document.createElement("div");header.id="ops-results-header";pane.prepend(header)}
+  if(!opsLastResult){header.innerHTML='<div class="ops-empty">Open an investigated incident to view its results.</div>';return}
+  header.innerHTML=opsResultHeader(opsLastResult)+'<div class="ops-metrics"><div class="ops-metric"><b>'+esc(opsLastResult.root_cause?.hypothesis_id||"—")+'</b><span>Leading hypothesis</span></div><div class="ops-metric"><b>'+Math.round((opsLastResult.root_cause?.confidence||0)*100)+'%</b><span>Heuristic evidence score</span></div><div class="ops-metric"><b>'+esc(label(opsLastResult.safety_decision?.decision||"unknown"))+'</b><span>Safety decision</span></div><div class="ops-metric"><b>'+(opsLastResult.evidence||[]).length+'</b><span>Evidence items</span></div></div><div class="ops-toolbar"><button type="button" data-ops-go="agents">View agent execution →</button><button type="button" data-ops-go="evidence">Explore evidence →</button><button type="button" data-ops-go="recovery">Review recovery →</button></div>';
+}
+async function opsLoadSaved(id,target="results"){
+  try{
+    const response=await fetch("/api/v1/incidents/"+encodeURIComponent(id));
+    const data=await response.json();
+    if(!response.ok)throw Error(data.detail||"Could not load saved investigation");
+    render(data);opsSwitch(target);
+  }catch(error){$("error").textContent=error.message;opsSwitch("incidents")}
+}
+function opsRenderRecoverySelector(){
+  const pane=opsContainer("ops-recovery");
+  let toolbar=$("ops-recovery-selector");
+  if(!toolbar){
+    toolbar=document.createElement("div");toolbar.id="ops-recovery-selector";toolbar.className="ops-toolbar";
+    toolbar.innerHTML='<label for="ops-recovery-incident" class="ops-note" style="align-self:center">Investigated incident</label><select id="ops-recovery-incident" aria-label="Select investigated incident"><option value="">Choose an incident</option></select><button type="button" id="ops-recovery-open">Load recovery result</button>';
+    pane.prepend(toolbar);
+    $("ops-recovery-open").addEventListener("click",()=>{const id=$("ops-recovery-incident").value;if(id)opsLoadSaved(id,"recovery")});
+    $("ops-recovery-incident").addEventListener("change",()=>{const id=$("ops-recovery-incident").value;if(id)opsLoadSaved(id,"recovery")});
+  }
+  const options=opsIncidents.filter(item=>item.has_investigation);
+  const selector=$("ops-recovery-incident");
+  const selected=opsLastResult?.incident_id||selector.value;
+  selector.innerHTML='<option value="">Choose an investigated incident</option>'+options.map(item=>'<option value="'+esc(item.incident_id)+'">'+esc(item.incident_id+" · "+item.title+" · "+label(item.status))+'</option>').join("");
+  selector.value=options.some(item=>item.incident_id===selected)?selected:"";
+  $("ops-recovery-open").disabled=!selector.value;
+  let info=$("ops-recovery-current");if(!info){info=document.createElement("div");info.id="ops-recovery-current";toolbar.after(info)}
+  info.innerHTML=opsLastResult?opsResultHeader(opsLastResult):'<div class="ops-empty">Select an investigated incident to view its recovery plan and safety decision.</div>';
+  // Never display a recovery plan from another incident as the selected one.
+  const showing=!!opsLastResult&&selector.value===opsLastResult.incident_id;
+  pane.querySelectorAll(".card").forEach(card=>card.hidden=!showing);
+}
 function opsAnswer(question){
   const d=opsLastResult;if(!d)return "No investigation is loaded. Select an incident and run the investigation first.";
   const q=question.toLowerCase(),r=d.root_cause,s=d.safety_decision;
@@ -342,14 +388,15 @@ function opsOnResult(data){
   opsLastResult=data;
   $("result").hidden=true;
   document.querySelectorAll(".ops-no-result").forEach(el=>el.hidden=true);
-  opsRenderAnalytics();opsRenderEvidence();
-  opsSwitch(data.status==="awaiting_human_approval"?"approvals":"agents");
+  opsRenderAnalytics();opsRenderEvidence();opsRenderResultSummary();
+  opsSwitch("results");
   opsRefreshOverview();
   opsRenderApprovals();
+  opsRenderRecoverySelector();
 }
 document.querySelectorAll(".ops-nav").forEach(button=>button.addEventListener("click",()=>opsSwitch(button.dataset.opsTab)));
 $("ops-open-incidents").addEventListener("click",()=>opsSwitch("incidents"));
-document.addEventListener("click",e=>{if(e.target.closest("[data-open-incidents]"))opsSwitch("incidents");const review=e.target.closest("[data-approval-open]");if(review)openSavedIncident(review.dataset.approvalOpen)});
+document.addEventListener("click",e=>{if(e.target.closest("[data-open-incidents]"))opsSwitch("incidents");const go=e.target.closest("[data-ops-go]");if(go)opsSwitch(go.dataset.opsGo);const review=e.target.closest("[data-approval-open]");if(review)opsLoadSaved(review.dataset.approvalOpen,"approvals")});
 opsPlaceCards();opsSetupCopilot();
 const originalRender=render;
 render=function(data){originalRender(data);opsOnResult(data)};
@@ -359,5 +406,5 @@ const originalSubmitApproval=submitApproval;
 submitApproval=async function(approved){await originalSubmitApproval(approved);await opsRenderApprovals()};
 const originalBack=$("back-home");
 originalBack.addEventListener("click",()=>opsSwitch("incidents"));
-opsSwitch("overview");opsRefreshOverview();opsRenderApprovals();
+opsSwitch("overview");opsRefreshOverview();opsRenderApprovals();opsRenderRecoverySelector();
 </script></body></html>

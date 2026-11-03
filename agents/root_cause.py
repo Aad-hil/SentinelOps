@@ -430,13 +430,49 @@ def _generate_redshift_hypotheses(state: InvestigationState) -> list[Hypothesis]
         causal_sources = tuple(dict.fromkeys(
             relationship.source for relationship in relationships
         ))
-        # Trigger evidence must come from a change/event record, not a
-        # downstream metric whose name happens to contain a trigger keyword.
+        # Separate initiating evidence from downstream symptoms. In particular,
+        # COPY errors are an impact for authorization failures too; they must not
+        # outweigh an explicit IAM/KMS policy change.
         direct_trigger = any(
             item.evidence_type in {"deployment", "deployment_change"}
             and any(_matches_signal(item, signal) for signal in definition.trigger_signals)
             for item in items
         )
+        mechanism_evidence = [
+            item for item in matches[1]
+            if item.evidence_type not in {"metric", "trace"}
+        ]
+        trigger_evidence = [
+            item for item in matches[0]
+            if item.evidence_type in {"deployment", "deployment_change"}
+        ]
+        impact_evidence = matches[2]
+        score = (
+            (0.45 if trigger_evidence else 0.0)
+            + (0.35 if mechanism_evidence else 0.0)
+            + (0.20 if impact_evidence else 0.0)
+        )
+        relationships = tuple(
+            CausalEvidenceRelationship(
+                source=item.source,
+                role=role,
+                hypothesis_id=definition.hypothesis_id,
+                strength=0.85 if role == "trigger" else 0.6,
+                rationale=f"Evidence matches Redshift {role} signals for {definition.hypothesis_id}.",
+            )
+            for role, stage in (
+                ("trigger", trigger_evidence),
+                ("mechanism", mechanism_evidence),
+                ("impact", impact_evidence),
+            )
+            for item in stage
+        )
+        supporting = tuple(dict.fromkeys(
+            item.source for stage in matches for item in stage
+        ))
+        causal_sources = tuple(dict.fromkeys(
+            relationship.source for relationship in relationships
+        ))
         confidence = min(
             0.99,
             0.10 + score * 0.68

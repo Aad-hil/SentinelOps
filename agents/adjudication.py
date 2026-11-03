@@ -124,14 +124,42 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
         relationship_roles = {relationship.role for relationship in hypothesis.causal_relationships}
 
         if hypothesis.hypothesis_id == "H1":
-            confidence = min(1.0, confidence * 0.55 + (0.15 if temporal else 0.0) + (0.15 if causal else 0.0) + (0.10 if recovery else 0.0))
+            # Generic database symptoms and a generic deployment record do not
+            # establish deployment causality. Only reward H1 when the change
+            # record itself describes a database/query/release change.
+            direct_deployment_trigger = any(
+                item.evidence_type in {"deployment", "deployment_change"}
+                and any(
+                    term in item.observation.lower()
+                    for term in ("query", "database", "db_", "release", "schema")
+                )
+                and not any(
+                    term in item.observation.lower()
+                    for term in ("rollback", "restart", "recovery", "throttle", "protect")
+                )
+                for item in items
+            )
+            if direct_deployment_trigger:
+                confidence = min(
+                    1.0,
+                    confidence * 0.55
+                    + (0.15 if temporal else 0.0)
+                    + (0.15 if causal else 0.0)
+                    + (0.10 if recovery else 0.0),
+                )
             status = "strong_candidate" if confidence >= 0.75 else "supported"
         elif hypothesis.hypothesis_id == "H2":
-            confidence = min(1.0, confidence * 0.55 + (0.25 if traffic_direct else 0.0))
-            status = "supported" if traffic_direct and confidence >= 0.6 else "insufficient_evidence"
+            # Preserve the root-cause agent's score and add a bounded bonus
+            # only when direct traffic/request-volume telemetry is present.
+            confidence = min(1.0, confidence + (0.10 if traffic_direct else 0.0))
+            status = "supported" if traffic_direct and confidence >= 0.6 else (
+                hypothesis.status if confidence >= 0.6 else "insufficient_evidence"
+            )
         elif hypothesis.hypothesis_id == "H3":
-            confidence = min(1.0, confidence * 0.55 + (0.25 if network_direct else 0.0))
-            status = "supported" if network_direct and confidence >= 0.6 else "insufficient_evidence"
+            confidence = min(1.0, confidence + (0.10 if network_direct else 0.0))
+            status = "supported" if network_direct and confidence >= 0.6 else (
+                hypothesis.status if confidence >= 0.6 else "insufficient_evidence"
+            )
         adjudicated.append(
             Hypothesis(
                 hypothesis_id=hypothesis.hypothesis_id,

@@ -17,7 +17,7 @@ def api(monkeypatch):
 
 def test_health_and_catalog(api):
     assert api.health() == {"status": "ok"}
-    assert api.dashboard().path.endswith("index.html")
+    assert api.dashboard().path.name == "index.html"
     incidents = api.list_incidents()
     assert len(incidents) == 12
     assert all(item["service"] == "amazon-redshift" for item in incidents)

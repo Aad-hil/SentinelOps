@@ -77,8 +77,8 @@ REDSHIFT_HYPOTHESES: tuple[RedshiftHypothesisDefinition, ...] = (
     RedshiftHypothesisDefinition(
         "RSH8", "IAM or KMS Authorization Failure",
         "An IAM role, S3 policy, or KMS key policy blocked a Redshift workflow.",
-        ("iam policy", "role change", "kms policy", "permission change"),
-        ("access denied", "assume role", "decrypt", "s3 authorization"),
+        ("iam policy", "role change", "kms policy", "permission change", "authorization change", "role policy update"),
+        ("access denied", "assume role", "decrypt", "s3 authorization", "iam kms authorization", "encrypted s3"),
         ("copy failure", "unload failure", "spectrum error", "error", "failure"),
         ("cloudtrail", "iam", "kms", "s3", "redshift"),
     ),

@@ -12,6 +12,8 @@ class Adjudication:
     hypothesis_id: str
     display_name: str
     statement: str
+    brief_explanation: str
+    full_explanation: str
     rationale: str
     temporal_support: bool
     causal_support: bool
@@ -114,15 +116,53 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
     if len(leading_relationship_roles.intersection({"trigger", "mechanism", "impact"})) < 3:
         gaps.append("complete trigger-mechanism-impact relationship")
 
+    evidence_by_source = {item.source: item for item in items}
+    role_lines: list[str] = []
+    for role in ("trigger", "mechanism", "impact"):
+        role_relationships = [
+            relationship for relationship in leading.causal_relationships
+            if relationship.role == role
+        ]
+        observations = []
+        for relationship in role_relationships:
+            item = evidence_by_source.get(relationship.source)
+            if item and item.observation not in observations:
+                observations.append(item.observation)
+        if observations:
+            role_lines.append(f"{role.title()}: " + " ".join(observations[:2]))
+
+    if role_lines:
+        brief_explanation = (
+            f"{leading.display_name} is the best-supported explanation because the evidence "
+            "forms this incident-specific chain: " + " ".join(role_lines[:3])
+        )
+    else:
+        brief_explanation = (
+            f"{leading.display_name} currently ranks highest, but the available evidence does "
+            "not yet establish a complete trigger-to-impact chain."
+        )
+
+    full_lines = [
+        f"Selected hypothesis: {leading.display_name} ({leading.hypothesis_id}).",
+        f"Proposed mechanism: {leading.statement}",
+        "Evidence chain:",
+        *(role_lines or ["The evidence does not yet provide clear trigger, mechanism, and impact observations."]),
+        f"Temporal support: {'Found' if temporal else 'Not established by the current adjudication checks'}.",
+        f"Causal support: {'Found' if causal else 'Not established by the current adjudication checks'}.",
+        f"Recovery correlation: {'Found' if recovery else 'Not established by the current adjudication checks'}.",
+        "Evidence gaps: " + (", ".join(gaps) if gaps else "No specific gap was flagged by the current adjudication checks."),
+        "The evidence score is a heuristic ranking score, not a calibrated probability or proof of root cause.",
+    ]
     rationale = (
-        f"{leading.hypothesis_id} has the strongest evidence after checking temporal order, "
-        "causal linkage, recovery correlation, alternative-hypothesis evidence, and explicit "
-        "causal relationship roles."
+        f"{leading.hypothesis_id} ranked highest after comparing evidence strength, causal roles, "
+        "temporal order, recovery correlation, and competing hypotheses."
     )
     adjudication = Adjudication(
         hypothesis_id=leading.hypothesis_id,
         display_name=leading.display_name,
         statement=leading.statement,
+        brief_explanation=brief_explanation,
+        full_explanation="\\n".join(full_lines),
         rationale=rationale,
         temporal_support=temporal,
         causal_support=causal,

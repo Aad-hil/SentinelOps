@@ -1,4 +1,4 @@
-"""Tests for the expanded 15-incident synthetic benchmark."""
+"""Tests for the expanded 30-incident synthetic benchmark."""
 
 from simulator.benchmark import build_all_benchmark_incidents, build_benchmark_incident
 from simulator.scenarios import build_benchmark_evidence
@@ -7,9 +7,9 @@ from simulator.scenarios import build_benchmark_evidence
 def test_all_benchmark_incidents_are_deterministic_and_complete() -> None:
     scenarios = build_all_benchmark_incidents()
 
-    assert len(scenarios) == 15
+    assert len(scenarios) == 30
     assert [scenario.incident.incident_id for scenario in scenarios] == [
-        f"INC-{number:03d}" for number in range(1, 16)
+        f"INC-{number:03d}" for number in range(1, 31)
     ]
 
     for scenario in scenarios:

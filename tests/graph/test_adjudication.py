@@ -50,3 +50,13 @@ def test_adjudication_preserves_causal_relationships():
     assert all(r.hypothesis_id == "H1" for r in h1.causal_relationships)
     assert all(r.rationale for r in h1.causal_relationships)
 
+
+
+def test_adjudication_preserves_hypothesis_display_names():
+    evidence = build_incident_002_evidence()
+    result = build_investigation_graph().invoke({"evidence": evidence})
+
+    by_id = {hypothesis.hypothesis_id: hypothesis for hypothesis in result["hypotheses"]}
+
+    assert by_id["H1"].display_name == "Deployment-Induced Database Saturation"
+    assert by_id["H1"].display_name

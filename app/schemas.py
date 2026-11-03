@@ -26,6 +26,7 @@ class EvidenceResponse(BaseModel):
 
 class HypothesisResponse(BaseModel):
     hypothesis_id: str
+    display_name: str
     statement: str
     supporting_evidence: list[str] = Field(default_factory=list)
     contradicting_evidence: list[str] = Field(default_factory=list)

@@ -374,13 +374,22 @@ function opsAnswer(question){
   if(q.includes("agent")||q.includes("flow"))return "The saved investigation includes "+(d.observability_events||[]).length+" recorded agent events. Open Agent Studio to replay them.";
   return "I can explain the selected root cause, missing evidence, safety decision, or agent flow using the loaded investigation. This is a deterministic, result-grounded assistant—not a connected LLM.";
 }
-function opsAsk(question){
+async function opsAsk(question){
   const log=$("ops-chat-log");if(!log)return;
-  log.insertAdjacentHTML("beforeend",'<div class="ops-bubble user">'+esc(question)+'</div><div class="ops-bubble">'+esc(opsAnswer(question))+'</div>');log.scrollTop=log.scrollHeight;
+  log.insertAdjacentHTML("beforeend",'<div class="ops-bubble user">'+esc(question)+'</div>');
+  const bubble=document.createElement("div");bubble.className="ops-bubble";bubble.textContent="Asking local LLM…";log.appendChild(bubble);
+  if(!opsLastResult){bubble.textContent="Select and investigate an incident first.";return}
+  try{
+    const response=await fetch("/api/v1/incidents/"+encodeURIComponent(opsLastResult.incident_id)+"/copilot",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question})});
+    const result=await response.json();
+    if(!response.ok)throw Error(result.detail||"Copilot request failed");
+    bubble.textContent=result.mode==="disabled" ? opsAnswer(question)+" (Deterministic fallback; enable Ollama for LLM answers.)" : result.answer;
+  }catch(error){bubble.textContent=opsAnswer(question)+" (Fallback: "+error.message+")"}
+  log.scrollTop=log.scrollHeight;
 }
 function opsSetupCopilot(){
   const pane=opsContainer("ops-copilot");
-  pane.innerHTML='<div class="card"><h2>Investigation Copilot · Result-grounded Q&A</h2><p class="ops-note">This panel answers from the saved API response using deterministic rules. It is not a generative model or live AWS assistant.</p><div class="ops-questions"><button data-ops-question="Why was this root cause selected?">Why this root cause?</button><button data-ops-question="What evidence is missing?">Missing evidence</button><button data-ops-question="Why is recovery blocked?">Recovery safety</button><button data-ops-question="Explain the agent flow">Agent flow</button></div><div class="ops-copilot-messages" id="ops-chat-log"><div class="ops-bubble">Select an incident to explore its evidence and safety decisions.</div></div><form id="ops-chat-form" class="ops-toolbar"><input id="ops-chat-input" aria-label="Ask about investigation" placeholder="Ask about this investigation..." required><button type="submit">Ask</button></form></div>';
+  pane.innerHTML='<div class="card"><h2>Investigation Copilot · Result-grounded Q&A</h2><p class="ops-note">Uses local Ollama when enabled, grounded in saved incident evidence. Falls back to deterministic answers. Never executes AWS changes.</p><div class="ops-questions"><button data-ops-question="Why was this root cause selected?">Why this root cause?</button><button data-ops-question="What evidence is missing?">Missing evidence</button><button data-ops-question="Why is recovery blocked?">Recovery safety</button><button data-ops-question="Explain the agent flow">Agent flow</button></div><div class="ops-copilot-messages" id="ops-chat-log"><div class="ops-bubble">Select an incident to explore its evidence and safety decisions.</div></div><form id="ops-chat-form" class="ops-toolbar"><input id="ops-chat-input" aria-label="Ask about investigation" placeholder="Ask about this investigation..." required><button type="submit">Ask</button></form></div>';
   pane.querySelectorAll("[data-ops-question]").forEach(b=>b.addEventListener("click",()=>opsAsk(b.dataset.opsQuestion)));
   $("ops-chat-form").addEventListener("submit",e=>{e.preventDefault();const input=$("ops-chat-input"),q=input.value.trim();if(q)opsAsk(q);input.value=""});
 }

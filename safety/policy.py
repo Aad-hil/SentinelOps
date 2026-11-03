@@ -69,8 +69,9 @@ def evaluate_recovery_safety(plan: RecoveryPlan | None) -> SafetyDecision:
             approval_required=False,
             blocked_steps=tuple(step.step_id for step in plan.steps if step.requires_approval),
             reviewed_steps=tuple(step.step_id for step in plan.steps if not step.requires_approval),
-            evidence_gaps=evidence_gaps
-            + tuple(evidence for step in plan.steps for evidence in step.evidence),
+            evidence_gaps=tuple(dict.fromkeys(
+                (*evidence_gaps, *(evidence for step in plan.steps for evidence in step.evidence))
+            )),
         )
 
     effective_risks = {step.step_id: classify_action_risk(step) for step in plan.steps}

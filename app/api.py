@@ -27,7 +27,6 @@ from rag.retrieval import create_knowledge_retriever_from_env
 from simulator.redshift import (
     build_all_redshift_incidents,
     build_redshift_evidence_bundle,
-    redshift_case_ids,
 )
 
 
@@ -197,7 +196,7 @@ def get_incident(incident_id: str) -> InvestigationResponse:
 def delete_incident(incident_id: str) -> dict[str, str]:
     """Delete one incident's saved investigation checkpoint."""
     try:
-        build_benchmark_evidence(incident_id)
+        build_redshift_evidence_bundle(incident_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=f"Unknown incident_id: {incident_id}") from exc
     snapshot = _GRAPH.get_state(_config(incident_id))
@@ -271,7 +270,7 @@ def approve_investigation(
 ) -> InvestigationResponse:
     """Resume a pending investigation with an explicit human approval decision."""
     try:
-        _ = build_benchmark_evidence(incident_id)
+        _ = build_redshift_evidence_bundle(incident_id)
     except KeyError as exc:
         raise HTTPException(
             status_code=404,

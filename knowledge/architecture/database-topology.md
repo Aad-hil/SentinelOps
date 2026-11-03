@@ -1,8 +1,15 @@
-# Database Topology
+# Amazon Redshift Workload Architecture
 
-Production database workloads commonly use a primary node for writes and one or more replicas for read workloads. The primary can become a bottleneck when write traffic, expensive queries, lock contention, or inefficient execution plans consume available resources.
+SentinelOps investigates Amazon Redshift workloads. Treat S3, Glue Data Catalog, IAM, KMS, VPC, and CloudWatch as dependencies only when evidence connects them to a Redshift query, load, unload, Spectrum, data-share, or client-connection failure.
 
-## Investigation notes
-Check primary-specific CPU, query load, queue depth, storage latency, and lock waits. Compare replicas and other database nodes when useful. A primary-only resource spike can narrow the investigation toward write-path workload or primary-specific conditions.
+## Investigation map
 
-Database saturation can propagate upward as increased dependency latency, request timeouts, and application errors.
+- Workload management: WLM queues, service classes, priorities, concurrency, queue wait.
+- Query execution: query history, query plans, scan volume, runtime, spill and execution steps.
+- Cluster capacity and health: compute utilization, concurrency scaling, resize history, cluster events and maintenance.
+- Data movement: COPY/UNLOAD history, S3 objects, manifests, formats and throughput.
+- External data: Spectrum, external schemas, Glue catalog, partitions and S3 access.
+- Table health: distribution skew, sort state, statistics freshness and maintenance.
+- Security and connectivity: IAM role/trust/policies, KMS access, VPC routes, security groups, DNS and endpoints.
+
+Correlate evidence by timestamp and workload identity. A dependency symptom alone does not establish the Redshift root cause. All repository simulator evidence is synthetic, not live AWS telemetry.

@@ -85,6 +85,7 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
         adjudicated.append(
             Hypothesis(
                 hypothesis_id=hypothesis.hypothesis_id,
+                display_name=hypothesis.display_name,
                 statement=hypothesis.statement,
                 supporting_evidence=hypothesis.supporting_evidence,
                 contradicting_evidence=hypothesis.contradicting_evidence,

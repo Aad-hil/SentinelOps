@@ -21,6 +21,7 @@ class Hypothesis:
     """A candidate explanation evaluated against shared evidence."""
 
     hypothesis_id: str
+    display_name: str
     statement: str
     supporting_evidence: tuple[str, ...]
     contradicting_evidence: tuple[str, ...]
@@ -29,10 +30,6 @@ class Hypothesis:
     causal_score: float = 0.0
     causal_evidence: tuple[str, ...] = ()
     causal_relationships: tuple[CausalEvidenceRelationship, ...] = ()
-
-    @property
-    def display_name(self) -> str:
-        return _HYPOTHESIS_NAMES[self.hypothesis_id]
 
 
 # Human-readable labels are presentation metadata; H1-H12 remain stable internal IDs.
@@ -431,6 +428,7 @@ def generate_hypotheses(state: InvestigationState) -> list[Hypothesis]:
         hypotheses.append(
             Hypothesis(
                 hypothesis_id=hypothesis_id,
+                display_name=_HYPOTHESIS_NAMES[hypothesis_id],
                 statement=statement,
                 supporting_evidence=supporting_sources,
                 contradicting_evidence=tuple(item.source for item in contradictions),

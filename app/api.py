@@ -216,9 +216,32 @@ def investigate(request: InvestigationRequest) -> InvestigationResponse:
     config = _config(request.incident_id)
     previous = _GRAPH.get_state(config)
     if previous.values:
-        # Investigation is idempotent: clicking Investigate again opens the
-        # saved result instead of silently restarting an approved/finished run.
-        return _investigation_response(previous.values)
+        previous_values = previous.values
+        is_pending_approval = (
+            previous_values.get("investigation_status") == "awaiting_human_approval"
+            and previous_values.get("approval_required") is True
+            and previous_values.get("approval_status") == "pending"
+        )
+        has_real_approval_interrupt = any(
+            task.name == "human_approval" and bool(task.interrupts)
+            for task in previous.tasks
+        )
+
+        if is_pending_approval and has_real_approval_interrupt:
+            raise HTTPException(
+                status_code=409,
+                detail="Investigation is waiting for human approval.",
+            )
+
+        if is_pending_approval:
+            # A stale/incomplete checkpoint can claim approval is pending
+            # without ever reaching the human_approval interrupt. Discard it
+            # and start a clean investigation for this incident.
+            _CHECKPOINTER.delete_thread(request.incident_id)
+        else:
+            # Completed, blocked, or already-approved investigations are
+            # reopened from their saved result rather than executed again.
+            return _investigation_response(previous_values)
 
     initial_state = {
         "incident_id": evidence.incident.incident_id,

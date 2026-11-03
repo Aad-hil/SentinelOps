@@ -493,30 +493,35 @@ def _generate_redshift_hypotheses(state: InvestigationState) -> list[Hypothesis]
             causal_evidence=causal_sources,
             causal_relationships=relationships,
         ))
-    # If the evidence contains only generic downstream symptoms and no
-    # hypothesis-specific initiating change or mechanism, prefer the explicit
-    # unknown/compound candidate. Do not infer a cause from latency/errors alone.
-    has_specific_trigger = any(
+    # Require a genuinely discriminating event or mechanism before naming a
+    # specific cause. Generic query/runtime/error wording is impact evidence only.
+    generic_only = {
+        "query", "runtime", "error", "latency", "duration",
+        "workload", "load", "failure", "redshift",
+    }
+    has_specific_change = any(
         item.evidence_type in {"deployment", "deployment_change"}
         and any(
             _matches_signal(item, signal)
             for definition in REDSHIFT_HYPOTHESES
             if definition.hypothesis_id != "RSH12"
             for signal in definition.trigger_signals
+            if signal not in generic_only
         )
         for item in items
     )
     has_specific_mechanism = any(
-        item.evidence_type not in {"metric", "trace"}
+        item.evidence_type in {"log", "deployment", "deployment_change"}
         and any(
             _matches_signal(item, signal)
             for definition in REDSHIFT_HYPOTHESES
             if definition.hypothesis_id != "RSH12"
             for signal in definition.mechanism_signals
+            if signal not in generic_only
         )
         for item in items
     )
-    if not has_specific_trigger and not has_specific_mechanism:
+    if not has_specific_change and not has_specific_mechanism:
         results = [
             Hypothesis(
                 hypothesis_id=item.hypothesis_id,

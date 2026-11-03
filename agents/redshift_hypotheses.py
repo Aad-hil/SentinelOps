@@ -21,7 +21,7 @@ REDSHIFT_HYPOTHESES: tuple[RedshiftHypothesisDefinition, ...] = (
     RedshiftHypothesisDefinition(
         "RSH1", "WLM Queue Contention",
         "Concurrent workloads saturated a Redshift workload-management queue.",
-        ("workload", "concurrency", "queue", "priority"),
+        ("concurrent", "concurrency", "queue", "priority"),
         ("queued", "slot", "wlm", "queue wait"),
         ("query latency", "timeout", "query error"),
         ("redshift_system_views", "cloudwatch", "query_history"),

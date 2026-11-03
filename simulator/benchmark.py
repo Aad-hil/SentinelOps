@@ -261,7 +261,7 @@ def build_benchmark_incident(incident_id: str) -> IncidentScenario:
             timestamp=start + timedelta(minutes=7),
             service=profile["service"],
             level="INFO",
-            message=f"mitigation signal observed for {profile['operation']}",
+            message=f"recovery: error rate and service latency returned toward baseline after mitigation for {profile['operation']}",
         ),
     ]
 

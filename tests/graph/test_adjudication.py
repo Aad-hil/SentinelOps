@@ -1,6 +1,6 @@
 from agents.adjudication import adjudicate_hypotheses
 from graph.investigation import build_investigation_graph
-from simulator.scenarios import build_incident_002_evidence
+from simulator.scenarios import build_benchmark_evidence, build_incident_002_evidence
 
 
 def test_adjudication_separates_direct_causal_evidence_from_symptoms():
@@ -60,3 +60,14 @@ def test_adjudication_preserves_hypothesis_display_names():
 
     assert by_id["H1"].display_name == "Deployment-Induced Database Saturation"
     assert by_id["H1"].display_name
+
+
+def test_adjudication_uses_incident_specific_recovery_evidence():
+    evidence = build_benchmark_evidence("INC-003")
+    result = build_investigation_graph().invoke({"evidence": evidence})
+
+    adjudication = result["adjudication"]
+    assert adjudication is not None
+    assert adjudication.causal_support is True
+    assert adjudication.temporal_support is True
+    assert adjudication.recovery_support is True

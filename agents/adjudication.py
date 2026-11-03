@@ -167,9 +167,10 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
 
         if hypothesis.hypothesis_id == "H1":
             if direct_deployment_trigger:
-                # Preserve the evidence-derived score; the direct change record
-                # validates the trigger but must not arbitrarily rescale confidence.
-                confidence = min(confidence, 0.95)
+                # Preserve the full evidence-derived score. A directly observed,
+                # hypothesis-specific change must not be capped below a competing
+                # symptom hypothesis that accumulated many downstream metrics.
+                confidence = confidence
             else:
                 # Missing deployment evidence weakens this explanation but does
                 # not make it impossible when other causal evidence exists.

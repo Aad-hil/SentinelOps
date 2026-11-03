@@ -478,7 +478,12 @@ def _generate_redshift_hypotheses(state: InvestigationState) -> list[Hypothesis]
 
 
 def generate_hypotheses(state: InvestigationState) -> list[Hypothesis]:
-    """Generate competing causal hypotheses from observed evidence only."""
+    """Generate domain-specific candidates from observed evidence only."""
+    evidence = state.get("evidence")
+    incident = getattr(evidence, "incident", None)
+    if incident is not None and incident.service == "amazon-redshift":
+        return _generate_redshift_hypotheses(state)
+
     items = list(state.get("evidence_items", []))
     hypotheses: list[Hypothesis] = []
 

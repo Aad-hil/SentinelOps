@@ -7,6 +7,28 @@ from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from typing import Any
 
+# Load local .env before importing checkpoint and RAG modules.
+# Existing shell environment variables always take precedence.
+def _load_local_env() -> None:
+    env_path = Path(__file__).resolve().parents[1] / ".env"
+    if not env_path.is_file():
+        return
+    for raw in env_path.read_text(encoding="utf-8-sig").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        if not key.isidentifier():
+            continue
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+            value = value[1:-1]
+        os.environ.setdefault(key, value)
+
+
+_load_local_env()
+
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from langgraph.types import Command
@@ -121,6 +143,12 @@ def _investigation_response(state: dict[str, Any]) -> InvestigationResponse:
             else None
         ),
         messages=list(state.get("messages", [])),
+        llm_findings=[
+            {"agent": f.agent, "category": f.category, "summary": f.summary,
+             "evidence": list(f.evidence)}
+            for f in state.get("findings", [])
+            if f.agent in ("root_cause_llm", "critic_llm")
+        ],
         observability_events=[
             {
                 **event,

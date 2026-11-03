@@ -60,10 +60,6 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
     if not hypotheses:
         return [], None
 
-    leading_for_evidence = next(
-        (item for item in state.get("hypotheses", []) if item.hypothesis_id == state.get("hypotheses", [])[0].hypothesis_id),
-        None,
-    ) if state.get("hypotheses") else None
     evidence_by_source = {item.source: item for item in items}
     # Preserve the direct-signal checks used to distinguish broad symptom
     # hypotheses from hypotheses supported by specific telemetry.

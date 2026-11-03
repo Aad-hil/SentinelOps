@@ -289,7 +289,7 @@ def evaluate_incident(graph, scenario) -> IncidentEvaluation:
 
 
 def run_benchmark() -> EvaluationReport:
-    """Evaluate all 15 deterministic benchmark scenarios locally."""
+    """Evaluate all deterministic benchmark scenarios locally."""
     graph = build_investigation_graph(checkpointer=None, incident_memory_repository=None)
     results = tuple(
         evaluate_incident(graph, scenario)

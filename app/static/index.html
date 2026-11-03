@@ -47,10 +47,14 @@ h2{font-size:14px;margin:0 0 17px}.muted{color:var(--muted)}.error{color:var(--d
 
 /* Unified graph + timeline: event-ordered, responsive and keyboard accessible */
 .flow-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}.flow-heading h2{margin-bottom:8px}.flow-controls{display:flex;gap:7px;flex-wrap:wrap}.flow-controls button{min-width:42px;padding:9px 12px;font-size:11px}.flow-controls button:disabled{opacity:.4;cursor:not-allowed}.flow-overview{display:flex;gap:16px;flex-wrap:wrap;margin:18px 0 10px;font-size:11px;color:#b8c8df}.flow-overview b{color:var(--text)}.flow-progress{height:5px;background:#1b2940;border-radius:20px;overflow:hidden}.flow-progress span{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}.flow-legend{display:flex;gap:15px;flex-wrap:wrap;font-size:10px;color:var(--muted);margin:14px 0}.flow-scroll{overflow-x:auto;overflow-y:hidden;padding:8px 2px 18px;scroll-behavior:smooth}.flow-track{display:flex;align-items:stretch;gap:0;min-height:170px;width:max-content;max-width:none}.flow-step{position:relative;display:flex;align-items:center;flex-shrink:0}.flow-node{position:relative;display:flex;flex-direction:column;gap:7px;text-align:left;width:174px;min-height:146px;padding:14px;background:#111d30;border:1px solid #344762;border-radius:13px;color:var(--text);cursor:pointer;transition:background .2s,border-color .2s,transform .2s}.flow-node:hover{border-color:#88b5ff;transform:translateY(-2px)}.flow-node:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.flow-node.active{border-color:var(--accent);background:#172b47;box-shadow:0 0 0 2px rgba(110,168,254,.18)}.flow-node.done{border-color:#367b65}.flow-node.error,.flow-node.blocked{border-color:#ae5b65}.flow-node.waiting{border-color:#ad8b43}.flow-node.future{opacity:.48}.flow-number{font-size:10px;color:#91a5c4;font-weight:800;letter-spacing:.07em}.flow-name{font-size:12px;font-weight:800;line-height:1.45}.flow-status{font-size:10px;color:var(--muted)}.flow-node.done .flow-status{color:var(--good)}.flow-node.error .flow-status,.flow-node.blocked .flow-status{color:var(--danger)}.flow-node.waiting .flow-status{color:var(--warn)}.flow-duration{margin-top:auto;font-size:11px;color:#b9c8df;font-variant-numeric:tabular-nums}.flow-arrow{display:flex;align-items:center;justify-content:center;width:36px;color:#6787b3;font-size:21px}.flow-inspector{padding:17px;border:1px solid #2b3e5c;border-radius:12px;background:#0b1423;margin-top:10px}.flow-inspector h3{font-size:15px;margin:0 0 9px}.flow-inspector .inspector-list{max-height:300px;overflow:auto}.flow-inspector .inspector-evidence{max-height:230px;overflow:auto}.flow-inspector .inspector-event{overflow-wrap:anywhere}.flow-inspector .inspector-meta{line-height:1.6}.flow-inspector .inspector-evidence{margin-top:10px}@media(max-width:620px){.flow-heading{display:block}.flow-controls{margin-top:12px}.flow-node{width:150px;min-height:140px}.flow-arrow{width:25px}}
+
+/* Operations command center shell */
+body{background:radial-gradient(circle at 72% -20%,#192b49,#080d18 48%)}header{padding-left:245px}main{width:calc(100% - 280px);max-width:1600px;margin:0 20px 0 260px;padding-top:26px}.ops-sidebar{position:fixed;left:0;top:0;bottom:0;width:236px;background:#0b1424;border-right:1px solid #253651;z-index:20;padding:24px 14px;display:flex;flex-direction:column;gap:6px}.ops-logo{font-weight:900;letter-spacing:.13em;font-size:17px;padding:6px 12px 18px;color:#e6efff}.ops-logo small{display:block;color:#7f95b6;font-size:10px;font-weight:600;letter-spacing:.05em;margin-top:7px}.ops-nav{display:flex;align-items:center;gap:11px;width:100%;min-width:0;padding:12px 13px;text-align:left;background:transparent;border:1px solid transparent;font-size:12px;color:#9db0cc;border-radius:10px}.ops-nav:hover,.ops-nav.active{color:#f4f8ff;background:#192b47;border-color:#34537a}.ops-nav span{font-size:17px;width:21px}.ops-footer{margin-top:auto;padding:14px 12px;border-top:1px solid #263751;color:#91a6c6;font-size:11px;line-height:1.8}.ops-top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:20px}.ops-top h1{font-size:24px;margin:0 0 5px}.ops-kicker{font-size:11px;letter-spacing:.13em;color:#8eacd9;text-transform:uppercase;font-weight:800}.ops-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}.ops-metric{padding:18px;border:1px solid #293b55;border-radius:13px;background:linear-gradient(145deg,#17253b,#101b2d)}.ops-metric b{font-size:27px;display:block;color:#c4dbff}.ops-metric span{font-size:11px;color:#8fa3c1}.ops-view[hidden]{display:none!important}.ops-view>.card{margin-bottom:18px}.ops-view>.grid{margin-bottom:18px}.ops-banner{padding:15px 18px;border:1px solid #2b4363;border-radius:12px;background:#111f34;color:#a9c2e8;font-size:12px;margin-bottom:17px}.ops-toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px}.ops-toolbar input,.ops-toolbar select{background:#0c1627;color:#e7f0ff;border:1px solid #31445f;border-radius:8px;padding:10px;min-width:160px}.ops-toolbar input{flex:1}.ops-chart{display:grid;gap:13px}.ops-chart-row{display:grid;grid-template-columns:130px 1fr 45px;align-items:center;gap:12px;font-size:12px}.ops-chart-track{height:10px;border-radius:10px;background:#202f46;overflow:hidden}.ops-chart-fill{height:100%;background:linear-gradient(90deg,#467ad5,#75b4ff);border-radius:10px}.ops-split{display:grid;grid-template-columns:1fr 1fr;gap:16px}.ops-copilot-messages{max-height:350px;overflow:auto;display:grid;gap:10px;padding:12px;background:#0c1524;border:1px solid #263852;border-radius:10px;margin-bottom:12px}.ops-bubble{padding:12px;border-radius:10px;background:#192940;color:#d6e3f6;font-size:12px;line-height:1.65}.ops-bubble.user{background:#243b5e;margin-left:20%}.ops-questions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}.ops-questions button{min-width:0;padding:8px;font-size:11px}.ops-note{color:#8da3c1;font-size:11px}.ops-empty{padding:26px;border:1px dashed #34506f;border-radius:12px;color:#9eb3d1;text-align:center}.ops-section-title{font-size:19px;font-weight:800;margin:0 0 16px}@media(max-width:1100px){.ops-metrics{grid-template-columns:repeat(2,1fr)}.ops-split{grid-template-columns:1fr}}@media(max-width:780px){.ops-sidebar{position:sticky;top:0;width:100%;height:auto;flex-direction:row;overflow:auto;padding:8px;gap:5px}.ops-logo,.ops-footer{display:none}.ops-nav{width:auto;white-space:nowrap;padding:9px;min-width:0}.ops-nav span{display:none}header{padding:12px 18px}main{width:calc(100% - 24px);margin:0 auto}.ops-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.ops-chart-row{grid-template-columns:90px 1fr 30px}}
 </style></head>
 <body>
+<aside class="ops-sidebar" aria-label="Operations navigation"><div class="ops-logo">◈ SENTINELOPS<small>AI INCIDENT COMMAND</small></div><button class="ops-nav active" data-ops-tab="overview"><span>▦</span>Overview</button><button class="ops-nav" data-ops-tab="incidents"><span>⚑</span>Incidents</button><button class="ops-nav" data-ops-tab="agents"><span>◇</span>Agent Studio</button><button class="ops-nav" data-ops-tab="evidence"><span>⌕</span>Evidence Explorer</button><button class="ops-nav" data-ops-tab="analytics"><span>▥</span>Analytics</button><button class="ops-nav" data-ops-tab="recovery"><span>⬡</span>Recovery Center</button><button class="ops-nav" data-ops-tab="copilot"><span>✧</span>RCA Copilot</button><div class="ops-footer">● Local simulation<br>Amazon Redshift · 12 synthetic scenarios<br>No production remediation</div></aside>
 <header><div><div class="brand">SENTINELOPS</div><div class="sub">Amazon Redshift incident investigation & safe recovery</div></div><div id="health" class="sub">Checking API…</div></header>
-<main><section id="home" class="home-panel"><div class="home-title">Redshift Incident Command Center</div><div class="home-description">Select a synthetic Redshift incident to investigate, reopen its saved results, or remove its saved investigation.</div><div id="incident-list" class="incident-grid"><div class="empty-state">Loading incidents…</div></div></section><button id="back-home" class="back-btn" hidden>← All incidents</button><div class="toolbar" hidden><input id="incident" value="RS-001" aria-label="Incident ID"><button id="run">Investigate</button></div><div id="error" class="error"></div>
+<main><div class="ops-top"><div><div class="ops-kicker">Operations workspace</div><h1 id="ops-page-title">Overview</h1><div class="muted" style="font-size:12px" id="ops-page-subtitle">Redshift incident investigation and safety-first operations</div></div><span class="badge">SYNTHETIC DATA · LOCAL DEMO</span></div><section id="ops-overview" class="ops-view"><div class="ops-metrics" id="ops-metrics"></div><div class="ops-split"><div class="card"><h2>Incident distribution</h2><div id="ops-severity-chart" class="ops-chart"></div></div><div class="card"><h2>Investigation activity</h2><div id="ops-status-chart" class="ops-chart"></div></div></div><div class="card" style="margin-top:18px"><h2>Quick start</h2><p class="muted">Explore 12 synthetic Amazon Redshift incidents, run the agent investigation, and inspect evidence-backed decisions.</p><button id="ops-open-incidents">Browse incidents →</button></div></section><section id="home" class="home-panel"><div class="home-title">Redshift Incident Command Center</div><div class="home-description">Select a synthetic Redshift incident to investigate, reopen its saved results, or remove its saved investigation.</div><div id="incident-list" class="incident-grid"><div class="empty-state">Loading incidents…</div></div></section><button id="back-home" class="back-btn" hidden>← All incidents</button><div class="toolbar" hidden><input id="incident" value="RS-001" aria-label="Incident ID"><button id="run">Investigate</button></div><div id="error" class="error"></div>
 <section id="result" hidden><div class="card incident-head"><div><div class="eyebrow">Incident</div><div id="incident-id" class="incident-id"></div><div class="muted">Evidence-backed investigation</div></div><div id="status" class="status"></div></div>
 <div class="grid"><div class="card"><h2>Root Cause</h2><div id="root"></div></div><div class="card"><h2>Safety Decision</h2><div id="safety"></div></div><div id="approval-card" class="card wide approval-card" hidden><h2>Human Approval Required</h2><div class="muted">Review the proposed recovery plan before allowing the investigation to proceed.</div><input id="reviewer" class="reviewer" placeholder="Reviewer name" aria-label="Reviewer name"><div class="approval-actions"><button id="approve" class="approve">Approve Recovery</button><button id="reject" class="reject">Reject Recovery</button></div></div><div class="card wide"><h2>Recovery Plan</h2><div id="recovery"></div></div><div class="card wide"><div class="flow-heading"><div><h2>Agent Execution Flow</h2><div class="muted" style="font-size:11px">One interactive journey combining the agent graph and execution timeline. Follow each recorded step and inspect its evidence.</div></div><div class="flow-controls"><button id="flow-prev" type="button" title="Previous step">←</button><button id="flow-play" type="button">▶ Play</button><button id="flow-next" type="button" title="Next step">→</button><button id="flow-all" type="button">Show all</button></div></div><div class="flow-overview" id="flow-overview" aria-live="polite"></div><div class="flow-progress"><span id="flow-progress-bar"></span></div><div class="flow-legend"><span>● Completed</span><span>◉ Selected step</span><span>◌ Not executed</span><span>⚠ Blocked / review</span></div><div class="flow-scroll" id="flow-scroll"><div class="flow-track" id="flow-track" role="list" aria-label="Recorded agent execution steps"></div></div><div class="flow-inspector" id="graph-inspector" aria-live="polite"><div class="muted">Select an execution step to inspect its trace and evidence.</div></div><div class="graph-note">Playback replays saved execution events; it does not execute agents or stream live activity. Supervisor may appear multiple times because it routes the workflow between agents.</div></div><div class="card wide"><h2>Competing Hypotheses</h2><div id="hypotheses"></div></div><div class="card wide"><h2>Evidence</h2><div id="evidence" class="evidence"></div></div></div></section></main>
 <script>
@@ -227,4 +231,116 @@ $("flow-all").addEventListener("click",()=>{flowShowAll=!flowShowAll;renderFlow(
 $("run").addEventListener("click",investigate);$("approve").addEventListener("click",()=>submitApproval(true));$("reject").addEventListener("click",()=>submitApproval(false));
 fetch("/health").then(r=>r.ok?$("health").innerHTML='<span class="online"><span class="dot"></span>API online</span>':Promise.reject()).catch(()=>$("health").textContent="API unavailable");
 loadIncidents();
+
+/* Multi-workspace UI: preserves the existing API, investigation rendering and safety gates. */
+const opsTabs=["overview","incidents","agents","evidence","analytics","recovery","copilot"];
+const opsTitles={overview:"Operations Overview",incidents:"Incident Command Center",agents:"Agent Orchestration Studio",evidence:"Evidence Explorer",analytics:"Investigation Analytics",recovery:"Recovery & Safety Center",copilot:"Investigation Copilot"};
+let opsActive="overview",opsLastResult=null,opsIncidents=[],opsFilteredEvidence=[];
+function opsContainer(id){let el=$(id);if(!el){el=document.createElement("section");el.id=id;el.className="ops-view";el.hidden=true;document.querySelector("main").appendChild(el)}return el}
+function opsPlaceCards(){
+  const grid=$("result").querySelector(".grid");if(!grid)return;
+  const cards=Array.from(grid.children).filter(x=>x.classList.contains("card"));
+  const pick=prefix=>cards.find(c=>c.querySelector("h2")?.textContent.trim().startsWith(prefix));
+  const moves={agents:["Agent Execution Flow"],evidence:["Evidence","Competing Hypotheses"],recovery:["Safety Decision","Recovery Plan","Human Approval Required"],analytics:[],copilot:[]};
+  // Keep the root cause with the recovery decision for a single explainable view.
+  moves.recovery.unshift("Root Cause");
+  Object.entries(moves).forEach(([tab,names])=>names.forEach(name=>{const card=pick(name);if(card)opsContainer("ops-"+tab).appendChild(card)}));
+  grid.remove();
+  $("result").querySelector(".incident-head").after(document.createElement("div"));
+  $("result").querySelector(".incident-head").hidden=true;
+}
+function opsSwitch(tab){
+  if(!opsTabs.includes(tab))return;
+  opsActive=tab;
+  document.querySelectorAll(".ops-nav").forEach(b=>{const active=b.dataset.opsTab===tab;b.classList.toggle("active",active);b.setAttribute("aria-current",active?"page":"false")});
+  $("ops-page-title").textContent=opsTitles[tab];
+  $("ops-page-subtitle").textContent=tab==="overview"?"Local Redshift incident monitoring":tab==="copilot"?"Answers grounded in the currently loaded investigation":"Synthetic evidence · Human-controlled recovery";
+  document.querySelectorAll(".ops-view").forEach(el=>el.hidden=el.id!=="ops-"+tab);
+  $("home").hidden=tab!=="incidents";$("result").hidden=true;
+  $("back-home").hidden=true;
+  if(["agents","evidence","analytics","recovery","copilot"].includes(tab)&&!opsLastResult){
+    const pane=opsContainer("ops-"+tab);
+    let notice=pane.querySelector(".ops-no-result");
+    if(!notice){notice=document.createElement("div");notice.className="ops-no-result ops-empty";notice.innerHTML='Run an investigation first to populate this workspace. <button type="button" data-open-incidents>Choose an incident →</button>';pane.prepend(notice)}
+  }
+  document.querySelectorAll(".ops-no-result").forEach(el=>el.hidden=!!opsLastResult);
+  if(tab==="analytics")opsRenderAnalytics();
+  if(tab==="evidence")opsRenderEvidence();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function opsChart(target,items){
+  const max=Math.max(1,...items.map(x=>x[1]));
+  $(target).innerHTML=items.length?items.map(([label,count])=>'<div class="ops-chart-row"><span>'+esc(label)+'</span><div class="ops-chart-track"><div class="ops-chart-fill" style="width:'+(100*count/max)+'%"></div></div><b>'+count+'</b></div>').join(""):'<div class="muted">No data available</div>';
+}
+function opsCounts(items,key){const counts={};items.forEach(x=>{const k=label(x[key]||"unknown");counts[k]=(counts[k]||0)+1});return Object.entries(counts).sort((a,b)=>b[1]-a[1])}
+async function opsRefreshOverview(){
+  try{const res=await fetch("/api/v1/incidents");if(!res.ok)throw Error("Incident API unavailable");opsIncidents=await res.json()}catch(e){$("ops-metrics").innerHTML='<div class="ops-empty">'+esc(e.message)+'</div>';return}
+  const investigated=opsIncidents.filter(x=>x.has_investigation);
+  const blocked=investigated.filter(x=>x.status==="complete"&&x.approval_required===false).length;
+  const metrics=[["12","Synthetic scenarios"],[String(investigated.length),"Investigations saved"],[String(opsIncidents.filter(x=>x.status==="awaiting_human_approval").length),"Awaiting approval"],[String(opsIncidents.length-investigated.length),"Not investigated"]];
+  $("ops-metrics").innerHTML=metrics.map(([value,name])=>'<div class="ops-metric"><b>'+esc(value)+'</b><span>'+esc(name)+'</span></div>').join("");
+  opsChart("ops-severity-chart",opsCounts(opsIncidents,"severity"));opsChart("ops-status-chart",opsCounts(opsIncidents,"status"));
+}
+function opsRenderAnalytics(){
+  const panel=opsContainer("ops-analytics");if(!opsLastResult){panel.innerHTML='<div class="ops-empty">Investigate an incident to see actual agent duration and hypothesis ranking charts.</div>';return}
+  const data=opsLastResult,events=data.observability_events||[],totals={};
+  events.forEach(e=>{totals[e.node]=(totals[e.node]||0)+Number(e.duration_ms||0)});
+  panel.innerHTML='<div class="ops-metrics"><div class="ops-metric"><b>'+events.length+'</b><span>Recorded agent events</span></div><div class="ops-metric"><b>'+events.reduce((n,e)=>n+Number(e.duration_ms||0),0).toFixed(1)+' ms</b><span>Summed node durations</span></div><div class="ops-metric"><b>'+(data.evidence||[]).length+'</b><span>Evidence items</span></div><div class="ops-metric"><b>'+(data.hypotheses||[]).length+'</b><span>Candidate hypotheses</span></div></div><div class="ops-split"><div class="card"><h2>Agent duration (ms)</h2><div class="ops-chart" id="ops-agent-chart"></div></div><div class="card"><h2>Hypothesis evidence match score</h2><div class="ops-chart" id="ops-hyp-chart"></div></div></div><p class="ops-note">Charts reflect the selected synthetic investigation. Hypothesis scores are heuristic ranking scores, not calibrated probabilities. Node durations are summed, not end-to-end wall-clock latency.</p>';
+  opsChart("ops-agent-chart",Object.entries(totals).sort((a,b)=>b[1]-a[1]).map(([k,v])=>[label(k),Number(v.toFixed(2))]));
+  opsChart("ops-hyp-chart",(data.hypotheses||[]).slice(0,8).map(h=>[h.hypothesis_id,Math.round(h.confidence*100)]));
+}
+function opsRenderEvidence(){
+  const data=opsLastResult,pane=opsContainer("ops-evidence");if(!data)return;
+  let toolbar=$("ops-evidence-toolbar");
+  if(!toolbar){toolbar=document.createElement("div");toolbar.id="ops-evidence-toolbar";toolbar.className="ops-toolbar";toolbar.innerHTML='<input id="ops-evidence-query" placeholder="Search evidence, sources, observations..." aria-label="Search evidence"><select id="ops-evidence-type" aria-label="Filter evidence type"><option value="">All evidence types</option></select><span id="ops-evidence-count" class="ops-note"></span>';pane.prepend(toolbar);$("ops-evidence-query").addEventListener("input",opsFilterEvidence);$("ops-evidence-type").addEventListener("change",opsFilterEvidence)}
+  const types=[...new Set((data.evidence||[]).map(e=>e.evidence_type))].sort();const select=$("ops-evidence-type"),prior=select.value;
+  select.innerHTML='<option value="">All evidence types</option>'+types.map(t=>'<option value="'+esc(t)+'">'+esc(label(t))+'</option>').join("");select.value=types.includes(prior)?prior:"";
+  opsFilterEvidence();
+}
+function opsFilterEvidence(){
+  if(!opsLastResult)return;
+  const q=($("ops-evidence-query")?.value||"").toLowerCase(),type=$("ops-evidence-type")?.value||"";
+  const filtered=(opsLastResult.evidence||[]).filter(e=>(!type||e.evidence_type===type)&&(!q||[e.source,e.observation,e.agent,e.evidence_type].join(" ").toLowerCase().includes(q)));
+  $("ops-evidence-count").textContent=filtered.length+" / "+opsLastResult.evidence.length+" items";
+  $("evidence").innerHTML=filtered.length?filtered.map(e=>'<div class="evidence-item"><div class="evidence-top"><span class="type">'+esc(e.evidence_type)+'</span><span class="source">'+esc(e.source)+'</span></div><div class="observation">'+esc(e.observation)+'</div><div class="time">'+esc(e.timestamp||"No timestamp")+'</div></div>').join(""):'<div class="ops-empty">No matching evidence.</div>';
+}
+function opsAnswer(question){
+  const d=opsLastResult;if(!d)return "No investigation is loaded. Select an incident and run the investigation first.";
+  const q=question.toLowerCase(),r=d.root_cause,s=d.safety_decision;
+  if(q.includes("why")||q.includes("cause"))return r?("Leading hypothesis: "+r.hypothesis_id+". "+(r.brief_explanation||r.rationale||"")+". Temporal support: "+r.temporal_support+"; causal support: "+r.causal_support+"; recovery support: "+r.recovery_support+"."):"No adjudicated root cause is available.";
+  if(q.includes("missing")||q.includes("gap"))return (r?.alternative_gaps||s?.evidence_gaps||[]).join("; ")||"No evidence gaps are recorded in this result.";
+  if(q.includes("safe")||q.includes("block")||q.includes("approval"))return s?("Safety decision: "+label(s.decision)+". "+s.rationale+" Approval required: "+d.approval_required+". No production action is executed."):"No safety decision is available.";
+  if(q.includes("evidence"))return "There are "+(d.evidence||[]).length+" evidence items. Open Evidence Explorer to search and filter by type or source.";
+  if(q.includes("agent")||q.includes("flow"))return "The saved investigation includes "+(d.observability_events||[]).length+" recorded agent events. Open Agent Studio to replay them.";
+  return "I can explain the selected root cause, missing evidence, safety decision, or agent flow using the loaded investigation. This is a deterministic, result-grounded assistant—not a connected LLM.";
+}
+function opsAsk(question){
+  const log=$("ops-chat-log");if(!log)return;
+  log.insertAdjacentHTML("beforeend",'<div class="ops-bubble user">'+esc(question)+'</div><div class="ops-bubble">'+esc(opsAnswer(question))+'</div>');log.scrollTop=log.scrollHeight;
+}
+function opsSetupCopilot(){
+  const pane=opsContainer("ops-copilot");
+  pane.innerHTML='<div class="card"><h2>Investigation Copilot · Result-grounded Q&A</h2><p class="ops-note">This panel answers from the saved API response using deterministic rules. It is not a generative model or live AWS assistant.</p><div class="ops-questions"><button data-ops-question="Why was this root cause selected?">Why this root cause?</button><button data-ops-question="What evidence is missing?">Missing evidence</button><button data-ops-question="Why is recovery blocked?">Recovery safety</button><button data-ops-question="Explain the agent flow">Agent flow</button></div><div class="ops-copilot-messages" id="ops-chat-log"><div class="ops-bubble">Select an incident to explore its evidence and safety decisions.</div></div><form id="ops-chat-form" class="ops-toolbar"><input id="ops-chat-input" aria-label="Ask about investigation" placeholder="Ask about this investigation..." required><button type="submit">Ask</button></form></div>';
+  pane.querySelectorAll("[data-ops-question]").forEach(b=>b.addEventListener("click",()=>opsAsk(b.dataset.opsQuestion)));
+  $("ops-chat-form").addEventListener("submit",e=>{e.preventDefault();const input=$("ops-chat-input"),q=input.value.trim();if(q)opsAsk(q);input.value=""});
+}
+function opsOnResult(data){
+  opsLastResult=data;
+  $("result").hidden=true;
+  document.querySelectorAll(".ops-no-result").forEach(el=>el.hidden=true);
+  opsRenderAnalytics();opsRenderEvidence();
+  opsSwitch("agents");
+  opsRefreshOverview();
+}
+document.querySelectorAll(".ops-nav").forEach(button=>button.addEventListener("click",()=>opsSwitch(button.dataset.opsTab)));
+$("ops-open-incidents").addEventListener("click",()=>opsSwitch("incidents"));
+document.addEventListener("click",e=>{if(e.target.closest("[data-open-incidents]"))opsSwitch("incidents")});
+opsPlaceCards();opsSetupCopilot();
+const originalRender=render;
+render=function(data){originalRender(data);opsOnResult(data)};
+const originalLoadIncidents=loadIncidents;
+loadIncidents=async function(){await originalLoadIncidents();await opsRefreshOverview()};
+const originalBack=$("back-home");
+originalBack.addEventListener("click",()=>opsSwitch("incidents"));
+opsSwitch("overview");opsRefreshOverview();
 </script></body></html>

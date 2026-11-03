@@ -143,8 +143,6 @@ _PROFILES: dict[str, dict] = {
         "deployment_change": {"migration": "active", "traffic_window": "peak"},
         "operation": "migration query",
     },
-},
-
     "database_connection_pool": {
         "service": "checkout-service",
         "title": "Checkout worker connection leak",
@@ -163,6 +161,7 @@ _PROFILES: dict[str, dict] = {
         "deployment_change": {"query_path": "search", "query_limit": "removed"},
         "operation": "GET /search",
     },
+}
 
 
 def _load_cases() -> list[dict]:

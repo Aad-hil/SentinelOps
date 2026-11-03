@@ -25,7 +25,7 @@ def classify_action_risk(step: RecoveryStep) -> str:
         inferred = "high"
     elif any(term in action for term in _MEDIUM_RISK_ACTION_TERMS):
         inferred = "medium"
-    elif any(term in action for term in ("collect", "inspect", "verify", "document", "observe", "prepare")):
+    elif any(term in action for term in ("collect", "inspect", "verify", "document", "observe", "prepare", "compare", "review")):
         inferred = "low"
     else:
         inferred = "high"

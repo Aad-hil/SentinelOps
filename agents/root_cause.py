@@ -278,6 +278,19 @@ def _trigger_evidence_strength(
     # source label.
     direct_change_items = [
         item
+        for item in items
+        if hypothesis_id == "H1"
+        and item.evidence_type in {"deployment", "deployment_change"}
+        and any(
+            _matches_signal(item, signal)
+            for signal in ("query", "database", "db_", "schema", "sql")
+        )
+        and not any(
+            term in _evidence_text(item)
+            for term in ("restart", "rollback", "recovery", "throttle", "protect")
+        )
+    ] if hypothesis_id == "H1" else [
+        item
         for item in trigger_items
         if item.evidence_type in {"deployment", "deployment_change"}
         and any(

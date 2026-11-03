@@ -240,6 +240,8 @@ def test_incident_list_includes_all_benchmark_incidents():
     payload = response.json()
     assert len(payload) == 30
     assert payload[1]["incident_id"] == "INC-002"
+    assert payload[1]["category"] == "deployment_query_database_saturation"
+    assert payload[-1]["incident_id"] == "INC-030"
 
 
 def test_saved_incident_can_be_opened_and_deleted():

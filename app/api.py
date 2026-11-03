@@ -372,3 +372,10 @@ def incident_copilot(incident_id: str, request: CopilotRequest) -> dict[str, Any
     )
     return {"mode": "ollama" if answer else "unavailable",
             "answer": answer or "Ollama is unavailable or timed out. Existing deterministic results remain unchanged."}
+
+
+# Register live progress endpoint without changing the existing synchronous API.
+from app.streaming import router as streaming_router, install_streaming
+install_streaming(_GRAPH, _config, build_redshift_evidence_bundle,
+                  _get_knowledge_retriever, _investigation_response)
+app.include_router(streaming_router)

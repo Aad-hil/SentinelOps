@@ -430,7 +430,19 @@ def _generate_redshift_hypotheses(state: InvestigationState) -> list[Hypothesis]
         causal_sources = tuple(dict.fromkeys(
             relationship.source for relationship in relationships
         ))
-        confidence = min(0.95, 0.10 + score * 0.78 + min(len(supporting), 5) * 0.015)
+        # Trigger evidence must come from a change/event record, not a
+        # downstream metric whose name happens to contain a trigger keyword.
+        direct_trigger = any(
+            item.evidence_type in {"deployment", "deployment_change"}
+            and any(_matches_signal(item, signal) for signal in definition.trigger_signals)
+            for item in items
+        )
+        confidence = min(
+            0.99,
+            0.10 + score * 0.68
+            + min(len(supporting), 5) * 0.012
+            + (0.16 if direct_trigger else 0.0),
+        )
         results.append(Hypothesis(
             hypothesis_id=definition.hypothesis_id,
             display_name=definition.name,

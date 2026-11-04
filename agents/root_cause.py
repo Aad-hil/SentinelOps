@@ -269,7 +269,7 @@ def run_root_cause_agent(state: InvestigationState) -> dict:
         f"Leading hypothesis: {best.hypothesis_id if best else 'none'}; "
         f"statement: {best.statement if best else 'none'}; "
         f"score: {best.confidence if best else 0}.\nEvidence:\n{evidence_context(state)}",
-        max_tokens=650,
+        max_tokens=400,
     ) if best else None
     result = append_finding(state, finding)
     if explanation:

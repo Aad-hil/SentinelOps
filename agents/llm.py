@@ -5,10 +5,24 @@ LLM text is advisory; deterministic scoring, safety and approval remain authorit
 import json
 import logging
 import os
+import time
+from contextvars import ContextVar
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 logger = logging.getLogger(__name__)
+_usage = ContextVar('llm_usage', default=None)
+
+
+def begin_usage_capture():
+    return _usage.set([])
+
+
+def end_usage_capture(token):
+    records = list(_usage.get() or [])
+    _usage.reset(token)
+    return records
+
 
 
 def provider() -> str:
@@ -35,17 +49,41 @@ def ask(system: str, user: str, *, max_tokens: int = 700) -> str | None:
             logger.warning("Groq inference unavailable: GROQ_API_KEY is missing")
             return None
         try:
-            from groq import Groq
+            from groq import Groq, RateLimitError
 
             client = Groq(api_key=api_key, timeout=timeout, max_retries=0)
-            response = client.chat.completions.create(
-                model=os.getenv("SENTINELOPS_LLM_MODEL", "openai/gpt-oss-20b"),
-                messages=messages,
-                temperature=0,
-                max_completion_tokens=limit,
-            )
-            content = response.choices[0].message.content
-            return content.strip() or None if isinstance(content, str) else None
+            retries = max(0, min(int(os.getenv('SENTINELOPS_GROQ_MAX_RETRIES', '1')), 2))
+            for attempt in range(retries + 1):
+                try:
+                    response = client.chat.completions.create(
+                        model=os.getenv('SENTINELOPS_LLM_MODEL', 'openai/gpt-oss-20b'),
+                        messages=messages, temperature=0, max_completion_tokens=limit,
+                    )
+                    usage = getattr(response, 'usage', None)
+                    finish = getattr(response.choices[0], 'finish_reason', None)
+                    record = {
+                        'prompt_tokens': int(getattr(usage, 'prompt_tokens', 0) or 0),
+                        'completion_tokens': int(getattr(usage, 'completion_tokens', 0) or 0),
+                        'total_tokens': int(getattr(usage, 'total_tokens', 0) or 0),
+                        'finish_reason': finish, 'attempts': attempt + 1,
+                    }
+                    captured = _usage.get()
+                    if captured is not None:
+                        captured.append(record)
+                    if finish == 'length':
+                        logger.warning('Groq completion reached its output cap')
+                    content = response.choices[0].message.content
+                    return content.strip() or None if isinstance(content, str) else None
+                except RateLimitError as exc:
+                    if attempt >= retries:
+                        raise
+                    headers = getattr(getattr(exc, 'response', None), 'headers', {}) or {}
+                    try:
+                        delay = min(max(float(headers.get('retry-after', 2)), 0), 8)
+                    except (TypeError, ValueError):
+                        delay = 2.0
+                    logger.warning('Groq rate limited; waiting %.1fs', delay)
+                    time.sleep(delay)
         except Exception as exc:
             logger.warning("Groq inference failed (%s): %s", type(exc).__name__, exc)
             return None

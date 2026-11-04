@@ -115,7 +115,7 @@ def run_critic_agent(state: InvestigationState) -> dict:
         f"Leading hypothesis: {critique.hypothesis_id if critique else 'none'}; "
         f"Leading hypothesis statement: {state.get('hypotheses', [])[0].statement if state.get('hypotheses') else 'none'}.\n"
         f"Evidence:\n{evidence_context(state)}",
-        max_tokens=650,
+        max_tokens=450,
     ) if critique else None
     result = append_finding(state, finding)
     if llm_challenge:

@@ -102,6 +102,7 @@ class InvestigationResponse(BaseModel):
     approval_status: str = "not_required"
     approval_required: bool = False
     root_cause: AdjudicationResponse | None = None
+    supervisor_summary: str | None = None
     hypotheses: list[HypothesisResponse] = Field(default_factory=list)
     evidence: list[EvidenceResponse] = Field(default_factory=list)
     recovery_plan: RecoveryPlanResponse | None = None

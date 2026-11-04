@@ -1,6 +1,6 @@
-"""Offline tests for hosted Groq and local Ollama inference."""
-import json
+"""Offline tests for hosted Groq SDK and local Ollama inference."""
 from io import BytesIO
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from agents import llm
@@ -14,26 +14,20 @@ class FakeResponse(BytesIO):
         self.close()
 
 
-def test_groq_uses_hosted_api_and_bearer_token():
-    calls = []
-
-    def fake_open(request, timeout):
-        calls.append((request, timeout))
-        return FakeResponse(json.dumps({"choices": [{"message": {"content": "Grounded answer"}}]}).encode())
-
+def test_groq_uses_sdk_and_configured_model():
+    response = SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="Grounded answer"))])
     with patch.dict("os.environ", {
         "SENTINELOPS_LLM_ENABLED": "true",
         "SENTINELOPS_LLM_PROVIDER": "groq",
-        "SENTINELOPS_LLM_MODEL": "llama-3.3-70b-versatile",
+        "SENTINELOPS_LLM_MODEL": "openai/gpt-oss-20b",
         "GROQ_API_KEY": "fake-test-key",
-    }), patch.object(llm, "urlopen", side_effect=fake_open):
+    }), patch("groq.Groq") as client_class:
+        client_class.return_value.chat.completions.create.return_value = response
         assert llm.ask("System", "Evidence") == "Grounded answer"
-
-    request, _ = calls[0]
-    assert request.full_url == "https://api.groq.com/openai/v1/chat/completions"
-    assert request.get_header("Authorization") == "Bearer fake-test-key"
-    payload = json.loads(request.data)
-    assert payload["stream"] is False
+        client_class.assert_called_once()
+        kwargs = client_class.return_value.chat.completions.create.call_args.kwargs
+        assert kwargs["model"] == "openai/gpt-oss-20b"
+        assert kwargs["messages"][0]["role"] == "system"
 
 
 def test_groq_missing_key_fails_closed():
@@ -41,9 +35,19 @@ def test_groq_missing_key_fails_closed():
         "SENTINELOPS_LLM_ENABLED": "true",
         "SENTINELOPS_LLM_PROVIDER": "groq",
         "GROQ_API_KEY": "",
-    }), patch.object(llm, "urlopen") as call:
+    }), patch("groq.Groq") as client_class:
         assert llm.ask("System", "Evidence") is None
-        call.assert_not_called()
+        client_class.assert_not_called()
+
+
+def test_groq_sdk_error_fails_closed():
+    with patch.dict("os.environ", {
+        "SENTINELOPS_LLM_ENABLED": "true",
+        "SENTINELOPS_LLM_PROVIDER": "groq",
+        "GROQ_API_KEY": "fake-test-key",
+    }), patch("groq.Groq") as client_class:
+        client_class.return_value.chat.completions.create.side_effect = RuntimeError("test failure")
+        assert llm.ask("System", "Evidence") is None
 
 
 def test_ollama_remains_available():

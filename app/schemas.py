@@ -91,6 +91,7 @@ class ObservabilityEventResponse(BaseModel):
     timestamp: datetime
     duration_ms: float
     output_keys: list[str] = Field(default_factory=list)
+    llm_usage: list[dict[str, object]] = Field(default_factory=list)
     error: str | None = None
 
 

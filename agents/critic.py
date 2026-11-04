@@ -113,8 +113,9 @@ def run_critic_agent(state: InvestigationState) -> dict:
         "explanations, based ONLY on provided observations. Do not change any deterministic "
         "scores, adjudication, or safety outcomes. Cite evidence source names. Under 120 words.",
         f"Leading hypothesis: {critique.hypothesis_id if critique else 'none'}; "
-        f"deterministic critique: {critique.challenge if critique else 'none'}.\n"
+        f"Leading hypothesis statement: {state.get('hypotheses', [])[0].statement if state.get('hypotheses') else 'none'}.\n"
         f"Evidence:\n{evidence_context(state)}",
+        max_tokens=650,
     ) if critique else None
     result = append_finding(state, finding)
     if llm_challenge:
@@ -127,7 +128,7 @@ def run_critic_agent(state: InvestigationState) -> dict:
         "critique": critique,
         "messages": list(state.get("messages", [])) + [
             "Critic Agent challenged the leading root-cause hypothesis."
-            + (" Ollama critique available." if llm_challenge else " Deterministic critique only.")
+            + (" LLM critique available." if llm_challenge else " Deterministic critique only.")
         ],
         "investigation_status": "critique",
     })

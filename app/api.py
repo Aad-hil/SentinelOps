@@ -148,7 +148,7 @@ def _investigation_response(state: dict[str, Any]) -> InvestigationResponse:
             {"agent": f.agent, "category": f.category, "summary": f.summary,
              "evidence": list(f.evidence)}
             for f in state.get("findings", [])
-            if f.agent in ("root_cause_llm", "critic_llm")
+            if f.agent in ("root_cause_llm", "critic_llm", "recovery_llm")
         ],
         observability_events=[
             {

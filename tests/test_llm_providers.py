@@ -59,3 +59,50 @@ def test_ollama_remains_available():
         b'{"message":{"content":"Local response"}}'
     )):
         assert llm.ask("System", "Evidence") == "Local response"
+
+
+def test_groq_usage_capture():
+    response = SimpleNamespace(
+        choices=[SimpleNamespace(message=SimpleNamespace(content="Answer"), finish_reason="length")],
+        usage=SimpleNamespace(prompt_tokens=100, completion_tokens=40, total_tokens=140),
+    )
+    with patch.dict("os.environ", {
+        "SENTINELOPS_LLM_ENABLED": "true",
+        "SENTINELOPS_LLM_PROVIDER": "groq",
+        "GROQ_API_KEY": "fake-test-key",
+    }), patch("groq.Groq") as client_class:
+        client_class.return_value.chat.completions.create.return_value = response
+        token = llm.begin_usage_capture()
+        try:
+            assert llm.ask("System", "Evidence") == "Answer"
+        finally:
+            records = llm.end_usage_capture(token)
+    assert records == [{
+        "prompt_tokens": 100, "completion_tokens": 40, "total_tokens": 140,
+        "finish_reason": "length", "attempts": 1,
+    }]
+
+
+def test_groq_retries_rate_limit_once():
+    from groq import RateLimitError
+    from httpx import Request, Response
+
+    request = Request("POST", "https://api.groq.com/openai/v1/chat/completions")
+    limited = RateLimitError(
+        "rate limit", response=Response(429, request=request, headers={"retry-after": "0"})
+    )
+    response = SimpleNamespace(
+        choices=[SimpleNamespace(message=SimpleNamespace(content="Recovered"), finish_reason="stop")],
+        usage=SimpleNamespace(prompt_tokens=5, completion_tokens=4, total_tokens=9),
+    )
+    with patch.dict("os.environ", {
+        "SENTINELOPS_LLM_ENABLED": "true",
+        "SENTINELOPS_LLM_PROVIDER": "groq",
+        "SENTINELOPS_GROQ_MAX_RETRIES": "1",
+        "GROQ_API_KEY": "fake-test-key",
+    }), patch("groq.Groq") as client_class, patch.object(llm.time, "sleep") as sleep:
+        create = client_class.return_value.chat.completions.create
+        create.side_effect = [limited, response]
+        assert llm.ask("System", "Evidence") == "Recovered"
+        assert create.call_count == 2
+        sleep.assert_called_once()

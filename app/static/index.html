@@ -357,7 +357,7 @@ function opsRenderLLMFindings(){
   const findings=opsLastResult?.llm_findings||[];
   section.innerHTML='<div class="card"><h2>LLM-generated incident analysis</h2>'+
     (findings.length ? findings.map(f=>'<div class="ops-bubble"><b>'+esc(f.agent==="root_cause_llm"?"Root Cause · LLM reasoning":"Critic · LLM review")+'</b><p>'+esc(f.summary)+'</p><small>AI-generated interpretation; safety and confidence remain deterministic.</small></div>').join("") :
-    '<p class="ops-note">No LLM output is saved for this investigation. Confirm Ollama is enabled and running, then delete and rerun this incident.</p>')+
+    '<p class="ops-note">No LLM output is saved for this investigation. Check that your configured LLM provider is enabled and reachable, then rerun a new investigation. Previously saved investigations are not regenerated automatically.</p>')+
     '</div>';
 }
 function opsRenderResultSummary(){

@@ -152,6 +152,8 @@ def traced_node(
     def run(state: InvestigationState, config: RunnableConfig = None) -> dict[str, Any]:
         parent_context, trace_id, parent_span_id = _span_context_from_state(state)
         started = perf_counter()
+        from agents.llm import begin_usage_capture, end_usage_capture
+        usage_token = begin_usage_capture()
 
         with node_tracer.start_as_current_span(
             f"sentinelops.node.{node_name}",
@@ -166,6 +168,7 @@ def traced_node(
             try:
                 result = node(state, config=config) if accepts_config else node(state)
             except Exception as exc:
+                end_usage_capture(usage_token)
                 duration_ms = (perf_counter() - started) * 1000
                 span.set_status(Status(StatusCode.ERROR, str(exc)))
                 span.record_exception(exc)
@@ -183,9 +186,11 @@ def traced_node(
                 )
                 raise
 
+            llm_usage = end_usage_capture(usage_token)
             duration_ms = (perf_counter() - started) * 1000
             span.set_status(Status(StatusCode.OK))
             span.set_attribute("sentinelops.duration_ms", duration_ms)
+            span.set_attribute("sentinelops.llm_total_tokens", sum(u["total_tokens"] for u in llm_usage))
             span.set_attribute("sentinelops.output_key_count", len(result))
 
             return {
@@ -199,7 +204,7 @@ def traced_node(
                     status="ok",
                     duration_ms=duration_ms,
                     output_keys=tuple(sorted(result.keys())),
-                ),
+                )[:-1] + [{**_append_trace(state, trace_id=actual_trace_id, node=node_name, status="ok", duration_ms=duration_ms, output_keys=tuple(sorted(result.keys())))[-1], "llm_usage": llm_usage}],
             }
 
     return run

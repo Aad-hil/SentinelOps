@@ -113,7 +113,7 @@ body{background:radial-gradient(circle at 72% -20%,#192b49,#080d18 48%)}header{p
 <script>
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const pct=v=>Math.round(Number(v||0)*100);
+const pct=v=>Math.round(Number(v||0)*100);\nconst pctPrecise=v=>(Number(v||0)*100).toFixed(1);
 const label=v=>String(v??"").replaceAll("_"," ");
 
 const graphNodeNames={supervisor_summary:"Supervisor · Final Summary",historical_memory:"Historical Memory",supervisor:"Supervisor",telemetry:"Telemetry Agent",knowledge:"Knowledge Agent · RAG",deployment:"Deployment Agent",root_cause:"Root Cause Agent",critic:"Critic Agent",adjudication:"Adjudication Agent",recovery:"Recovery Agent",safety:"Safety Agent",human_approval:"Human Approval"};
@@ -425,7 +425,7 @@ function opsRenderResultSummary(){
   const state=label(safety.decision||"unknown");
   header.innerHTML='<div class="ops-report-hero"><div class="ops-report-top"><div><div class="ops-report-id">'+esc(data.incident_id)+' · '+esc(label(data.status))+'</div><h2 class="ops-report-title">'+esc(name)+'</h2></div><span class="ops-report-state">Recovery: '+esc(state)+'</span></div>'+
     '<div class="ops-report-metrics"><div class="ops-report-metric"><b>'+pct(root.confidence)+'%</b><span>Evidence match</span></div><div class="ops-report-metric"><b>'+(data.evidence||[]).length+'</b><span>Evidence items</span></div><div class="ops-report-metric"><b>'+esc(root.hypothesis_id||"—")+'</b><span>Leading hypothesis</span></div></div>'+
-    '<div class="ops-report-id">Supervisor Agent · Investigation summary</div><p class="ops-report-summary">'+esc(explanation)+'</p><div class="ops-report-actions"><button type="button" data-ops-go="agents">Agent execution</button><button type="button" data-ops-go="evidence">Evidence explorer</button><button type="button" data-ops-go="recovery">Recovery & safety</button></div><div class="ops-report-footnote">Synthetic incident · Heuristic ranking, not a calibrated probability · No production remediation</div></div>';
+    '<div class="ops-report-id">Supervisor Agent · Investigation summary (LLM Critic)</div><p class="ops-report-summary">'+esc(explanation)+'</p><div class="ops-report-actions"><button type="button" data-ops-go="agents">Agent execution</button><button type="button" data-ops-go="evidence">Evidence explorer</button><button type="button" data-ops-go="recovery">Recovery & safety</button></div><div class="ops-report-footnote">Synthetic incident · Heuristic ranking, not a calibrated probability · No production remediation</div></div>';
 }
 async function opsLoadSaved(id,target="results"){
   try{

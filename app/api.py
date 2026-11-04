@@ -115,6 +115,7 @@ def _investigation_response(state: dict[str, Any]) -> InvestigationResponse:
     return InvestigationResponse(
         incident_id=state["incident_id"],
         status=state.get("investigation_status", "unknown"),
+        supervisor_summary=state.get("supervisor_summary"),
         approval_status=state.get("approval_status", "not_required"),
         approval_required=bool(state.get("approval_required", False)),
         root_cause=(

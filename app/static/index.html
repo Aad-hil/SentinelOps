@@ -140,6 +140,7 @@ function renderFlow(){
   const events=graphData?.observability_events||[];
   const total=events.reduce((sum,e)=>sum+Number(e.duration_ms||0),0);
   const selected=flowSteps[flowIndex];
+  const tokens=events.reduce((sum,e)=>sum+(e.llm_usage||[]).reduce((n,u)=>n+Number(u.total_tokens||0),0),0);
   $("flow-overview").innerHTML='<span><b>'+flowSteps.length+'</b> flow steps</span><span><b>'+events.length+'</b> recorded events</span><span><b>'+total.toFixed(1)+' ms</b> summed node durations</span><span>Outcome: <b>'+esc(label(graphData?.status||"not started"))+'</b></span>';
   $("flow-progress-bar").style.width=(flowSteps.length?100*(flowIndex+1)/flowSteps.length:0)+'%';
   $("flow-prev").disabled=!flowSteps.length||flowIndex===0;
@@ -170,6 +171,9 @@ function inspectFlowStep(step){
     const e=step.event;
     html+='<div class="inspector-meta">Recorded event '+(step.index+1)+' of '+events.length+' · '+esc((e.status||"unknown").toUpperCase())+' · '+Number(e.duration_ms||0).toFixed(2)+' ms</div>';
     html+='<div class="inspector-event"><b>Timestamp:</b> '+esc(e.timestamp||"unavailable")+'<div class="trace">Trace: '+esc(e.trace_id||graphData.trace_id||"unavailable")+'</div><div class="timeline-keys">'+(e.output_keys||[]).map(k=>'<span class="timeline-key">'+esc(k)+'</span>').join("")+'</div>'+(e.error?'<div class="error">'+esc(e.error)+'</div>':"")+'</div>';
+    if((e.llm_usage||[]).length){
+      html+='<div class="inspector-event"><b>LLM usage</b>'+e.llm_usage.map(u=>'<div class="inspector-meta">Input '+Number(u.prompt_tokens||0)+' · Output '+Number(u.completion_tokens||0)+' · Total '+Number(u.total_tokens||0)+' · Finish '+esc(u.finish_reason||"unknown")+' · Attempts '+Number(u.attempts||1)+'</div>').join("")+'</div>';
+    }
     if(matched.length>1)html+='<div class="inspector-meta" style="margin-top:10px">This agent ran '+matched.length+' times. Each invocation is a separate step in the flow.</div>';
   }else if(step.kind==="checkpoint"){
     html+='<div class="inspector-meta">Human checkpoint: '+esc(label(step.status))+'. '+(step.status==="blocked"?"Recovery remains blocked; no action was executed.":step.status==="waiting"?"An operator decision is required.":step.status==="skipped"?"No approval was required by the safety decision.":"Approval only authorizes a proposal; SentinelOps does not execute production recovery.")+'</div>';

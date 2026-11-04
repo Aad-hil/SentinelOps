@@ -89,7 +89,7 @@ def test_groq_retries_rate_limit_once():
 
     request = Request("POST", "https://api.groq.com/openai/v1/chat/completions")
     limited = RateLimitError(
-        "rate limit", response=Response(429, request=request, headers={"retry-after": "0"})
+        "rate limit", response=Response(429, request=request, headers={"retry-after": "0"}), body=None
     )
     response = SimpleNamespace(
         choices=[SimpleNamespace(message=SimpleNamespace(content="Recovered"), finish_reason="stop")],

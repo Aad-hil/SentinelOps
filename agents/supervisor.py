@@ -103,7 +103,7 @@ def run_supervisor_summary(state: InvestigationState) -> dict:
     score = get(root, "confidence", 0)
     decision = get(safety, "decision", "not available")
     rationale = get(safety, "rationale", "")
-    observations = [str(get(item, "observation", ""))[:220] for item in list(state.get("evidence_items") or [])[:12]]
+    observations = [str(get(item, "observation", ""))[:140] for item in list(state.get("evidence_items") or [])[:6]]
     llm_reviews = [f.summary for f in state.get("findings", []) if get(f, "agent") == "critic_llm"]
     llm_critique = llm_reviews[-1] if llm_reviews else None
     context = {
@@ -132,7 +132,7 @@ def run_supervisor_summary(state: InvestigationState) -> dict:
         "claim remediation was executed, or override human approval. "
         "Do not start with 'We are given' or repeat the input.",
         json.dumps(context, default=str)[:7000],
-        max_tokens=450,
+        max_tokens=350,
     )
     fallback = (
         f"The leading evidence-supported hypothesis is {name} "

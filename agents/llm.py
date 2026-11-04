@@ -19,13 +19,13 @@ def enabled() -> bool:
     return os.getenv("SENTINELOPS_LLM_ENABLED", "false").strip().lower() in ("1", "true", "yes")
 
 
-def ask(system: str, user: str, *, max_tokens: int = 300) -> str | None:
+def ask(system: str, user: str, *, max_tokens: int = 700) -> str | None:
     """Return advisory model text, or None if inference is unavailable."""
     if not enabled():
         return None
 
     model_provider = provider()
-    limit = max(1, min(max_tokens, int(os.getenv("SENTINELOPS_LLM_MAX_TOKENS", "160"))))
+    limit = max(1, min(max_tokens, int(os.getenv("SENTINELOPS_LLM_MAX_TOKENS", "900"))))
     timeout = float(os.getenv("SENTINELOPS_LLM_TIMEOUT", "45"))
     messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
 
@@ -45,7 +45,7 @@ def ask(system: str, user: str, *, max_tokens: int = 300) -> str | None:
                 max_completion_tokens=limit,
             )
             content = response.choices[0].message.content
-            return content.strip()[:2400] or None if isinstance(content, str) else None
+            return content.strip() or None if isinstance(content, str) else None
         except Exception as exc:
             logger.warning("Groq inference failed (%s): %s", type(exc).__name__, exc)
             return None

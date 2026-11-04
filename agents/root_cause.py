@@ -269,6 +269,7 @@ def run_root_cause_agent(state: InvestigationState) -> dict:
         f"Leading hypothesis: {best.hypothesis_id if best else 'none'}; "
         f"statement: {best.statement if best else 'none'}; "
         f"score: {best.confidence if best else 0}.\nEvidence:\n{evidence_context(state)}",
+        max_tokens=650,
     ) if best else None
     result = append_finding(state, finding)
     if explanation:
@@ -280,7 +281,7 @@ def run_root_cause_agent(state: InvestigationState) -> dict:
         "hypotheses": hypotheses,
         "messages": list(state.get("messages", [])) + [
             f"Root Cause Agent evaluated {len(hypotheses)} competing hypotheses with causal-chain scoring."
-            + (" Ollama provided an evidence explanation." if explanation else " Deterministic mode; no LLM explanation.")
+            + (" LLM provided an evidence explanation." if explanation else " Deterministic mode; no LLM explanation.")
         ],
         "investigation_status": "hypothesis_evaluation",
     })

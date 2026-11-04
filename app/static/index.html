@@ -68,6 +68,41 @@ h2{font-size:14px;margin:0 0 17px}.muted{color:var(--muted)}.error{color:var(--d
 
 /* Operations command center shell */
 body{background:radial-gradient(circle at 72% -20%,#192b49,#080d18 48%)}header{padding-left:245px}main{width:calc(100% - 280px);max-width:1600px;margin:0 20px 0 260px;padding-top:26px}.ops-sidebar{position:fixed;left:0;top:0;bottom:0;width:236px;background:#0b1424;border-right:1px solid #253651;z-index:20;padding:24px 14px;display:flex;flex-direction:column;gap:6px}.ops-logo{font-weight:900;letter-spacing:.13em;font-size:17px;padding:6px 12px 18px;color:#e6efff}.ops-logo small{display:block;color:#7f95b6;font-size:10px;font-weight:600;letter-spacing:.05em;margin-top:7px}.ops-nav{display:flex;align-items:center;gap:11px;width:100%;min-width:0;padding:12px 13px;text-align:left;background:transparent;border:1px solid transparent;font-size:12px;color:#9db0cc;border-radius:10px}.ops-nav:hover,.ops-nav.active{color:#f4f8ff;background:#192b47;border-color:#34537a}.ops-nav span{font-size:17px;width:21px}.ops-footer{margin-top:auto;padding:14px 12px;border-top:1px solid #263751;color:#91a6c6;font-size:11px;line-height:1.8}.ops-top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:20px}.ops-top h1{font-size:24px;margin:0 0 5px}.ops-kicker{font-size:11px;letter-spacing:.13em;color:#8eacd9;text-transform:uppercase;font-weight:800}.ops-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}.ops-metric{padding:18px;border:1px solid #293b55;border-radius:13px;background:linear-gradient(145deg,#17253b,#101b2d)}.ops-metric b{font-size:27px;display:block;color:#c4dbff}.ops-metric span{font-size:11px;color:#8fa3c1}.ops-view[hidden]{display:none!important}.ops-view>.card{margin-bottom:18px}.ops-view>.grid{margin-bottom:18px}.ops-banner{padding:15px 18px;border:1px solid #2b4363;border-radius:12px;background:#111f34;color:#a9c2e8;font-size:12px;margin-bottom:17px}.ops-toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px}.ops-toolbar input,.ops-toolbar select{background:#0c1627;color:#e7f0ff;border:1px solid #31445f;border-radius:8px;padding:10px;min-width:160px}.ops-toolbar input{flex:1}.ops-chart{display:grid;gap:13px}.ops-chart-row{display:grid;grid-template-columns:130px 1fr 45px;align-items:center;gap:12px;font-size:12px}.ops-chart-track{height:10px;border-radius:10px;background:#202f46;overflow:hidden}.ops-chart-fill{height:100%;background:linear-gradient(90deg,#467ad5,#75b4ff);border-radius:10px}.ops-split{display:grid;grid-template-columns:1fr 1fr;gap:16px}.ops-copilot-messages{max-height:350px;overflow:auto;display:grid;gap:10px;padding:12px;background:#0c1524;border:1px solid #263852;border-radius:10px;margin-bottom:12px}.ops-bubble{padding:12px;border-radius:10px;background:#192940;color:#d6e3f6;font-size:12px;line-height:1.65}.ops-bubble.user{background:#243b5e;margin-left:20%}.ops-questions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}.ops-questions button{min-width:0;padding:8px;font-size:11px}.ops-note{color:#8da3c1;font-size:11px}.ops-empty{padding:26px;border:1px dashed #34506f;border-radius:12px;color:#9eb3d1;text-align:center}.ops-section-title{font-size:19px;font-weight:800;margin:0 0 16px}@media(max-width:1100px){.ops-metrics{grid-template-columns:repeat(2,1fr)}.ops-split{grid-template-columns:1fr}}@media(max-width:780px){.ops-sidebar{position:sticky;top:0;width:100%;height:auto;flex-direction:row;overflow:auto;padding:8px;gap:5px}.ops-logo,.ops-footer{display:none}.ops-nav{width:auto;white-space:nowrap;padding:9px;min-width:0}.ops-nav span{display:none}header{padding:12px 18px}main{width:calc(100% - 24px);margin:0 auto}.ops-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.ops-chart-row{grid-template-columns:90px 1fr 30px}}
+
+/* Investigation report: concise decision-first presentation */
+#ops-results{display:flex;flex-direction:column;gap:18px;max-width:1120px}
+#ops-results[hidden]{display:none}
+#ops-results .card{padding:24px;border-color:#2a3c55;box-shadow:none}
+#ops-results .card h2{font-size:15px;margin-bottom:16px}
+.ops-report-hero{padding:28px;border:1px solid #344b6d;border-radius:16px;background:linear-gradient(130deg,#1b304e,#111d30 75%)}
+.ops-report-top{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;flex-wrap:wrap}
+.ops-report-id{color:#94b2d9;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.ops-report-title{font-size:27px;letter-spacing:-.025em;margin:7px 0 12px;line-height:1.25}
+.ops-report-state{border:1px solid #735c32;color:#f4c95d;background:#32291b;padding:7px 11px;border-radius:30px;font-size:11px;font-weight:800}
+.ops-report-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0}
+.ops-report-metric{padding:16px;background:rgba(7,15,27,.5);border:1px solid #2c415d;border-radius:11px}
+.ops-report-metric b{display:block;font-size:24px;line-height:1.2}
+.ops-report-metric span{font-size:11px;color:#9fb2cb}
+.ops-report-summary{font-size:13px;color:#d7e4f6;line-height:1.75;max-width:820px;overflow-wrap:anywhere}
+.ops-report-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:19px}
+.ops-report-actions button{min-width:0;font-size:11px;padding:10px 13px}
+.ops-report-footnote{font-size:10px;color:#92a7c2;margin-top:13px}
+#ops-results .hypothesis{border-color:#2c3e57;margin-bottom:10px}
+#ops-results .hypothesis summary{padding:17px}
+#ops-results .hypothesis .hyp-details{padding:14px 17px}
+.ops-evidence-list{display:grid;gap:7px;margin:10px 0}
+.ops-evidence-row{font-family:ui-monospace,Consolas,monospace;font-size:10px;color:#afc0d8;overflow-wrap:anywhere;padding:9px 11px;border:1px solid #25364d;border-radius:7px;background:#101c2d}
+.ops-detail-group{margin-top:13px}
+.ops-detail-group summary{font-size:11px;color:#9ebef0;font-weight:750;cursor:pointer}
+.ops-ai-card{border:1px solid #2d415d;border-radius:11px;padding:17px;background:#101c2e;margin-top:12px}
+.ops-ai-card summary{cursor:pointer;font-weight:800;font-size:13px;list-style-position:inside}
+.ops-ai-card p{font-size:12px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;color:#c9d6e8}
+.ops-ai-card small{font-size:10px;color:#91a7c3}
+#ops-results #root .rationale{font-size:13px;line-height:1.8;max-width:850px}
+#ops-results #root .confidence-row{margin-top:16px}
+#ops-results #root .facts{margin-top:15px}
+@media(max-width:650px){.ops-report-hero{padding:18px}.ops-report-title{font-size:22px}.ops-report-metrics{gap:7px}.ops-report-metric{padding:11px}.ops-report-metric b{font-size:20px}}
+
 </style></head>
 <body>
 <aside class="ops-sidebar" aria-label="Operations navigation"><div class="ops-logo">◈ SENTINELOPS<small>AI INCIDENT COMMAND</small></div><button class="ops-nav active" data-ops-tab="overview"><span>▦</span>Overview</button><button class="ops-nav" data-ops-tab="incidents"><span>⚑</span>Incidents</button><button class="ops-nav" data-ops-tab="results"><span>▤</span>Investigation Results</button><button class="ops-nav" data-ops-tab="agents"><span>◇</span>Agent Studio</button><button class="ops-nav" data-ops-tab="evidence"><span>⌕</span>Evidence Explorer</button><button class="ops-nav" data-ops-tab="analytics"><span>▥</span>Analytics</button><button class="ops-nav" data-ops-tab="recovery"><span>⬡</span>Recovery Center</button><button class="ops-nav" data-ops-tab="approvals"><span>✓</span>Approval Queue <b id="ops-approval-count" style="font-size:10px;color:#f4c95d"></b></button><button class="ops-nav" data-ops-tab="copilot"><span>✧</span>RCA Copilot</button><div class="ops-footer">● Local simulation<br>Amazon Redshift · 12 synthetic scenarios<br>No production remediation</div></aside>
@@ -177,12 +212,13 @@ function render(data){
     let steps=p.steps.map((x,i)=>'<div class="step"><div class="step-num">'+(i+1)+'</div><div><div class="step-title">'+esc(x.action)+'</div><div class="step-purpose">'+esc(x.purpose)+'</div></div><span class="badge '+(x.requires_approval?"warn":"")+'">'+esc(x.risk)+(x.requires_approval?" · approval":"")+'</span></div>').join("");
     $("recovery").innerHTML='<div class="muted" style="margin-bottom:12px">Readiness: <b style="color:var(--text)">'+esc(label(p.readiness))+'</b></div><div class="safety-text">'+esc(p.rationale)+'</div><div class="steps">'+steps+'</div>';
   }else $("recovery").innerHTML="<span class='muted'>No recovery plan.</span>";
-  const visibleHypotheses=data.hypotheses.filter(h=>Number(h.confidence)>0.75);
-  $("hypotheses").innerHTML=visibleHypotheses.length?'<div class="muted" style="margin-bottom:10px">Showing hypotheses with an evidence match score above 75%.</div><div class="hypotheses">'+visibleHypotheses.map((h,i)=>{
-    const support=h.supporting_evidence.length?h.supporting_evidence.map(x=>'<span class="chip">'+esc(x)+'</span>').join(""):"<span class='muted'>None</span>";
-    const causal=h.causal_relationships.length?h.causal_relationships.map(x=>'<span class="chip">'+esc(x.role)+' · '+esc(x.source)+' · '+pct(x.strength)+'%</span>').join(""):"<span class='muted'>None</span>";
-    return '<details class="hypothesis" '+(i===0?"open":"")+'><summary><div class="hyp-head"><span class="hyp-id">'+esc(h.hypothesis_id)+'</span><div><div class="hyp-statement">'+esc(h.display_name)+'</div><div class="timeline-meta">'+esc(h.statement)+'</div><div class="hyp-status">'+esc(h.status)+'</div><div class="hyp-bar"><span style="width:'+pct(h.confidence)+'%"></span></div></div><span class="hyp-score">'+pct(h.confidence)+'%</span></div></summary><div class="hyp-details"><p>Supporting evidence</p><div class="chips">'+support+'</div><p>Causal relationships</p><div class="chips">'+causal+'</div></div></details>';
-  }).join("")+'</div>':"<span class='muted'>No hypotheses exceeded the 75% evidence match threshold. This does not mean no cause exists; the available evidence may be insufficient.</span>";
+  const visibleHypotheses=(data.hypotheses||[]).filter(h=>Number(h.confidence)>0.75);
+  $("hypotheses").innerHTML=visibleHypotheses.length?'<p class="ops-note">Candidates above the 75% heuristic evidence-match threshold. Scores are not probabilities.</p><div class="hypotheses">'+visibleHypotheses.map(h=>{
+    const support=h.supporting_evidence||[],causal=h.causal_relationships||[];
+    const supportRows=support.map(x=>'<div class="ops-evidence-row">'+esc(x)+'</div>').join("");
+    const causalRows=causal.map(x=>'<div class="ops-evidence-row">'+esc(x.role)+' · '+esc(x.source)+' · '+pct(x.strength)+'%</div>').join("");
+    return '<details class="hypothesis"><summary><div class="hyp-head"><span class="hyp-id">'+esc(h.hypothesis_id)+'</span><div><div class="hyp-statement">'+esc(h.display_name)+'</div><div class="timeline-meta">'+esc(h.statement)+'</div><div class="hyp-status">'+esc(h.status)+'</div><div class="hyp-bar"><span style="width:'+pct(h.confidence)+'%"></span></div></div><span class="hyp-score">'+pct(h.confidence)+'%</span></div></summary><div class="hyp-details"><details class="ops-detail-group"><summary>Supporting evidence ('+support.length+')</summary><div class="ops-evidence-list">'+(supportRows||'No linked evidence')+'</div></details><details class="ops-detail-group"><summary>Causal relationships ('+causal.length+')</summary><div class="ops-evidence-list">'+(causalRows||'No linked relationships')+'</div></details></div></details>';
+  }).join("")+'</div>':"<span class='muted'>No hypotheses exceeded the 75% evidence match threshold.</span>";
   $("evidence").innerHTML=data.evidence.length?data.evidence.map(e=>'<div class="evidence-item"><div class="evidence-top"><span class="type">'+esc(e.evidence_type)+'</span><span class="source">'+esc(e.source)+'</span></div><div class="observation">'+esc(e.observation)+'</div>'+(e.timestamp?'<div class="time">'+esc(e.timestamp)+'</div>':"")+'</div>').join(""):"<span class='muted'>No evidence.</span>";
 }
 async function submitApproval(approved){
@@ -373,16 +409,23 @@ function opsRenderLLMFindings(){
   let section=$("ops-llm-findings");
   if(!section){section=document.createElement("section");section.id="ops-llm-findings";pane.appendChild(section)}
   const findings=opsLastResult?.llm_findings||[];
-  section.innerHTML='<div class="card"><h2>LLM-generated incident analysis</h2>'+
-    (findings.length ? findings.map(f=>'<div class="ops-bubble"><b>'+esc(f.agent==="root_cause_llm"?"Root Cause · LLM reasoning":"Critic · LLM review")+'</b><p>'+esc(f.summary)+'</p><small>AI-generated interpretation; safety and confidence remain deterministic.</small></div>').join("") :
-    '<p class="ops-note">No LLM output is saved for this investigation. Check that your configured LLM provider is enabled and reachable, then rerun a new investigation. Previously saved investigations are not regenerated automatically.</p>')+
+  section.innerHTML='<div class="card"><h2>AI analysis & independent review</h2><p class="ops-note">Advisory model output. Expand a section to read the saved response; safety decisions and scoring are deterministic.</p>'+
+    (findings.length ? findings.map((f,i)=>'<details class="ops-ai-card"><summary>'+esc(f.agent==="root_cause_llm"?"Root cause analysis":"Critic review")+'</summary><p>'+esc(f.summary)+'</p><small>Saved model output · not independently verified</small></details>').join("") :
+    '<p class="ops-note">No AI analysis is saved for this investigation. Run a new investigation with the configured LLM enabled to generate one.</p>')+
     '</div>';
 }
 function opsRenderResultSummary(){
   const pane=opsContainer("ops-results");
   let header=$("ops-results-header");if(!header){header=document.createElement("div");header.id="ops-results-header";pane.prepend(header)}
   if(!opsLastResult){header.innerHTML='<div class="ops-empty">Open an investigated incident to view its results.</div>';return}
-  header.innerHTML=opsResultHeader(opsLastResult)+'<div class="ops-metrics"><div class="ops-metric"><b>'+esc(opsLastResult.root_cause?.hypothesis_id||"—")+'</b><span>Leading hypothesis</span></div><div class="ops-metric"><b>'+Math.round((opsLastResult.root_cause?.confidence||0)*100)+'%</b><span>Heuristic evidence score</span></div><div class="ops-metric"><b>'+esc(label(opsLastResult.safety_decision?.decision||"unknown"))+'</b><span>Safety decision</span></div><div class="ops-metric"><b>'+(opsLastResult.evidence||[]).length+'</b><span>Evidence items</span></div></div><div class="ops-toolbar"><button type="button" data-ops-go="agents">View agent execution →</button><button type="button" data-ops-go="evidence">Explore evidence →</button><button type="button" data-ops-go="recovery">Review recovery →</button></div>';
+  const data=opsLastResult,root=data.root_cause||{},safety=data.safety_decision||{};
+  const match=(data.hypotheses||[]).find(h=>h.hypothesis_id===root.hypothesis_id)||{};
+  const name=root.display_name||match.display_name||"No adjudicated root cause";
+  const explanation=root.brief_explanation||root.rationale||match.statement||"No investigation summary available.";
+  const state=label(safety.decision||"unknown");
+  header.innerHTML='<div class="ops-report-hero"><div class="ops-report-top"><div><div class="ops-report-id">'+esc(data.incident_id)+' · '+esc(label(data.status))+'</div><h2 class="ops-report-title">'+esc(name)+'</h2></div><span class="ops-report-state">Recovery: '+esc(state)+'</span></div>'+
+    '<div class="ops-report-metrics"><div class="ops-report-metric"><b>'+pct(root.confidence)+'%</b><span>Evidence match</span></div><div class="ops-report-metric"><b>'+(data.evidence||[]).length+'</b><span>Evidence items</span></div><div class="ops-report-metric"><b>'+esc(root.hypothesis_id||"—")+'</b><span>Leading hypothesis</span></div></div>'+
+    '<div class="ops-report-id">Investigation summary</div><p class="ops-report-summary">'+esc(explanation)+'</p><div class="ops-report-actions"><button type="button" data-ops-go="agents">Agent execution</button><button type="button" data-ops-go="evidence">Evidence explorer</button><button type="button" data-ops-go="recovery">Recovery & safety</button></div><div class="ops-report-footnote">Synthetic incident · Heuristic ranking, not a calibrated probability · No production remediation</div></div>';
 }
 async function opsLoadSaved(id,target="results"){
   try{

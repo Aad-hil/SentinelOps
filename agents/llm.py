@@ -102,7 +102,7 @@ def evidence_context(state, *, limit: int = 8) -> str:
             break
         if item not in chosen:
             chosen.append(item)
-    return "\\n".join(
+    return "\n".join(
         f"[{str(item.source)[:72]}] {str(item.observation)[:145]}"
         for item in chosen
     )[:1800]

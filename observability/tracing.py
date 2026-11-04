@@ -193,18 +193,17 @@ def traced_node(
             span.set_attribute("sentinelops.llm_total_tokens", sum(u["total_tokens"] for u in llm_usage))
             span.set_attribute("sentinelops.output_key_count", len(result))
 
+            events = _append_trace(
+                state, trace_id=actual_trace_id, node=node_name, status="ok",
+                duration_ms=duration_ms, output_keys=tuple(sorted(result.keys())),
+            )
+            events[-1]["llm_usage"] = llm_usage
             return {
                 **result,
                 "otel_trace_id": actual_trace_id,
                 "otel_parent_span_id": parent_span_id,
-                "observability_events": _append_trace(
-                    state,
-                    trace_id=actual_trace_id,
-                    node=node_name,
-                    status="ok",
-                    duration_ms=duration_ms,
-                    output_keys=tuple(sorted(result.keys())),
-                )[:-1] + [{**_append_trace(state, trace_id=actual_trace_id, node=node_name, status="ok", duration_ms=duration_ms, output_keys=tuple(sorted(result.keys())))[-1], "llm_usage": llm_usage}],
+                "observability_events": events,
+
             }
 
     return run

@@ -9,8 +9,10 @@ from graph.state import AgentFinding, InvestigationState, append_finding
 def run_recovery_agent(state: InvestigationState) -> dict:
     """Turn adjudication output into a conservative recovery recommendation."""
     plan = build_recovery_plan(state)
+    # LLM is the sole narrative author for recovery; fixed templates remain a
+    # non-generative safety envelope and are never altered by model output.
     llm_advice = None
-    if os.getenv("SENTINELOPS_RECOVERY_LLM_ENABLED", "false").strip().lower() in ("true", "1", "yes"):
+    if os.getenv("SENTINELOPS_RECOVERY_LLM_ENABLED", "true").strip().lower() in ("true", "1", "yes"):
         from agents.llm import ask
         root = state.get("adjudication")
         context = {

@@ -185,7 +185,7 @@ async function investigate(incidentId){
   let panel=$("ops-live-progress");
   if(!panel){panel=document.createElement("section");panel.id="ops-live-progress";panel.className="card";$("back-home").after(panel)}
   panel.hidden=false;
-  panel.innerHTML='<h2>Live investigation progress</h2><div class="ops-note">Agent updates appear as each LangGraph node completes. Local LLM generation may take longer on CPU.</div><div id="ops-live-events" aria-live="polite"></div>';
+  panel.innerHTML='<h2>Live investigation progress</h2><div class="ops-note">Agent updates appear as each LangGraph node completes. LLM response time depends on the selected provider.</div><div id="ops-live-events" aria-live="polite"></div>';
   const log=$("ops-live-events");
   const add=(message)=>{const line=document.createElement("div");line.className="ops-bubble";line.textContent=message;log.appendChild(line);line.scrollIntoView({block:"nearest"})};
   try{
@@ -355,7 +355,7 @@ function opsRenderLLMFindings(){
   let section=$("ops-llm-findings");
   if(!section){section=document.createElement("section");section.id="ops-llm-findings";pane.appendChild(section)}
   const findings=opsLastResult?.llm_findings||[];
-  section.innerHTML='<div class="card"><h2>Local LLM analysis · Qwen3 4B</h2>'+
+  section.innerHTML='<div class="card"><h2>LLM-generated incident analysis</h2>'+
     (findings.length ? findings.map(f=>'<div class="ops-bubble"><b>'+esc(f.agent==="root_cause_llm"?"Root Cause · LLM reasoning":"Critic · LLM review")+'</b><p>'+esc(f.summary)+'</p><small>AI-generated interpretation; safety and confidence remain deterministic.</small></div>').join("") :
     '<p class="ops-note">No LLM output is saved for this investigation. Confirm Ollama is enabled and running, then delete and rerun this incident.</p>')+
     '</div>';

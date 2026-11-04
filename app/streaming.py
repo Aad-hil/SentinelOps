@@ -1,5 +1,6 @@
 """Live investigation progress over newline-delimited JSON."""
 import json
+from agents.llm import provider
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -44,7 +45,7 @@ def install_streaming(graph, config_factory, evidence_factory, retriever_factory
                                 if next_agent and next_agent != "complete":
                                     yield encode({"type":"status",
                                                   "message":"Running "+next_agent.replace("_"," ").title()
-                                                  + (" (waiting for local Ollama response)" if next_agent in ("root_cause","critic") else "")})
+                                                  + (" (waiting for "+provider().title()+" LLM response)" if next_agent in ("root_cause","critic") else "")})
                             if isinstance(delta, dict):
                                 for finding in delta.get("findings", []):
                                     if getattr(finding,"agent","") in ("root_cause_llm","critic_llm"):

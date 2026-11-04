@@ -113,7 +113,8 @@ body{background:radial-gradient(circle at 72% -20%,#192b49,#080d18 48%)}header{p
 <script>
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const pct=v=>Math.round(Number(v||0)*100);\nconst pctPrecise=v=>(Number(v||0)*100).toFixed(1);
+const pct=v=>Math.round(Number(v||0)*100);
+const pctPrecise=v=>(Number(v||0)*100).toFixed(1);
 const label=v=>String(v??"").replaceAll("_"," ");
 
 const graphNodeNames={supervisor_summary:"Supervisor · Final Summary",historical_memory:"Historical Memory",supervisor:"Supervisor",telemetry:"Telemetry Agent",knowledge:"Knowledge Agent · RAG",deployment:"Deployment Agent",root_cause:"Root Cause Agent",critic:"Critic Agent",adjudication:"Adjudication Agent",recovery:"Recovery Agent",safety:"Safety Agent",human_approval:"Human Approval"};

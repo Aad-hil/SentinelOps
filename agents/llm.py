@@ -86,10 +86,23 @@ def ask(system: str, user: str, *, max_tokens: int = 700) -> str | None:
         return None
 
 
-def evidence_context(state, *, limit: int = 10) -> str:
-    """Only pass bounded observed evidence, not hidden ground-truth labels."""
-    items = list(state.get("evidence_items", ()))[:limit]
-    return "\n".join(
-        f"[{str(item.source)[:100]}] {str(item.observation)[:200]}"
-        for item in items
-    )[:3000]
+def evidence_context(state, *, limit: int = 8) -> str:
+    """Compact, diverse evidence context for LLM analysis."""
+    items = list(state.get("evidence_items", ()))
+    chosen = []
+    types = set()
+    for item in items:
+        if item.evidence_type not in types:
+            chosen.append(item)
+            types.add(item.evidence_type)
+        if len(chosen) >= limit:
+            break
+    for item in items:
+        if len(chosen) >= limit:
+            break
+        if item not in chosen:
+            chosen.append(item)
+    return "\\n".join(
+        f"[{str(item.source)[:72]}] {str(item.observation)[:145]}"
+        for item in chosen
+    )[:1800]

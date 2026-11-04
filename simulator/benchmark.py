@@ -1,4 +1,4 @@
-"""Deterministic synthetic telemetry for the 15-incident evaluation benchmark.
+"""Deterministic synthetic telemetry for the incident evaluation benchmark.
 
 The public incidents are reconstructions: only facts documented by the cited
 GitHub availability reports are represented. Logs, metrics, traces, timestamps,
@@ -143,6 +143,24 @@ _PROFILES: dict[str, dict] = {
         "deployment_change": {"migration": "active", "traffic_window": "peak"},
         "operation": "migration query",
     },
+    "database_connection_pool": {
+        "service": "checkout-service",
+        "title": "Checkout worker connection leak",
+        "description": "Worker retries retain database connections and exhaust the shared pool.",
+        "metric_names": ("db_pool_utilization_percent", "db_connection_wait_ms", "worker_retry_rate"),
+        "values": ((55, 62, 74, 86, 95, 100, 100, 98), (35, 48, 75, 140, 320, 680, 1100, 980), (2, 3, 5, 9, 16, 24, 31, 20)),
+        "deployment_change": {"worker_retry_policy": "aggressive", "connection_release": "delayed"},
+        "operation": "process checkout retry",
+    },
+    "deployment_query_database_saturation": {
+        "service": "github-web",
+        "title": "Search API query regression",
+        "description": "A deployed query pattern saturates the primary database.",
+        "metric_names": ("db_primary_cpu_percent", "db_queue_depth", "search_request_rate"),
+        "values": ((50, 58, 69, 82, 92, 97, 99, 96), (8, 12, 18, 29, 47, 68, 86, 79), (100, 120, 160, 230, 340, 470, 520, 440)),
+        "deployment_change": {"query_path": "search", "query_limit": "removed"},
+        "operation": "GET /search",
+    },
 }
 
 
@@ -157,13 +175,18 @@ def _case(incident_id: str) -> dict:
     raise KeyError(f"Unknown benchmark incident: {incident_id}")
 
 
+def benchmark_category(incident_id: str) -> str:
+    """Return the curated failure category for an incident."""
+    return _case(incident_id)["category"]
+
+
 def _timestamp(incident_id: str) -> datetime:
     number = int(incident_id.split("-")[1])
     return datetime(2026, 1, 1, 12, 0, tzinfo=UTC) + timedelta(days=number)
 
 
 def build_benchmark_incident(incident_id: str) -> IncidentScenario:
-    """Build a deterministic synthetic scenario for INC-001 through INC-015."""
+    """Build a deterministic synthetic scenario from the curated incident dataset."""
     case = _case(incident_id)
 
     if incident_id == "INC-001":
@@ -182,7 +205,7 @@ def build_benchmark_incident(incident_id: str) -> IncidentScenario:
     incident = Incident(
         incident_id=incident_id,
         service=profile["service"],
-        severity="HIGH",
+        severity=case.get("severity", "HIGH"),
         title=case["title"],
         description=profile["description"],
         started_at=start,
@@ -238,7 +261,7 @@ def build_benchmark_incident(incident_id: str) -> IncidentScenario:
             timestamp=start + timedelta(minutes=7),
             service=profile["service"],
             level="INFO",
-            message=f"mitigation signal observed for {profile['operation']}",
+            message=f"recovery: error rate and service latency returned toward baseline after mitigation for {profile['operation']}",
         ),
     ]
 
@@ -287,5 +310,8 @@ def build_benchmark_incident(incident_id: str) -> IncidentScenario:
 
 
 def build_all_benchmark_incidents() -> tuple[IncidentScenario, ...]:
-    """Build all 15 deterministic benchmark scenarios."""
-    return tuple(build_benchmark_incident(f"INC-{number:03d}") for number in range(1, 16))
+    """Build every deterministic benchmark scenario in the curated dataset."""
+    return tuple(
+        build_benchmark_incident(case["incident_id"])
+        for case in _load_cases()
+    )

@@ -14,7 +14,7 @@ _HIGH_RISK_ACTION_TERMS = (
 _MEDIUM_RISK_ACTION_TERMS = (
     "rollback", "restart", "mitigation", "mitigate", "configuration change",
     "config change", "production rollout", "production change", "deploy",
-    "scale", "failover",
+    "scale", "failover", "query behavior",
 )
 
 
@@ -25,7 +25,7 @@ def classify_action_risk(step: RecoveryStep) -> str:
         inferred = "high"
     elif any(term in action for term in _MEDIUM_RISK_ACTION_TERMS):
         inferred = "medium"
-    elif any(term in action for term in ("collect", "inspect", "verify", "document", "observe", "prepare")):
+    elif any(term in action for term in ("collect", "inspect", "verify", "document", "observe", "prepare", "compare", "review")):
         inferred = "low"
     else:
         inferred = "high"
@@ -69,8 +69,9 @@ def evaluate_recovery_safety(plan: RecoveryPlan | None) -> SafetyDecision:
             approval_required=False,
             blocked_steps=tuple(step.step_id for step in plan.steps if step.requires_approval),
             reviewed_steps=tuple(step.step_id for step in plan.steps if not step.requires_approval),
-            evidence_gaps=evidence_gaps
-            + tuple(evidence for step in plan.steps for evidence in step.evidence),
+            evidence_gaps=tuple(dict.fromkeys(
+                (*evidence_gaps, *(evidence for step in plan.steps for evidence in step.evidence))
+            )),
         )
 
     effective_risks = {step.step_id: classify_action_risk(step) for step in plan.steps}

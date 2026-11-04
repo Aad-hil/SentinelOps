@@ -1,17 +1,22 @@
-# Database Query Latency Runbook
+# Amazon Redshift Query Performance Runbook
 
 ## Purpose
-Investigate queries whose execution time increases and contributes to database pressure.
+
+Investigate slow Redshift queries and query-plan regressions.
 
 ## Signals
-Inspect query latency percentiles, execution count, rows examined, rows returned, total database time, and query fingerprints. A query with a large increase in execution time or execution frequency can create substantial load even when individual requests appear normal.
+
+Inspect query history, query IDs, execution and queue time, execution plans, scan volume, join behavior, rows processed, disk-based steps and spill metrics. Compare the incident window with a known healthy period.
 
 ## Investigation steps
-1. Identify query fingerprints associated with the affected request path.
-2. Compare latency and execution volume against a known healthy window.
-3. Check whether the query plan, indexes, predicates, or data access pattern changed.
-4. Correlate the first abnormal query observations with deployments and configuration changes.
-5. Check for competing explanations such as traffic growth, lock contention, storage latency, or database infrastructure changes.
+
+1. Identify affected query IDs and workload groups.
+2. Compare EXPLAIN plans and query text/revisions where available.
+3. Check scan volume, joins, predicates, data skew and statistics freshness.
+4. Separate queue wait from execution time.
+5. Correlate the query behavior with WLM changes, data changes, maintenance, or workload growth.
+6. Check whether spill or cluster capacity is a contributing factor.
 
 ## Evidence standard
-Do not treat a query fingerprint as the root cause by itself. Establish a temporal and causal relationship between the query behavior, database resource pressure, and application impact.
+
+A slow query is not automatically the root cause. Build a trigger-to-mechanism-to-impact chain and retain competing explanations when evidence is incomplete.

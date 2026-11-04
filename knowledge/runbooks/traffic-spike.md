@@ -1,13 +1,5 @@
-# Traffic Spike Investigation Runbook
+# Redshift Workload Growth Runbook
 
-## Purpose
-Determine whether increased request volume explains an application or database incident.
+For workload growth or concurrency pressure, compare query arrival rate, workload-group mix, WLM queue wait, queued query count, concurrency, query runtime, and compute utilization. Identify whether demand growth, a WLM configuration change, inefficient SQL, or cluster capacity is the primary driver.
 
-## Checks
-- Compare request volume with the normal baseline.
-- Check whether traffic increased across all endpoints or only a subset.
-- Compare request volume with database query execution rate.
-- Check whether autoscaling and rate limiting behaved as expected.
-
-## Interpretation
-A traffic increase can raise database load, but increased load alone does not establish the cause of an incident. If traffic is stable while one query fingerprint becomes substantially more expensive, investigate query behavior and recent changes.
+Traffic growth is not automatically a root cause. Distinguish WLM contention (RSH1), query-plan regression (RSH2), and compute capacity pressure (RSH3) using workload and query-level evidence. If evidence does not discriminate, retain RSH12.

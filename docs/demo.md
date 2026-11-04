@@ -1,115 +1,49 @@
-# SentinelOps Demo Guide
+# SentinelOps Redshift Demo Guide
 
 ## Goal
 
-Demonstrate one complete incident investigation from evidence collection through human approval without executing any production-changing action.
+Demonstrate an evidence-led Amazon Redshift incident investigation, from synthetic AWS-style evidence through human-reviewed recovery planning. No production changes are executed.
 
-## Start
-
-Activate the virtual environment and start the API:
+## Start locally
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
+$env:SENTINELOPS_CHECKPOINT_BACKEND="memory"
 python -m uvicorn app.api:app --reload
 ```
 
-Open:
+Open http://127.0.0.1:8000/ and select one of the RS-001 through RS-012 scenarios.
 
-```text
-http://127.0.0.1:8000/
+## Suggested walkthrough
+
+1. **Incident context:** show the Redshift workload, incident severity, and synthetic-data label.
+2. **Evidence:** inspect the relevant Redshift query/WLM/load/cluster signals and related AWS dependency evidence.
+3. **Candidate hypotheses:** explain the RSH1-RSH12 taxonomy. Candidates are ranked by evidence; confidence is not a calibrated probability.
+4. **Adjudication:** show the leading hypothesis, causal/temporal support, contradictions, and evidence gaps.
+5. **Recovery plan:** inspect Redshift-specific diagnostic and proposed remediation steps.
+6. **Safety and human approval:** explain that disruptive changes require review and are not executed by SentinelOps.
+7. **Agent timeline:** show the recorded execution events for the LangGraph workflow.
+
+RS-012 is the unknown/compound case. Use it to demonstrate that SentinelOps can request more diagnostics instead of forcing a specific root cause.
+
+## API
+
+- `GET /health`
+- `GET /api/v1/incidents`
+- `POST /api/v1/investigations` with `{"incident_id":"RS-001"}`
+- `POST /api/v1/investigations/RS-001/approval` with `{"approved":true,"reviewer":"Demo Reviewer"}`
+- Swagger: http://127.0.0.1:8000/docs
+
+## Evaluation
+
+Run the Redshift hypothesis benchmark:
+
+```powershell
+python -m evaluation.redshift_runner
 ```
 
-## Suggested demo: INC-002
-
-Use `INC-002`, the primary database saturation scenario.
-
-Walk through the dashboard in this order:
-
-### 1. Incident
-
-Show the incident ID and investigation status.
-
-### 2. Evidence
-
-Point out the deployment/change evidence, database saturation signals, and service impact evidence.
-
-### 3. Competing hypotheses
-
-Open several hypotheses and show that the system retains alternatives instead of presenting only one unexplained answer.
-
-### 4. Root cause
-
-Show:
-
-- hypothesis ID;
-- confidence;
-- rationale;
-- temporal support;
-- causal support;
-- recovery support.
-
-### 5. Recovery plan
-
-Show the structured recovery steps and their risk/approval metadata.
-
-Emphasize that these are **proposals**, not executed actions.
-
-### 6. Safety decision
-
-Show whether the safety layer requires human approval.
-
-### 7. Execution timeline
-
-Scroll through the Agent Execution Timeline.
-
-Point out that the graph records separate execution events for the historical memory, supervisor, telemetry, knowledge, deployment, root-cause, critic, adjudication, recovery, and safety stages.
-
-### 8. Human approval
-
-For an investigation awaiting approval, enter a reviewer name and approve or reject the proposed recovery.
-
-The approval request is sent to:
-
-```text
-POST /api/v1/investigations/{incident_id}/approval
-```
-
-No infrastructure action is executed by this endpoint.
+It evaluates 12 deterministic synthetic scenarios. The benchmark label is read only after candidate generation and is never passed into the agent state. This measures the hypothesis-ranking component, not end-to-end production RCA accuracy.
 
 ## Interview explanation
 
-A concise explanation of the architecture:
-
-> SentinelOps is a LangGraph-based multi-agent incident investigation system. A supervisor coordinates specialized agents for telemetry, knowledge retrieval, deployment analysis, root-cause generation, critique, adjudication, recovery planning, and safety. Evidence and causal relationships are kept in shared state, while PostgreSQL checkpoints make human approval interruptions durable. The dashboard exposes the investigation and OpenTelemetry execution timeline, and a deterministic 15-incident benchmark evaluates hypothesis accuracy, evidence coverage, RCA concepts, and recovery matching.
-
-## Useful API endpoints
-
-### Health
-
-```http
-GET /health
-```
-
-### Start investigation
-
-```http
-POST /api/v1/investigations
-Content-Type: application/json
-
-{"incident_id":"INC-002"}
-```
-
-### Human approval
-
-```http
-POST /api/v1/investigations/INC-002/approval
-Content-Type: application/json
-
-{"approved":true,"reviewer":"Demo Reviewer"}
-```
-
-### Swagger
-
-```text
-http://127.0.0.1:8000/docs
-```
+> SentinelOps is a LangGraph-based multi-agent incident investigation and safe recovery planning system focused exclusively on Amazon Redshift workloads. Specialized agents collect and interpret synthetic telemetry, retrieve operational knowledge, inspect change context, rank RSH1-RSH12 hypotheses, critique and adjudicate evidence, and prepare a Redshift-aware recovery plan. Safety controls and a human approval checkpoint keep potentially disruptive actions as proposals rather than autonomous production changes.

@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from typing import Any
 
-from rag.embeddings import BedrockEmbeddingProvider, EmbeddingProvider
-from rag.vector_store import DEFAULT_COLLECTION, QdrantVectorStore
+from rag.embeddings import (
+    BedrockEmbeddingProvider,
+    EmbeddingProvider,
+    create_embedding_provider_from_env,
+)
+from rag.vector_store import QdrantVectorStore, default_collection_for_embedding
 
 
 @dataclass(frozen=True)
@@ -64,3 +69,18 @@ class KnowledgeRetriever:
                 )
             )
         return results
+
+
+def create_knowledge_retriever_from_env() -> KnowledgeRetriever:
+    """Create a retriever whose embedding dimensions match its Qdrant collection."""
+    provider = create_embedding_provider_from_env()
+    provider_name = os.getenv("SENTINELOPS_EMBEDDING_PROVIDER", "local").strip().lower()
+    collection_name = os.getenv("QDRANT_COLLECTION") or default_collection_for_embedding(
+        provider_name, provider.dimension
+    )
+    store = QdrantVectorStore(
+        url=os.getenv("QDRANT_URL", "http://localhost:6333"),
+        collection_name=collection_name,
+        dimension=provider.dimension,
+    )
+    return KnowledgeRetriever(embedding_provider=provider, vector_store=store)

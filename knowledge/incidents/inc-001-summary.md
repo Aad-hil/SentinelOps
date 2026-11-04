@@ -1,5 +1,3 @@
-# Incident Pattern: Database Connection Pool Exhaustion
+# Historical Incident Note — Retired
 
-This historical training scenario describes an application whose database connection pool becomes exhausted. Typical signals include increasing connection acquisition time, pool utilization approaching its configured maximum, growing database connection wait queues, and application request failures.
-
-Investigators should compare connection-pool metrics with database latency and recent configuration or application changes. Increasing pool capacity may help when the pool is undersized, but changing capacity without understanding the underlying workload can move pressure to the database.
+This legacy application/database incident is not part of the active SentinelOps dataset. The supported incident domain is Amazon Redshift only. Use RS-001 through RS-012 and RSH1 through RSH12 for current demos and evaluation.

@@ -1,0 +1,146 @@
+"""Optional evidence-grounded inference via Groq SDK or local Ollama.
+
+LLM text is advisory; deterministic scoring, safety and approval remain authoritative.
+"""
+import json
+import logging
+import os
+import time
+from contextvars import ContextVar
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
+
+logger = logging.getLogger(__name__)
+_usage = ContextVar('llm_usage', default=None)
+
+
+def begin_usage_capture():
+    return _usage.set([])
+
+
+def end_usage_capture(token):
+    records = list(_usage.get() or [])
+    _usage.reset(token)
+    return records
+
+
+
+def provider() -> str:
+    return os.getenv("SENTINELOPS_LLM_PROVIDER", "ollama").strip().lower()
+
+
+def enabled() -> bool:
+    return os.getenv("SENTINELOPS_LLM_ENABLED", "false").strip().lower() in ("1", "true", "yes")
+
+
+def ask(system: str, user: str, *, max_tokens: int = 700) -> str | None:
+    """Return advisory model text, or None if inference is unavailable."""
+    if not enabled():
+        return None
+
+    model_provider = provider()
+    limit = max(1, min(max_tokens, int(os.getenv("SENTINELOPS_LLM_MAX_TOKENS", "900"))))
+    timeout = float(os.getenv("SENTINELOPS_LLM_TIMEOUT", "45"))
+    messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
+
+    if model_provider == "groq":
+        api_key = os.getenv("GROQ_API_KEY", "").strip()
+        if not api_key:
+            logger.warning("Groq inference unavailable: GROQ_API_KEY is missing")
+            return None
+        try:
+            from groq import Groq, RateLimitError
+
+            client = Groq(api_key=api_key, timeout=timeout, max_retries=0)
+            retries = max(0, min(int(os.getenv('SENTINELOPS_GROQ_MAX_RETRIES', '1')), 2))
+            for attempt in range(retries + 1):
+                try:
+                    response = client.chat.completions.create(
+                        model=os.getenv('SENTINELOPS_LLM_MODEL', 'openai/gpt-oss-20b'),
+                        messages=messages, temperature=0, max_completion_tokens=limit,
+                    )
+                    usage = getattr(response, 'usage', None)
+                    finish = getattr(response.choices[0], 'finish_reason', None)
+                    record = {
+                        'prompt_tokens': int(getattr(usage, 'prompt_tokens', 0) or 0),
+                        'completion_tokens': int(getattr(usage, 'completion_tokens', 0) or 0),
+                        'total_tokens': int(getattr(usage, 'total_tokens', 0) or 0),
+                        'finish_reason': finish, 'attempts': attempt + 1,
+                    }
+                    captured = _usage.get()
+                    if captured is not None:
+                        captured.append(record)
+                    if finish == 'length':
+                        logger.warning('Groq completion reached its output cap')
+                    content = response.choices[0].message.content
+                    return content.strip() or None if isinstance(content, str) else None
+                except RateLimitError as exc:
+                    if attempt >= retries:
+                        raise
+                    headers = getattr(getattr(exc, 'response', None), 'headers', {}) or {}
+                    try:
+                        delay = min(max(float(headers.get('retry-after', 2)), 0), 8)
+                    except (TypeError, ValueError):
+                        delay = 2.0
+                    logger.warning('Groq rate limited; waiting %.1fs', delay)
+                    time.sleep(delay)
+        except Exception as exc:
+            logger.warning("Groq inference failed (%s): %s", type(exc).__name__, exc)
+            return None
+
+    if model_provider != "ollama":
+        logger.warning("Unsupported LLM provider: %s", model_provider)
+        return None
+
+    host = os.getenv("SENTINELOPS_OLLAMA_URL", "http://localhost:11434").rstrip("/")
+    if not (host.startswith("http://localhost:") or host.startswith("http://127.0.0.1:")):
+        logger.warning("Ollama URL must point to localhost")
+        return None
+
+    payload = {
+        "model": os.getenv("SENTINELOPS_LLM_MODEL", "qwen3:4b"),
+        "messages": messages,
+        "stream": False,
+        "think": False,
+        "options": {
+            "temperature": 0,
+            "num_predict": limit,
+            "num_ctx": int(os.getenv("SENTINELOPS_LLM_CONTEXT", "1536")),
+        },
+    }
+    request = Request(
+        host + "/api/chat",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urlopen(request, timeout=timeout) as response:
+            data = json.load(response)
+        content = data.get("message", {}).get("content", "")
+        return content.strip()[:2400] or None if isinstance(content, str) else None
+    except (HTTPError, URLError, TimeoutError, ValueError, OSError, KeyError, IndexError) as exc:
+        logger.warning("Ollama inference failed (%s): %s", type(exc).__name__, exc)
+        return None
+
+
+def evidence_context(state, *, limit: int = 8) -> str:
+    """Compact, diverse evidence context for LLM analysis."""
+    items = list(state.get("evidence_items", ()))
+    chosen = []
+    types = set()
+    for item in items:
+        if item.evidence_type not in types:
+            chosen.append(item)
+            types.add(item.evidence_type)
+        if len(chosen) >= limit:
+            break
+    for item in items:
+        if len(chosen) >= limit:
+            break
+        if item not in chosen:
+            chosen.append(item)
+    return "\n".join(
+        f"[{str(item.source)[:72]}] {str(item.observation)[:145]}"
+        for item in chosen
+    )[:1800]

@@ -107,11 +107,28 @@ def run_critic_agent(state: InvestigationState) -> dict:
             confidence=critique.confidence,
         )
 
+    from agents.llm import ask, evidence_context
+    llm_challenge = ask(
+        "You are a skeptical Redshift incident reviewer. Identify missing evidence and alternative "
+        "explanations, based ONLY on provided observations. Do not change any deterministic "
+        "scores, adjudication, or safety outcomes. Cite evidence source names. Under 120 words.",
+        f"Leading hypothesis: {critique.hypothesis_id if critique else 'none'}; "
+        f"Leading hypothesis statement: {state.get('hypotheses', [])[0].statement if state.get('hypotheses') else 'none'}.\n"
+        f"Evidence:\n{evidence_context(state)}",
+        max_tokens=450,
+    ) if critique else None
     result = append_finding(state, finding)
+    if llm_challenge:
+        finding = AgentFinding(agent="critic_llm", category="llm_critique",
+            summary=llm_challenge, evidence=critique.supporting_evidence,
+            confidence=critique.confidence)
+    if llm_challenge:
+        result = append_finding({**state, **result}, finding)
     result.update({
         "critique": critique,
         "messages": list(state.get("messages", [])) + [
             "Critic Agent challenged the leading root-cause hypothesis."
+            + (" LLM critique available." if llm_challenge else " Deterministic critique only.")
         ],
         "investigation_status": "critique",
     })

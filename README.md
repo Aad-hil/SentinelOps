@@ -33,13 +33,13 @@ RSH12 is an intentional fallback. SentinelOps should report insufficient evidenc
 
 ## Investigation flow
 
-`Supervisor → Telemetry → Knowledge → Deployment/Change Context → Root Cause → Critic → Adjudication → Recovery Planning → Safety → Human Approval`
+`Historical Memory → Supervisor ↔ Telemetry / Knowledge / Deployment / Root Cause / Critic / Adjudication / Recovery / Safety → Supervisor LLM Summary → Human Approval`
 
 LangGraph coordinates the workflow and shared investigation state. Checkpointing supports resumable investigations and approval interrupts. The dashboard displays incident evidence, ranked hypotheses, recovery proposals, safety decisions, and recorded agent execution events.
 
 ## Run locally
 
-Python 3.12+ is recommended. Create and activate a virtual environment, install the project dependencies, then:
+Python 3.13 is required by `pyproject.toml`. Create and activate a virtual environment, install the project dependencies, then:
 
 ```powershell
 Copy-Item .env.example .env
@@ -49,7 +49,7 @@ python -m uvicorn app.api:app --reload
 
 Open the dashboard at http://127.0.0.1:8000/ and API docs at http://127.0.0.1:8000/docs.
 
-The local deterministic simulator and benchmark do not require an AWS account. All generated evidence is synthetic and must not be represented as live AWS telemetry.
+To enable LLM analysis, set `SENTINELOPS_LLM_ENABLED=true` and `GROQ_API_KEY` in `.env`. The Recovery Agent generates a short LLM advisory by default when LLMs are enabled; its structured plan remains deterministic so the Safety Agent can enforce fixed policies. Set `SENTINELOPS_RECOVERY_LLM_ENABLED=false` to skip that extra call. The local deterministic simulator and benchmark do not require an AWS account. All generated evidence is synthetic and must not be represented as live AWS telemetry.
 
 ## Investigate an incident
 

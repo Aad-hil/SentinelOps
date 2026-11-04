@@ -211,7 +211,9 @@ function render(data){
   const p=data.recovery_plan;
   if(p){
     let steps=p.steps.map((x,i)=>'<div class="step"><div class="step-num">'+(i+1)+'</div><div><div class="step-title">'+esc(x.action)+'</div><div class="step-purpose">'+esc(x.purpose)+'</div></div><span class="badge '+(x.requires_approval?"warn":"")+'">'+esc(x.risk)+(x.requires_approval?" · approval":"")+'</span></div>').join("");
-    $("recovery").innerHTML='<div class="muted" style="margin-bottom:12px">Readiness: <b style="color:var(--text)">'+esc(label(p.readiness))+'</b></div><div class="safety-text">'+esc(p.rationale)+'</div><div class="steps">'+steps+'</div>';
+    const recoveryAdvice=(data.llm_findings||[]).find(f=>f.agent==="recovery_llm");
+    const adviceHtml=recoveryAdvice?'<div class="safety-text" style="margin-bottom:14px"><b>Recovery AI Advisor · Advisory only</b><div style="margin-top:6px">'+esc(recoveryAdvice.summary)+'</div></div>':'';
+    $("recovery").innerHTML=adviceHtml+'<div class="muted" style="margin-bottom:12px">Readiness: <b style="color:var(--text)">'+esc(label(p.readiness))+'</b></div><div class="safety-text">'+esc(p.rationale)+'</div><div class="steps">'+steps+'</div>';
   }else $("recovery").innerHTML="<span class='muted'>No recovery plan.</span>";
   const visibleHypotheses=(data.hypotheses||[]).filter(h=>Number(h.confidence)>0.75);
   $("hypotheses").innerHTML=visibleHypotheses.length?'<p class="ops-note">Candidates above the 75% heuristic evidence-match threshold. Scores are not probabilities.</p><div class="hypotheses">'+visibleHypotheses.map(h=>{

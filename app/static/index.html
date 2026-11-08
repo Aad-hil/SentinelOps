@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>SentinelOps — Investigation</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>SentinelOps — Redshift Investigation</title>
 <style>
 :root{color-scheme:dark;--bg:#080d18;--panel:#101827;--panel2:#0c1422;--muted:#8d9ab0;--text:#f2f6fc;--line:#223149;--accent:#6ea8fe;--accent2:#9b8cff;--warn:#f4c95d;--good:#5ed6a0;--danger:#ff8585}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% -20%,#172541 0,#080d18 42%);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.45}
 header{position:sticky;top:0;z-index:10;background:rgba(8,13,24,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:18px clamp(20px,4vw,56px);display:flex;justify-content:space-between;align-items:center}
 .brand{font-size:16px;font-weight:850;letter-spacing:.12em}.sub{color:var(--muted);font-size:12px;margin-top:3px}.online{color:var(--good);display:flex;align-items:center;gap:7px}.dot{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 12px var(--good)}
-main{width:min(1440px,calc(100% - 40px));margin:0 auto;padding:30px 0 64px}.toolbar{display:flex;gap:10px;margin-bottom:22px}.toolbar input{flex:1;min-width:0}
+main{width:min(1440px,calc(100% - 40px));margin:0 auto;padding:30px 0 64px}.toolbar{display:flex;gap:10px;margin-bottom:22px}.toolbar[hidden]{display:none}.toolbar input{flex:1;min-width:0}
 input,button{font:inherit;border:1px solid var(--line);border-radius:9px;padding:12px 14px;background:#0d1626;color:var(--text)}input:focus{outline:2px solid rgba(110,168,254,.25);border-color:var(--accent)}button{cursor:pointer;background:linear-gradient(180deg,#1c3152,#15243d);font-weight:700;min-width:120px}button:hover{border-color:var(--accent)}button:disabled{opacity:.55;cursor:wait}
 .incident-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:24px;margin-bottom:18px}.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:700}.incident-id{font-size:32px;line-height:1.1;margin:6px 0 5px}.status{display:inline-flex;padding:6px 10px;border-radius:999px;background:#493d16;color:var(--warn);font-size:11px;font-weight:800;letter-spacing:.06em}
 .grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,.65fr);gap:18px}.card{background:linear-gradient(180deg,rgba(16,24,39,.98),rgba(12,20,34,.98));border:1px solid var(--line);border-radius:13px;padding:21px;box-shadow:0 8px 30px rgba(0,0,0,.12)}.wide{grid-column:1/-1}
@@ -17,44 +17,215 @@ h2{font-size:14px;margin:0 0 17px}.muted{color:var(--muted)}.error{color:var(--d
 .hypotheses{display:grid;gap:7px}.hypothesis{border:1px solid var(--line);border-radius:9px;background:var(--panel2);overflow:hidden}.hypothesis summary{list-style:none;cursor:pointer;padding:13px 15px}.hypothesis summary::-webkit-details-marker{display:none}.hyp-head{display:grid;grid-template-columns:42px 1fr 48px;gap:10px;align-items:center}.hyp-id{color:var(--accent);font-weight:850}.hyp-statement{font-size:12px;font-weight:650}.hyp-score{text-align:right;font-weight:800;font-size:12px}.hyp-status{font-size:10px;color:var(--muted);margin-top:3px;text-transform:uppercase}.hyp-details{padding:0 15px 15px;border-top:1px solid var(--line);font-size:11px;color:#b9c5d6}.hyp-details p{margin:12px 0 5px;font-weight:700;color:var(--text)}.chips{display:flex;flex-wrap:wrap;gap:5px}.chip{padding:4px 6px;border-radius:5px;background:#182338;color:#aebbd0}.hyp-bar{height:4px;background:#1b2639;margin-top:9px;border-radius:99px;overflow:hidden}.hyp-bar span{display:block;height:100%;background:var(--accent)}
 .timeline{display:grid;gap:8px;max-height:460px;overflow:auto;padding-right:3px}.timeline-item{display:grid;grid-template-columns:10px 1fr auto;gap:12px;align-items:start;padding:12px;background:var(--panel2);border:1px solid #1c2940;border-radius:9px}.timeline-dot{width:9px;height:9px;border-radius:50%;background:var(--good);margin-top:5px;box-shadow:0 0 8px rgba(94,214,160,.35)}.timeline-dot.error{background:var(--danger);box-shadow:0 0 8px rgba(255,133,133,.35)}.timeline-node{font-weight:800;font-size:12px}.timeline-meta{font-size:10px;color:var(--muted);margin-top:3px}.timeline-keys{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}.timeline-key{font-size:9px;padding:3px 5px;border-radius:4px;background:#182338;color:#aebbd0}.timeline-duration{font-size:11px;font-weight:800;color:#b7c3d6}.trace{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:10px;color:#8d9ab0;overflow-wrap:anywhere;margin-top:8px}.evidence{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;max-height:520px;overflow:auto;padding-right:3px}.evidence-item{padding:13px;background:var(--panel2);border:1px solid #1c2940;border-radius:9px}.evidence-top{display:flex;justify-content:space-between;gap:8px}.type{font-size:10px;font-weight:850;color:var(--accent);text-transform:uppercase}.source{font-size:11px;color:var(--muted);overflow-wrap:anywhere}.observation{font-size:12px;margin-top:7px}.time{font-size:10px;color:#68768d;margin-top:8px}
 @media(max-width:900px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}.evidence{grid-template-columns:1fr}}@media(max-width:620px){header{padding:15px 18px}.sub{display:none}main{width:calc(100% - 24px);padding-top:18px}.toolbar{flex-direction:column}.toolbar button{width:100%}.incident-head{align-items:flex-start;flex-direction:column}.facts{grid-template-columns:1fr}.step{grid-template-columns:30px 1fr}.step .badge{grid-column:2;justify-self:start}.hyp-head{grid-template-columns:38px 1fr 42px}.incident-id{font-size:27px}}
+
+.graph-wrap{overflow-x:auto;padding-bottom:8px}
+.graph-canvas{position:relative;width:1200px;height:630px;min-width:1200px;border:1px solid #1c2940;border-radius:12px;background:radial-gradient(circle at 48% 50%,rgba(42,65,103,.16),transparent 48%),#0b1321}
+.graph-lines{position:absolute;inset:0;width:1200px;height:630px;pointer-events:none}
+.graph-lines path{fill:none;stroke:#40516c;stroke-width:1.7;opacity:.8;marker-end:url(#graph-arrow)}
+.graph-lines path.loop{stroke:#536b91;stroke-dasharray:5 5}
+.graph-node{position:absolute;width:160px;min-height:50px;padding:9px 11px;text-align:left;border:1px solid #31425d;border-radius:9px;background:#111d30;color:var(--text);min-width:0;cursor:pointer;z-index:2}
+.graph-node:hover,.graph-node.selected{border-color:var(--accent);box-shadow:0 0 0 2px rgba(110,168,254,.13)}
+.graph-node .node-name{display:block;font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.04em}
+.graph-node .node-state{display:block;margin-top:4px;font-size:9px;color:var(--muted);text-transform:uppercase}
+.graph-node .node-count{position:absolute;right:8px;top:8px;font-size:9px;color:#9eb4d5}
+.graph-node.completed{border-color:#32765f;background:#10251f}.graph-node.completed .node-state{color:var(--good)}
+.graph-node.failed,.graph-node.blocked{border-color:#81434b;background:#2a171d}.graph-node.failed .node-state,.graph-node.blocked .node-state{color:#ff9b9b}
+.graph-node.waiting{border-color:#806b31;background:#2b2516}.graph-node.waiting .node-state{color:var(--warn)}
+.graph-node.running{border-color:#4777b8;background:#14243a}.graph-node.running .node-state{color:#8fc0ff}
+.graph-node.start,.graph-node.end{width:100px;min-height:42px;text-align:center;border-radius:999px;background:#172338}
+.graph-node.history{left:180px;top:288px}.graph-node.supervisor{left:410px;top:282px;width:170px;min-height:62px}
+.graph-node.start{left:25px;top:294px}.graph-node.end{left:1040px;top:280px}
+.graph-node.agent{left:720px}
+.graph-node.agent[data-node="telemetry"]{top:24px}.graph-node.agent[data-node="knowledge"]{top:94px}.graph-node.agent[data-node="deployment"]{top:164px}.graph-node.agent[data-node="root_cause"]{top:234px}.graph-node.agent[data-node="critic"]{top:304px}.graph-node.agent[data-node="adjudication"]{top:374px}.graph-node.agent[data-node="recovery"]{top:444px}.graph-node.agent[data-node="safety"]{top:514px}
+.graph-node.approval-node{left:990px;top:514px;width:180px}
+.graph-legend{display:flex;flex-wrap:wrap;gap:14px;margin:12px 0 16px;font-size:10px;color:var(--muted)}
+.legend-item{display:flex;align-items:center;gap:6px}.legend-dot{width:8px;height:8px;border-radius:50%;background:#53627a}.legend-dot.done{background:var(--good)}.legend-dot.wait{background:var(--warn)}.legend-dot.fail{background:var(--danger)}
+.graph-inspector{margin-top:14px;padding:15px;border:1px solid #263650;border-radius:10px;background:#0b1423}
+.graph-inspector h3{font-size:12px;margin:0 0 7px}.inspector-meta{font-size:11px;color:var(--muted);margin-bottom:10px}.inspector-list{display:grid;gap:7px}.inspector-event{font-size:11px;padding:9px;background:#111d30;border-radius:7px;color:#c7d2e2}.inspector-evidence{font-size:11px;padding:8px 0;border-top:1px solid #223149;color:#c7d2e2}.graph-note{font-size:10px;color:var(--muted);margin-top:10px}
+
+.home-panel{margin-bottom:24px}.home-title{font-size:26px;font-weight:850;margin:0 0 5px}.home-description{color:var(--muted);font-size:13px;margin-bottom:18px}.incident-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:13px}.incident-card{background:linear-gradient(180deg,rgba(16,24,39,.98),rgba(12,20,34,.98));border:1px solid var(--line);border-radius:12px;padding:17px}.incident-card h3{font-size:14px;margin:8px 0 5px}.incident-card p{font-size:11px;color:var(--muted);min-height:34px}.incident-meta{font-size:10px;color:var(--muted);display:flex;justify-content:space-between}.incident-actions{display:flex;gap:7px;margin-top:13px}.incident-actions button{min-width:0;flex:1;padding:9px;font-size:11px}.incident-actions .delete-btn{background:#321d25;border-color:#75414a;color:#ff9b9b}.severity{font-size:9px;color:var(--warn);letter-spacing:.1em;font-weight:850}.back-btn{margin-bottom:14px;min-width:0}.empty-state{padding:24px;text-align:center;color:var(--muted)}
+
+/* Unified graph + timeline: event-ordered, responsive and keyboard accessible */
+.flow-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}.flow-heading h2{margin-bottom:8px}.flow-controls{display:flex;gap:7px;flex-wrap:wrap}.flow-controls button{min-width:42px;padding:9px 12px;font-size:11px}.flow-controls button:disabled{opacity:.4;cursor:not-allowed}.flow-overview{display:flex;gap:16px;flex-wrap:wrap;margin:18px 0 10px;font-size:11px;color:#b8c8df}.flow-overview b{color:var(--text)}.flow-progress{height:5px;background:#1b2940;border-radius:20px;overflow:hidden}.flow-progress span{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}.flow-legend{display:flex;gap:15px;flex-wrap:wrap;font-size:10px;color:var(--muted);margin:14px 0}.flow-scroll{overflow-x:auto;overflow-y:hidden;padding:8px 2px 18px;scroll-behavior:smooth}.flow-track{display:flex;align-items:stretch;gap:0;min-height:170px;width:max-content;max-width:none}.flow-step{position:relative;display:flex;align-items:center;flex-shrink:0}.flow-node{position:relative;display:flex;flex-direction:column;gap:7px;text-align:left;width:174px;min-height:146px;padding:14px;background:#111d30;border:1px solid #344762;border-radius:13px;color:var(--text);cursor:pointer;transition:background .2s,border-color .2s,transform .2s}.flow-node:hover{border-color:#88b5ff;transform:translateY(-2px)}.flow-node:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.flow-node.active{border-color:var(--accent);background:#172b47;box-shadow:0 0 0 2px rgba(110,168,254,.18)}.flow-node.done{border-color:#367b65}.flow-node.error,.flow-node.blocked{border-color:#ae5b65}.flow-node.waiting{border-color:#ad8b43}.flow-node.future{opacity:.48}.flow-number{font-size:10px;color:#91a5c4;font-weight:800;letter-spacing:.07em}.flow-name{font-size:12px;font-weight:800;line-height:1.45}.flow-status{font-size:10px;color:var(--muted)}.flow-node.done .flow-status{color:var(--good)}.flow-node.error .flow-status,.flow-node.blocked .flow-status{color:var(--danger)}.flow-node.waiting .flow-status{color:var(--warn)}.flow-duration{margin-top:auto;font-size:11px;color:#b9c8df;font-variant-numeric:tabular-nums}.flow-arrow{display:flex;align-items:center;justify-content:center;width:36px;color:#6787b3;font-size:21px}.flow-inspector{padding:17px;border:1px solid #2b3e5c;border-radius:12px;background:#0b1423;margin-top:10px}.flow-inspector h3{font-size:15px;margin:0 0 9px}.flow-inspector .inspector-list{max-height:300px;overflow:auto}.flow-inspector .inspector-evidence{max-height:230px;overflow:auto}.flow-inspector .inspector-event{overflow-wrap:anywhere}.flow-inspector .inspector-meta{line-height:1.6}.flow-inspector .inspector-evidence{margin-top:10px}@media(max-width:620px){.flow-heading{display:block}.flow-controls{margin-top:12px}.flow-node{width:150px;min-height:140px}.flow-arrow{width:25px}}
+
+
+/* Power Automate-inspired vertical Agent Studio; event order stays authoritative. */
+.flow-scroll{overflow-x:hidden;overflow-y:auto;max-height:740px;padding:18px 12px 24px;scroll-behavior:smooth;background:radial-gradient(circle at 50% 0,rgba(62,100,155,.12),transparent 70%);border:1px solid #243650;border-radius:14px;margin-top:12px}
+.flow-track{display:flex;flex-direction:column;align-items:center;gap:0;width:100%;min-height:0;max-width:none}
+.flow-step{display:flex;flex-direction:column;align-items:center;width:min(100%,570px);flex-shrink:0}
+.flow-node{width:100%;min-height:94px;padding:17px 20px;gap:5px;border-radius:12px;border-left:4px solid #47678f;box-shadow:0 5px 18px rgba(0,0,0,.12)}
+.flow-node:hover{transform:translateY(-1px)}
+.flow-node.active{border-left-color:var(--accent)}
+.flow-node.done{border-left-color:var(--good)}
+.flow-node.waiting{border-left-color:var(--warn)}
+.flow-node.error,.flow-node.blocked{border-left-color:var(--danger)}
+.flow-number{font-size:10px}
+.flow-name{font-size:15px}
+.flow-duration{margin-top:5px}
+.flow-arrow{width:2px;height:44px;position:relative;font-size:0;background:#52749f;flex-shrink:0}
+.flow-arrow::after{content:"";position:absolute;bottom:0;left:-5px;width:12px;height:12px;border-right:2px solid #7197c7;border-bottom:2px solid #7197c7;transform:rotate(45deg)}
+@media(max-width:620px){.flow-scroll{padding:12px 8px;max-height:650px}.flow-node{width:100%;min-height:94px}.flow-arrow{width:2px;height:35px}}
+
+/* Operations command center shell */
+body{background:radial-gradient(circle at 72% -20%,#192b49,#080d18 48%)}header{padding-left:245px}main{width:calc(100% - 280px);max-width:1600px;margin:0 20px 0 260px;padding-top:26px}.ops-sidebar{position:fixed;left:0;top:0;bottom:0;width:236px;background:#0b1424;border-right:1px solid #253651;z-index:20;padding:24px 14px;display:flex;flex-direction:column;gap:6px}.ops-logo{font-weight:900;letter-spacing:.13em;font-size:17px;padding:6px 12px 18px;color:#e6efff}.ops-logo small{display:block;color:#7f95b6;font-size:10px;font-weight:600;letter-spacing:.05em;margin-top:7px}.ops-nav{display:flex;align-items:center;gap:11px;width:100%;min-width:0;padding:12px 13px;text-align:left;background:transparent;border:1px solid transparent;font-size:12px;color:#9db0cc;border-radius:10px}.ops-nav:hover,.ops-nav.active{color:#f4f8ff;background:#192b47;border-color:#34537a}.ops-nav span{font-size:17px;width:21px}.ops-footer{margin-top:auto;padding:14px 12px;border-top:1px solid #263751;color:#91a6c6;font-size:11px;line-height:1.8}.ops-top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:20px}.ops-top h1{font-size:24px;margin:0 0 5px}.ops-kicker{font-size:11px;letter-spacing:.13em;color:#8eacd9;text-transform:uppercase;font-weight:800}.ops-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}.ops-metric{padding:18px;border:1px solid #293b55;border-radius:13px;background:linear-gradient(145deg,#17253b,#101b2d)}.ops-metric b{font-size:27px;display:block;color:#c4dbff}.ops-metric span{font-size:11px;color:#8fa3c1}.ops-view[hidden]{display:none!important}.ops-view>.card{margin-bottom:18px}.ops-view>.grid{margin-bottom:18px}.ops-banner{padding:15px 18px;border:1px solid #2b4363;border-radius:12px;background:#111f34;color:#a9c2e8;font-size:12px;margin-bottom:17px}.ops-toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px}.ops-toolbar input,.ops-toolbar select{background:#0c1627;color:#e7f0ff;border:1px solid #31445f;border-radius:8px;padding:10px;min-width:160px}.ops-toolbar input{flex:1}.ops-chart{display:grid;gap:13px}.ops-chart-row{display:grid;grid-template-columns:130px 1fr 45px;align-items:center;gap:12px;font-size:12px}.ops-chart-track{height:10px;border-radius:10px;background:#202f46;overflow:hidden}.ops-chart-fill{height:100%;background:linear-gradient(90deg,#467ad5,#75b4ff);border-radius:10px}.ops-split{display:grid;grid-template-columns:1fr 1fr;gap:16px}.ops-copilot-messages{max-height:350px;overflow:auto;display:grid;gap:10px;padding:12px;background:#0c1524;border:1px solid #263852;border-radius:10px;margin-bottom:12px}.ops-bubble{padding:12px;border-radius:10px;background:#192940;color:#d6e3f6;font-size:12px;line-height:1.65}.ops-bubble.user{background:#243b5e;margin-left:20%}.ops-questions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}.ops-questions button{min-width:0;padding:8px;font-size:11px}.ops-note{color:#8da3c1;font-size:11px}.ops-empty{padding:26px;border:1px dashed #34506f;border-radius:12px;color:#9eb3d1;text-align:center}.ops-section-title{font-size:19px;font-weight:800;margin:0 0 16px}@media(max-width:1100px){.ops-metrics{grid-template-columns:repeat(2,1fr)}.ops-split{grid-template-columns:1fr}}@media(max-width:780px){.ops-sidebar{position:sticky;top:0;width:100%;height:auto;flex-direction:row;overflow:auto;padding:8px;gap:5px}.ops-logo,.ops-footer{display:none}.ops-nav{width:auto;white-space:nowrap;padding:9px;min-width:0}.ops-nav span{display:none}header{padding:12px 18px}main{width:calc(100% - 24px);margin:0 auto}.ops-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.ops-chart-row{grid-template-columns:90px 1fr 30px}}
+
+/* Investigation report: concise decision-first presentation */
+#ops-results{display:flex;flex-direction:column;gap:18px;max-width:1120px}
+#ops-results[hidden]{display:none}
+#ops-results .card{padding:24px;border-color:#2a3c55;box-shadow:none}
+#ops-results .card h2{font-size:15px;margin-bottom:16px}
+.ops-report-hero{padding:28px;border:1px solid #344b6d;border-radius:16px;background:linear-gradient(130deg,#1b304e,#111d30 75%)}
+.ops-report-top{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;flex-wrap:wrap}
+.ops-report-id{color:#94b2d9;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.ops-report-title{font-size:27px;letter-spacing:-.025em;margin:7px 0 12px;line-height:1.25}
+.ops-report-state{border:1px solid #735c32;color:#f4c95d;background:#32291b;padding:7px 11px;border-radius:30px;font-size:11px;font-weight:800}
+.ops-report-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0}
+.ops-report-metric{padding:16px;background:rgba(7,15,27,.5);border:1px solid #2c415d;border-radius:11px}
+.ops-report-metric b{display:block;font-size:24px;line-height:1.2}
+.ops-report-metric span{font-size:11px;color:#9fb2cb}
+.ops-report-summary{font-size:13px;color:#d7e4f6;line-height:1.75;max-width:820px;overflow-wrap:anywhere}
+.ops-report-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:19px}
+.ops-report-actions button{min-width:0;font-size:11px;padding:10px 13px}
+.ops-report-footnote{font-size:10px;color:#92a7c2;margin-top:13px}
+#ops-results .hypothesis{border-color:#2c3e57;margin-bottom:10px}
+#ops-results .hypothesis summary{padding:17px}
+#ops-results .hypothesis .hyp-details{padding:14px 17px}
+.ops-evidence-list{display:grid;gap:7px;margin:10px 0}
+.ops-evidence-row{font-family:ui-monospace,Consolas,monospace;font-size:10px;color:#afc0d8;overflow-wrap:anywhere;padding:9px 11px;border:1px solid #25364d;border-radius:7px;background:#101c2d}
+.ops-detail-group{margin-top:13px}
+.ops-detail-group summary{font-size:11px;color:#9ebef0;font-weight:750;cursor:pointer}
+.ops-ai-card{border:1px solid #2d415d;border-radius:11px;padding:17px;background:#101c2e;margin-top:12px}
+.ops-ai-card summary{cursor:pointer;font-weight:800;font-size:13px;list-style-position:inside}
+.ops-ai-card p{font-size:12px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;color:#c9d6e8}
+.ops-ai-card small{font-size:10px;color:#91a7c3}
+#ops-results #root .rationale{font-size:13px;line-height:1.8;max-width:850px}
+#ops-results #root .confidence-row{margin-top:16px}
+#ops-results #root .facts{margin-top:15px}
+@media(max-width:650px){.ops-report-hero{padding:18px}.ops-report-title{font-size:22px}.ops-report-metrics{gap:7px}.ops-report-metric{padding:11px}.ops-report-metric b{font-size:20px}}
+
 </style></head>
 <body>
-<header><div><div class="brand">SENTINELOPS</div><div class="sub">AI-powered incident investigation & safe recovery</div></div><div id="health" class="sub">Checking API…</div></header>
-<main><div class="toolbar"><input id="incident" value="INC-002" aria-label="Incident ID"><button id="run">Investigate</button></div><div id="error" class="error"></div>
+<aside class="ops-sidebar" aria-label="Operations navigation"><div class="ops-logo">◈ SENTINELOPS<small>AI INCIDENT COMMAND</small></div><button class="ops-nav active" data-ops-tab="overview"><span>▦</span>Overview</button><button class="ops-nav" data-ops-tab="incidents"><span>⚑</span>Investigations & Results</button><button class="ops-nav" data-ops-tab="agents"><span>◇</span>Agent Studio</button><button class="ops-nav" data-ops-tab="evidence"><span>⌕</span>Evidence Explorer</button><button class="ops-nav" data-ops-tab="analytics"><span>▥</span>Analytics</button><button class="ops-nav" data-ops-tab="recovery"><span>⬡</span>Recovery Center</button><button class="ops-nav" data-ops-tab="approvals"><span>✓</span>Approval Queue <b id="ops-approval-count" style="font-size:10px;color:#f4c95d"></b></button><button class="ops-nav" data-ops-tab="copilot"><span>✧</span>RCA Copilot</button><div class="ops-footer">● Local simulation<br>Amazon Redshift · 12 synthetic scenarios<br>No production remediation</div></aside>
+<header><div><div class="brand">SENTINELOPS</div><div class="sub">Amazon Redshift incident investigation & safe recovery</div></div><div id="health" class="sub">Checking API…</div></header>
+<main><div class="ops-top"><div><div class="ops-kicker">Operations workspace</div><h1 id="ops-page-title">Overview</h1><div class="muted" style="font-size:12px" id="ops-page-subtitle">Redshift incident investigation and safety-first operations</div></div><span class="badge">SYNTHETIC DATA · LOCAL DEMO</span></div><section id="ops-overview" class="ops-view"><div class="ops-metrics" id="ops-metrics"></div><div class="ops-split"><div class="card"><h2>Incident distribution</h2><div id="ops-severity-chart" class="ops-chart"></div></div><div class="card"><h2>Investigation activity</h2><div id="ops-status-chart" class="ops-chart"></div></div></div><div class="card" style="margin-top:18px"><h2>Quick start</h2><p class="muted">Explore 12 synthetic Amazon Redshift incidents, run the agent investigation, and inspect evidence-backed decisions.</p><button id="ops-open-incidents">Browse incidents →</button></div></section><section id="home" class="home-panel"><div class="home-title">Redshift Incident Command Center</div><div class="home-description">Select a synthetic Redshift incident to investigate, reopen its saved results, or remove its saved investigation.</div><div id="incident-list" class="incident-grid"><div class="empty-state">Loading incidents…</div></div></section><button id="back-home" class="back-btn" hidden>← All incidents</button><div class="toolbar" hidden><input id="incident" value="RS-001" aria-label="Incident ID"><button id="run">Investigate</button></div><div id="error" class="error"></div>
 <section id="result" hidden><div class="card incident-head"><div><div class="eyebrow">Incident</div><div id="incident-id" class="incident-id"></div><div class="muted">Evidence-backed investigation</div></div><div id="status" class="status"></div></div>
-<div class="grid"><div class="card"><h2>Root Cause</h2><div id="root"></div></div><div class="card"><h2>Safety Decision</h2><div id="safety"></div></div><div id="approval-card" class="card wide approval-card" hidden><h2>Human Approval Required</h2><div class="muted">Review the proposed recovery plan before allowing the investigation to proceed.</div><input id="reviewer" class="reviewer" placeholder="Reviewer name" aria-label="Reviewer name"><div class="approval-actions"><button id="approve" class="approve">Approve Recovery</button><button id="reject" class="reject">Reject Recovery</button></div></div><div class="card wide"><h2>Recovery Plan</h2><div id="recovery"></div></div><div class="card wide"><h2>Agent Execution Timeline</h2><div id="timeline"></div></div><div class="card wide"><h2>Competing Hypotheses</h2><div id="hypotheses"></div></div><div class="card wide"><h2>Evidence</h2><div id="evidence" class="evidence"></div></div></div></section></main>
+<div class="grid"><div class="card"><h2>Root Cause</h2><div id="root"></div></div><div class="card"><h2>Risk Warning</h2><div id="safety"></div></div><div id="approval-card" class="card wide approval-card" hidden><h2>Human Approval Required</h2><div class="muted">Review the proposed recovery plan before allowing the investigation to proceed.</div><input id="reviewer" class="reviewer" placeholder="Reviewer name" aria-label="Reviewer name"><div class="approval-actions"><button id="approve" class="approve">Approve Recovery</button><button id="reject" class="reject">Reject Recovery</button></div></div><div class="card wide"><h2>Recovery Plan</h2><div id="recovery"></div></div><div class="card wide"><div class="flow-heading"><div><h2>Agent Execution Flow</h2><div class="muted" style="font-size:11px">Vertical execution workflow showing recorded agent steps in order. Select a step to inspect its trace and evidence.</div></div><div class="flow-controls"><button id="flow-prev" type="button" title="Previous step">←</button><button id="flow-play" type="button">▶ Play</button><button id="flow-next" type="button" title="Next step">→</button><button id="flow-all" type="button">Show all</button></div></div><div class="flow-overview" id="flow-overview" aria-live="polite"></div><div class="flow-progress"><span id="flow-progress-bar"></span></div><div class="flow-legend"><span>● Completed</span><span>◉ Selected step</span><span>◌ Not executed</span><span>⚠ Blocked / review</span></div><div class="flow-scroll" id="flow-scroll"><div class="flow-track" id="flow-track" role="list" aria-label="Recorded agent execution steps"></div></div><div class="flow-inspector" id="graph-inspector" aria-live="polite"><div class="muted">Select an execution step to inspect its trace and evidence.</div></div><div class="graph-note">Playback replays saved execution events; it does not execute agents or stream live activity. Supervisor may appear multiple times because it routes the workflow between agents.</div></div><div class="card wide"><h2>Competing Hypotheses</h2><div id="hypotheses"></div></div><div class="card wide"><h2>Evidence</h2><div id="evidence" class="evidence"></div></div></div></section></main>
 <script>
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pct=v=>Math.round(Number(v||0)*100);
+const pctPrecise=v=>(Number(v||0)*100).toFixed(1);
 const label=v=>String(v??"").replaceAll("_"," ");
+
+const graphNodeNames={supervisor_summary:"Supervisor · Final Summary",historical_memory:"Historical Memory",supervisor:"Supervisor",telemetry:"Telemetry Agent",knowledge:"Knowledge Agent · RAG",deployment:"Deployment Agent",root_cause:"Root Cause Agent",critic:"Critic Agent",adjudication:"Adjudication Agent",recovery:"Recovery Agent",safety:"Safety Agent",human_approval:"Human Approval"};
+const flowOrder=["historical_memory","supervisor","telemetry","knowledge","deployment","root_cause","critic","adjudication","recovery","safety","human_approval"];
+let graphData=null,flowSteps=[],flowIndex=0,flowTimer=null,flowShowAll=false;
+function stopFlow(){if(flowTimer!==null){clearInterval(flowTimer);flowTimer=null}$("flow-play").textContent="▶ Play"}
+function buildFlowSteps(data){
+  const events=data.observability_events||[];
+  const steps=events.map((event,i)=>({node:event.node,event,index:i,kind:"event"}));
+  // The approval checkpoint is not instrumented as a traced node.
+  if(steps.length&&data.safety_decision){
+    const status=data.status==="awaiting_human_approval"?"waiting":data.status==="approved_for_execution"?"done":data.status==="blocked"?"blocked":"skipped";
+    steps.push({node:"human_approval",kind:"checkpoint",status,index:steps.length});
+  }
+  if(steps.length)steps.push({node:"__end",kind:"terminal",status:data.status,index:steps.length});
+  return steps;
+}
+function renderExecutionGraph(data){
+  stopFlow();graphData=data;flowSteps=buildFlowSteps(data);flowIndex=Math.max(0,flowSteps.length-1);flowShowAll=false;
+  renderFlow();
+}
+function renderFlow(){
+  const events=graphData?.observability_events||[];
+  const total=events.reduce((sum,e)=>sum+Number(e.duration_ms||0),0);
+  const selected=flowSteps[flowIndex];
+  const tokens=events.reduce((sum,e)=>sum+(e.llm_usage||[]).reduce((n,u)=>n+Number(u.total_tokens||0),0),0);
+  $("flow-overview").innerHTML='<span><b>'+flowSteps.length+'</b> flow steps</span><span><b>'+events.length+'</b> recorded events</span><span><b>'+total.toFixed(1)+' ms</b> summed node durations</span><span>Outcome: <b>'+esc(label(graphData?.status||"not started"))+'</b></span>';
+  $("flow-progress-bar").style.width=(flowSteps.length?100*(flowIndex+1)/flowSteps.length:0)+'%';
+  $("flow-prev").disabled=!flowSteps.length||flowIndex===0;
+  $("flow-next").disabled=!flowSteps.length||flowIndex===flowSteps.length-1;
+  $("flow-play").disabled=flowSteps.length<2;
+  $("flow-all").textContent=flowShowAll?"Focus selected":"Show all";
+  if(!flowSteps.length){$("flow-track").innerHTML='<div class="empty-state">No recorded agent events available for this investigation.</div>';$("graph-inspector").innerHTML='<div class="muted">No execution trace available.</div>';return}
+  $("flow-track").innerHTML=flowSteps.map((step,i)=>{
+    const isActive=i===flowIndex;
+    const isFuture=!flowShowAll&&i>flowIndex;
+    const state=step.kind==="event"?(step.event.status==="error"?"error":"done"):step.status;
+    const title=step.node==="__end"?"Investigation Result":graphNodeNames[step.node]||label(step.node);
+    const status=step.kind==="event"?(step.event.status||"recorded"):step.kind==="checkpoint"?(step.status==="skipped"?"No approval requested":label(step.status)):label(step.status);
+    const duration=step.kind==="event"?Number(step.event.duration_ms||0).toFixed(1)+" ms":step.kind==="checkpoint"?"Human decision gate":"Final state";
+    return '<div class="flow-step" role="listitem"><button type="button" class="flow-node '+esc(state)+' '+(isActive?"active ":"")+(isFuture?"future":"")+'" data-flow-index="'+i+'" aria-current="'+(isActive?"step":"false")+'" aria-label="Step '+(i+1)+': '+esc(title)+'"><span class="flow-number">STEP '+String(i+1).padStart(2,"0")+'</span><span class="flow-name">'+esc(title)+'</span><span class="flow-status">'+esc(status)+'</span><span class="flow-duration">'+esc(duration)+'</span></button>'+(i<flowSteps.length-1?'<span class="flow-arrow" aria-hidden="true"></span>':"")+'</div>';
+  }).join("");
+  const current=$("flow-track").querySelector('[data-flow-index="'+flowIndex+'"]');
+  if(current)current.scrollIntoView({behavior:"smooth",block:"nearest",inline:"nearest"});
+  inspectFlowStep(selected);
+}
+function inspectFlowStep(step){
+  const name=step.node==="__end"?"Investigation Result":graphNodeNames[step.node]||label(step.node);
+  const events=graphData.observability_events||[];
+  const matched=events.filter(e=>e.node===step.node);
+  const evidence=(graphData.evidence||[]).filter(e=>step.node==="knowledge"?e.evidence_type==="knowledge":e.agent===step.node);
+  let html='<h3>'+esc(name)+'</h3>';
+  if(step.kind==="event"){
+    const e=step.event;
+    html+='<div class="inspector-meta">Recorded event '+(step.index+1)+' of '+events.length+' · '+esc((e.status||"unknown").toUpperCase())+' · '+Number(e.duration_ms||0).toFixed(2)+' ms</div>';
+    html+='<div class="inspector-event"><b>Timestamp:</b> '+esc(e.timestamp||"unavailable")+'<div class="trace">Trace: '+esc(e.trace_id||graphData.trace_id||"unavailable")+'</div><div class="timeline-keys">'+(e.output_keys||[]).map(k=>'<span class="timeline-key">'+esc(k)+'</span>').join("")+'</div>'+(e.error?'<div class="error">'+esc(e.error)+'</div>':"")+'</div>';
+    if((e.llm_usage||[]).length){
+      html+='<div class="inspector-event"><b>LLM usage</b>'+e.llm_usage.map(u=>'<div class="inspector-meta">Input '+Number(u.prompt_tokens||0)+' · Output '+Number(u.completion_tokens||0)+' · Total '+Number(u.total_tokens||0)+' · Finish '+esc(u.finish_reason||"unknown")+' · Attempts '+Number(u.attempts||1)+'</div>').join("")+'</div>';
+    }
+    if(matched.length>1)html+='<div class="inspector-meta" style="margin-top:10px">This agent ran '+matched.length+' times. Each invocation is a separate step in the flow.</div>';
+  }else if(step.kind==="checkpoint"){
+    html+='<div class="inspector-meta">Human checkpoint: '+esc(label(step.status))+'. '+(step.status==="blocked"?"Recovery remains blocked; no action was executed.":step.status==="waiting"?"An operator decision is required.":step.status==="skipped"?"No approval was required by the safety decision.":"Approval only authorizes a proposal; SentinelOps does not execute production recovery.")+'</div>';
+  }else{
+    html+='<div class="inspector-meta">Investigation status: '+esc(label(graphData.status))+' · Safety: '+esc(label(graphData.safety_decision?.decision||"unavailable"))+'. This is a recorded result, not an automatic remediation.</div>';
+  }
+  if(evidence.length)html+='<div class="inspector-evidence"><b>Related evidence ('+evidence.length+')</b>'+evidence.map(e=>'<div class="inspector-evidence"><b>'+esc(e.source)+'</b><div>'+esc(e.observation)+'</div></div>').join("")+'</div>';
+  else if(step.kind==="event")html+='<div class="inspector-meta" style="margin-top:12px">No evidence items are directly attributed to this agent in the API response.</div>';
+  $("graph-inspector").innerHTML=html;
+}
+function selectFlowIndex(index){if(index<0||index>=flowSteps.length)return;flowIndex=index;renderFlow()}
+function toggleFlowPlay(){
+  if(flowTimer!==null){stopFlow();return}
+  if(!flowSteps.length)return;
+  if(flowIndex>=flowSteps.length-1)flowIndex=0;
+  $("flow-play").textContent="Ⅱ Pause";
+  renderFlow();
+  flowTimer=setInterval(()=>{
+    if(flowIndex>=flowSteps.length-1){stopFlow();return}
+    flowIndex++;renderFlow();
+    if(flowIndex===flowSteps.length-1)stopFlow();
+  },850);
+}
+
 function render(data){
+  renderExecutionGraph(data);
   $("result").hidden=false;$("incident-id").textContent=data.incident_id;$("status").textContent=label(data.status).toUpperCase();$("approval-card").hidden=!(data.status==="awaiting_human_approval"&&data.approval_required);
   const r=data.root_cause;
   if(r){
-    const h=data.hypotheses.find(x=>x.hypothesis_id===r.hypothesis_id);
-    $("root").innerHTML='<div class="root-id">'+esc(r.hypothesis_id)+'</div><div class="root-title">'+esc(h?h.statement:"Adjudicated root-cause hypothesis")+'</div><div class="rationale">'+esc(r.rationale)+'</div><div class="confidence-row"><div class="confidence">'+pct(r.confidence)+'%</div><div class="confidence-label">Confidence</div></div><div class="progress"><span style="width:'+pct(r.confidence)+'%"></span></div><div class="facts"><div class="fact"><b class="'+(r.temporal_support?"ok":"")+'">'+(r.temporal_support?"✓":"—")+'</b><span>Temporal support</span></div><div class="fact"><b class="'+(r.causal_support?"ok":"")+'">'+(r.causal_support?"✓":"—")+'</b><span>Causal support</span></div><div class="fact"><b class="'+(r.recovery_support?"ok":"")+'">'+(r.recovery_support?"✓":"—")+'</b><span>Recovery support</span></div></div>';
+    const h=(data.hypotheses||[]).find(x=>x&&x.hypothesis_id===r.hypothesis_id);
+    const rootName=r.display_name||(h&&h.display_name)||("Root cause "+r.hypothesis_id);
+    const rootStatement=r.statement||(h&&h.statement)||r.rationale;
+    const brief=r.brief_explanation||r.rationale||rootStatement;
+    const full=r.full_explanation||[rootStatement,"Evidence score is a heuristic ranking score, not a calibrated probability."].join("\\n");
+    $("root").innerHTML='<div class="root-id">'+esc(r.hypothesis_id)+'</div><div class="root-title">'+esc(rootName)+'</div><div class="rationale">'+esc(brief)+'</div><details class="rca-details"><summary>View full explanation</summary><div class="rca-full">'+esc(full).replaceAll("\\n","<br>")+'</div></details><div class="confidence-row"><div class="confidence">'+pct(r.confidence)+'%</div><div class="confidence-label">Evidence match score</div></div><div class="progress"><span style="width:'+pct(r.confidence)+'%"></span></div>';
   }else $("root").innerHTML="<span class='muted'>No adjudicated root cause.</span>";
   const s=data.safety_decision;
-  $("safety").innerHTML=s?'<div class="safety-decision">'+esc(label(s.decision).toUpperCase())+'</div><span class="risk">'+esc(s.risk_level)+' risk</span><div class="safety-text">'+esc(s.rationale)+'</div>'+(s.approval_required?'<div class="approval">⚠ Explicit human approval required</div>':'<div class="ok">✓ No human approval required</div>'):"<span class='muted'>No safety decision.</span>";
-  const events=data.observability_events||[];
-  if(events.length){
-    const total=events.reduce((sum,e)=>sum+Number(e.duration_ms||0),0);
-    $("timeline").innerHTML='<div class="muted" style="margin-bottom:10px">'+events.length+' agent/node events · '+total.toFixed(1)+' ms total</div><div class="trace">Trace: '+esc(data.trace_id||events[0].trace_id||"unavailable")+'</div><div class="timeline">'+events.map(e=>{
-      const keys=(e.output_keys||[]).map(k=>'<span class="timeline-key">'+esc(k)+'</span>').join("");
-      return '<div class="timeline-item"><span class="timeline-dot '+(e.status==="error"?"error":"")+'"></span><div><div class="timeline-node">'+esc(label(e.node))+'</div><div class="timeline-meta">'+esc(e.status.toUpperCase())+' · '+esc(e.timestamp||"")+'</div><div class="timeline-keys">'+keys+'</div>'+(e.error?'<div class="error" style="margin:7px 0 0">'+esc(e.error)+'</div>':"")+'</div><div class="timeline-duration">'+Number(e.duration_ms||0).toFixed(1)+' ms</div></div>';
-    }).join("")+'</div>';
-  }else $("timeline").innerHTML="<span class='muted'>No execution events recorded.</span>";
+  $("safety").innerHTML=s?'<span class="risk">'+esc(s.risk_level)+' risk</span><div class="safety-text">'+esc(s.rationale)+'</div><div class="approval">Human review is required before handing any plan to a recovery system.</div>':"<span class='muted'>Risk assessment unavailable.</span>";
   const p=data.recovery_plan;
   if(p){
     let steps=p.steps.map((x,i)=>'<div class="step"><div class="step-num">'+(i+1)+'</div><div><div class="step-title">'+esc(x.action)+'</div><div class="step-purpose">'+esc(x.purpose)+'</div></div><span class="badge '+(x.requires_approval?"warn":"")+'">'+esc(x.risk)+(x.requires_approval?" · approval":"")+'</span></div>').join("");
-    $("recovery").innerHTML='<div class="muted" style="margin-bottom:12px">Readiness: <b style="color:var(--text)">'+esc(label(p.readiness))+'</b></div><div class="safety-text">'+esc(p.rationale)+'</div><div class="steps">'+steps+'</div>';
+    const recoveryAdvice=(data.llm_findings||[]).find(f=>f.agent==="recovery_llm");
+    const adviceHtml=recoveryAdvice?'<div class="safety-text" style="margin-bottom:14px"><b>Recovery AI Advisor · Advisory only</b><div style="margin-top:6px">'+esc(recoveryAdvice.summary)+'</div></div>':'';
+    $("recovery").innerHTML=adviceHtml+'<div class="muted" style="margin-bottom:12px">Readiness: <b style="color:var(--text)">'+esc(label(p.readiness))+'</b></div><div class="safety-text">'+esc(p.rationale)+'</div><div class="steps">'+steps+'</div>';
   }else $("recovery").innerHTML="<span class='muted'>No recovery plan.</span>";
-  $("hypotheses").innerHTML=data.hypotheses.length?'<div class="hypotheses">'+data.hypotheses.map((h,i)=>{
-    const support=h.supporting_evidence.length?h.supporting_evidence.map(x=>'<span class="chip">'+esc(x)+'</span>').join(""):"<span class='muted'>None</span>";
-    const causal=h.causal_relationships.length?h.causal_relationships.map(x=>'<span class="chip">'+esc(x.role)+' · '+esc(x.source)+' · '+pct(x.strength)+'%</span>').join(""):"<span class='muted'>None</span>";
-    return '<details class="hypothesis" '+(i===0?"open":"")+'><summary><div class="hyp-head"><span class="hyp-id">'+esc(h.hypothesis_id)+'</span><div><div class="hyp-statement">'+esc(h.statement)+'</div><div class="hyp-status">'+esc(h.status)+'</div><div class="hyp-bar"><span style="width:'+pct(h.confidence)+'%"></span></div></div><span class="hyp-score">'+pct(h.confidence)+'%</span></div></summary><div class="hyp-details"><p>Supporting evidence</p><div class="chips">'+support+'</div><p>Causal relationships</p><div class="chips">'+causal+'</div></div></details>';
-  }).join("")+'</div>':"<span class='muted'>No hypotheses.</span>";
+  const visibleHypotheses=(data.hypotheses||[]).filter(h=>Number(h.confidence)>0.75);
+  $("hypotheses").innerHTML=visibleHypotheses.length?'<p class="ops-note">Candidates above the 75% heuristic evidence-match threshold. Scores are not probabilities.</p><div class="hypotheses">'+visibleHypotheses.map(h=>{
+    const support=h.supporting_evidence||[],causal=h.causal_relationships||[];
+    const supportRows=support.map(x=>'<div class="ops-evidence-row">'+esc(x)+'</div>').join("");
+    const causalRows=causal.map(x=>'<div class="ops-evidence-row">'+esc(x.role)+' · '+esc(x.source)+' · '+pct(x.strength)+'%</div>').join("");
+    return '<details class="hypothesis"><summary><div class="hyp-head"><span class="hyp-id">'+esc(h.hypothesis_id)+'</span><div><div class="hyp-statement">'+esc(h.display_name)+'</div><div class="timeline-meta">'+esc(h.statement)+'</div><div class="hyp-status">'+esc(h.status)+'</div><div class="hyp-bar"><span style="width:'+pct(h.confidence)+'%"></span></div></div><span class="hyp-score">'+pct(h.confidence)+'%</span></div></summary><div class="hyp-details"><details class="ops-detail-group"><summary>Supporting evidence ('+support.length+')</summary><div class="ops-evidence-list">'+(supportRows||'No linked evidence')+'</div></details><details class="ops-detail-group"><summary>Causal relationships ('+causal.length+')</summary><div class="ops-evidence-list">'+(causalRows||'No linked relationships')+'</div></details></div></details>';
+  }).join("")+'</div>':"<span class='muted'>No hypotheses exceeded the 75% evidence match threshold.</span>";
   $("evidence").innerHTML=data.evidence.length?data.evidence.map(e=>'<div class="evidence-item"><div class="evidence-top"><span class="type">'+esc(e.evidence_type)+'</span><span class="source">'+esc(e.source)+'</span></div><div class="observation">'+esc(e.observation)+'</div>'+(e.timestamp?'<div class="time">'+esc(e.timestamp)+'</div>':"")+'</div>').join(""):"<span class='muted'>No evidence.</span>";
 }
 async function submitApproval(approved){
@@ -68,12 +239,306 @@ async function submitApproval(approved){
   }catch(e){$("error").textContent=e.message}
   finally{$("approve").disabled=false;$("reject").disabled=false}
 }
-async function investigate(){
-  $("error").textContent="";$("run").disabled=true;$("run").textContent="Investigating…";
-  try{const res=await fetch("/api/v1/investigations",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({incident_id:$("incident").value.trim()})});const data=await res.json();if(!res.ok)throw new Error(data.detail||"Investigation failed");render(data)}
-  catch(e){$("error").textContent=e.message}finally{$("run").disabled=false;$("run").textContent="Investigate"}
+async function investigate(incidentId){
+  const id=(typeof incidentId==="string"?incidentId:$("incident").value).trim();
+  $("error").textContent="";$("result").hidden=true;$("home").hidden=true;$("back-home").hidden=false;
+  $("run").disabled=true;$("run").textContent="Investigating…";
+  let panel=$("ops-live-progress");
+  if(!panel){panel=document.createElement("section");panel.id="ops-live-progress";panel.className="card";$("back-home").after(panel)}
+  panel.hidden=false;
+  panel.innerHTML='<h2>Live investigation progress</h2><div class="ops-note">Agent updates appear as each LangGraph node completes. LLM response time depends on the selected provider.</div><div id="ops-live-events" aria-live="polite"></div>';
+  const log=$("ops-live-events");
+  const add=(message)=>{const line=document.createElement("div");line.className="ops-bubble";line.textContent=message;log.appendChild(line);line.scrollIntoView({block:"nearest"})};
+  try{
+    const response=await fetch("/api/v1/investigations/stream",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({incident_id:id})});
+    if(!response.ok)throw Error("Investigation request failed: HTTP "+response.status);
+    const reader=response.body.getReader(),decoder=new TextDecoder();
+    let buffer="",completed=false;
+    const handle=line=>{
+      if(!line.trim())return;
+      const event=JSON.parse(line);
+      if(event.type==="error")throw Error(event.message);
+      if(event.type==="status"||event.type==="node")add(event.message);
+      if(event.type==="llm")add((event.agent==="root_cause_llm"?"Root Cause LLM: ":"Critic LLM: ")+event.text);
+      if(event.type==="result"){completed=true;render(event.data);panel.hidden=true}
+    };
+    while(true){
+      const {value,done}=await reader.read();
+      if(done)break;
+      buffer+=decoder.decode(value,{stream:true});
+      let end;
+      while((end=buffer.indexOf("\n"))!==-1){const line=buffer.slice(0,end);buffer=buffer.slice(end+1);handle(line)}
+    }
+    if(buffer.trim())handle(buffer);
+    if(!completed)throw Error("Investigation stream ended without a result");
+  }catch(error){$("error").textContent=error.message;add("Error: "+error.message)}
+  finally{$("run").disabled=false;$("run").textContent="Investigate"}
 }
+async function loadIncidents(){
+  try{
+    const res=await fetch("/api/v1/incidents");if(!res.ok)throw new Error("Unable to load incidents");
+    const incidents=await res.json();
+    $("incident-list").innerHTML=incidents.map(item=>{
+      const status=item.has_investigation?label(item.status):"Not started";
+      const statusColor=item.status==="awaiting_human_approval"?"var(--warn)":(["complete","approved_for_execution"].includes(item.status)?"var(--good)":"var(--muted)");
+      return '<article class="incident-card"><div class="incident-meta"><span>'+esc(item.incident_id)+'</span><span class="severity">'+esc(item.severity)+'</span></div><h3>'+esc(item.title)+'</h3><div class="incident-meta"><span class="category">'+esc((item.category||"other").replaceAll("_"," "))+'</span></div><p>'+esc(item.description)+'</p><div class="incident-meta"><span>'+esc(item.service)+'</span><b style="color:'+statusColor+'">'+esc(status)+'</b></div><div class="incident-actions"><button data-action="'+(item.has_investigation?"open":"investigate")+'" data-id="'+esc(item.incident_id)+'">'+(item.has_investigation?"View result":"Investigate")+'</button>'+(item.has_investigation?'<button class="delete-btn" data-action="delete" data-id="'+esc(item.incident_id)+'">Delete</button>':"")+'</div></article>';
+    }).join("");
+  }catch(e){$("incident-list").innerHTML='<div class="empty-state">'+esc(e.message)+'</div>'}
+}
+async function openSavedIncident(id){
+  try{
+    const res=await fetch("/api/v1/incidents/"+encodeURIComponent(id));const data=await res.json();if(!res.ok)throw new Error(data.detail||"Unable to open incident");
+    $("home").hidden=true;$("back-home").hidden=false;$("result").hidden=false;render(data);
+  }catch(e){$("error").textContent=e.message}
+}
+async function deleteIncident(id){
+  if(!confirm("Delete the saved investigation for "+id+"? This cannot be undone."))return;
+  try{
+    const res=await fetch("/api/v1/incidents/"+encodeURIComponent(id),{method:"DELETE"});const data=await res.json();if(!res.ok)throw new Error(data.detail||"Delete failed");
+    await loadIncidents();
+  }catch(e){$("error").textContent=e.message}
+}
+$("incident-list").addEventListener("click",e=>{
+  const button=e.target.closest("button[data-action]");if(!button)return;
+  const id=button.dataset.id;
+  if(button.dataset.action==="investigate")investigate(id);
+  if(button.dataset.action==="open")opsLoadSaved(id,"incidents");
+  if(button.dataset.action==="delete")deleteIncident(id);
+});
+$("back-home").addEventListener("click",()=>{$("result").hidden=true;$("home").hidden=false;$("back-home").hidden=true;$("error").textContent="";loadIncidents()});
+
+$("flow-track").addEventListener("click",e=>{const node=e.target.closest("[data-flow-index]");if(node){stopFlow();selectFlowIndex(Number(node.dataset.flowIndex))}});
+$("flow-prev").addEventListener("click",()=>{stopFlow();selectFlowIndex(flowIndex-1)});
+$("flow-next").addEventListener("click",()=>{stopFlow();selectFlowIndex(flowIndex+1)});
+$("flow-play").addEventListener("click",toggleFlowPlay);
+$("flow-all").addEventListener("click",()=>{flowShowAll=!flowShowAll;renderFlow()});
 $("run").addEventListener("click",investigate);$("approve").addEventListener("click",()=>submitApproval(true));$("reject").addEventListener("click",()=>submitApproval(false));
 fetch("/health").then(r=>r.ok?$("health").innerHTML='<span class="online"><span class="dot"></span>API online</span>':Promise.reject()).catch(()=>$("health").textContent="API unavailable");
-investigate();
+loadIncidents();
+
+/* Multi-workspace UI: preserves the existing API, investigation rendering and safety gates. */
+const opsTabs=["overview","incidents","results","agents","evidence","analytics","recovery","approvals","copilot"];
+const opsTitles={overview:"Operations Overview",incidents:"Incident Command Center",results:"Investigation Results",agents:"Agent Orchestration Studio",evidence:"Evidence Explorer",analytics:"Investigation Analytics",recovery:"Recovery & Safety Center",approvals:"Human Approval Queue",copilot:"Investigation Copilot"};
+let opsActive="overview",opsLastResult=null,opsIncidents=[],opsFilteredEvidence=[];
+function opsContainer(id){let el=$(id);if(!el){el=document.createElement("section");el.id=id;el.className="ops-view";el.hidden=true;document.querySelector("main").appendChild(el)}return el}
+function opsPlaceCards(){
+  const grid=$("result").querySelector(".grid");if(!grid)return;
+  const cards=Array.from(grid.children).filter(x=>x.classList.contains("card"));
+  const pick=prefix=>cards.find(c=>c.querySelector("h2")?.textContent.trim().startsWith(prefix));
+  const moves={agents:["Agent Execution Flow"],evidence:["Evidence"],recovery:["Risk Warning","Recovery Plan"],analytics:[],copilot:[]};
+  // Keep the root cause with the recovery decision for a single explainable view.
+  moves.results=["Root Cause","Competing Hypotheses"];
+  moves.recovery=[];
+  Object.entries(moves).forEach(([tab,names])=>names.forEach(name=>{const card=pick(name);if(card)opsContainer("ops-"+tab).appendChild(card)}));
+  const approval=pick("Human Approval Required");if(approval)opsContainer("ops-recovery").appendChild(approval);
+  const recoveryNames=["Risk Warning","Recovery Plan"];
+  recoveryNames.forEach(name=>{const card=pick(name);if(card)opsContainer("ops-recovery").appendChild(card)});
+  grid.remove();
+  $("result").querySelector(".incident-head").after(document.createElement("div"));
+  $("result").querySelector(".incident-head").hidden=true;
+}
+function opsSwitch(tab){
+  if(!opsTabs.includes(tab))return;
+  opsActive=tab;
+  document.querySelectorAll(".ops-nav").forEach(b=>{const active=b.dataset.opsTab===tab;b.classList.toggle("active",active);b.setAttribute("aria-current",active?"page":"false")});
+  $("ops-page-title").textContent=opsTitles[tab];
+  $("ops-page-subtitle").textContent=tab==="overview"?"Local Redshift incident monitoring":tab==="copilot"?"Answers grounded in the currently loaded investigation":"Synthetic evidence · Human-controlled recovery";
+  document.querySelectorAll(".ops-view").forEach(el=>el.hidden=el.id!=="ops-"+tab);
+  $("home").hidden=tab!=="incidents";$("result").hidden=true;
+  $("back-home").hidden=true;
+  if(["results","agents","evidence","analytics","recovery","copilot"].includes(tab)&&!opsLastResult){
+    const pane=opsContainer("ops-"+tab);
+    let notice=pane.querySelector(".ops-no-result");
+    if(!notice){notice=document.createElement("div");notice.className="ops-no-result ops-empty";notice.innerHTML='Run an investigation first to populate this workspace. <button type="button" data-open-incidents>Choose an incident →</button>';pane.prepend(notice)}
+  }
+  document.querySelectorAll(".ops-no-result").forEach(el=>el.hidden=!!opsLastResult);
+  if(tab==="approvals")opsRenderApprovals();
+  if(tab==="recovery")opsRenderRecoverySelector();
+  if(tab==="results")opsRenderResultSummary();
+  if(tab==="analytics")opsRenderAnalytics();
+  if(tab==="evidence")opsRenderEvidence();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function opsChart(target,items){
+  const max=Math.max(1,...items.map(x=>x[1]));
+  $(target).innerHTML=items.length?items.map(([label,count])=>'<div class="ops-chart-row"><span>'+esc(label)+'</span><div class="ops-chart-track"><div class="ops-chart-fill" style="width:'+(100*count/max)+'%"></div></div><b>'+count+'</b></div>').join(""):'<div class="muted">No data available</div>';
+}
+function opsCounts(items,key){const counts={};items.forEach(x=>{const k=label(x[key]||"unknown");counts[k]=(counts[k]||0)+1});return Object.entries(counts).sort((a,b)=>b[1]-a[1])}
+async function opsRefreshOverview(){
+  try{const res=await fetch("/api/v1/incidents");if(!res.ok)throw Error("Incident API unavailable");opsIncidents=await res.json()}catch(e){$("ops-metrics").innerHTML='<div class="ops-empty">'+esc(e.message)+'</div>';return}
+  const investigated=opsIncidents.filter(x=>x.has_investigation);
+  const blocked=investigated.filter(x=>x.status==="complete"&&x.approval_required===false).length;
+  const metrics=[[String(opsIncidents.length),"Synthetic scenarios"],[String(investigated.length),"Investigations saved"],[String(opsIncidents.filter(x=>x.status==="awaiting_human_approval").length),"Awaiting approval"],[String(opsIncidents.length-investigated.length),"Not investigated"]];
+  $("ops-metrics").innerHTML=metrics.map(([value,name])=>'<div class="ops-metric"><b>'+esc(value)+'</b><span>'+esc(name)+'</span></div>').join("");
+  opsRenderRecoverySelector();
+  opsChart("ops-severity-chart",opsCounts(opsIncidents,"severity"));opsChart("ops-status-chart",opsCounts(opsIncidents,"status"));
+}
+function opsRenderAnalytics(){
+  const panel=opsContainer("ops-analytics");if(!opsLastResult){panel.innerHTML='<div class="ops-empty">Investigate an incident to see actual agent duration and hypothesis ranking charts.</div>';return}
+  const data=opsLastResult,events=data.observability_events||[],totals={};
+  events.forEach(e=>{totals[e.node]=(totals[e.node]||0)+Number(e.duration_ms||0)});
+  panel.innerHTML='<div class="ops-metrics"><div class="ops-metric"><b>'+events.length+'</b><span>Recorded agent events</span></div><div class="ops-metric"><b>'+events.reduce((n,e)=>n+Number(e.duration_ms||0),0).toFixed(1)+' ms</b><span>Summed node durations</span></div><div class="ops-metric"><b>'+(data.evidence||[]).length+'</b><span>Evidence items</span></div><div class="ops-metric"><b>'+(data.hypotheses||[]).length+'</b><span>Candidate hypotheses</span></div></div><div class="ops-split"><div class="card"><h2>Agent duration (ms)</h2><div class="ops-chart" id="ops-agent-chart"></div></div><div class="card"><h2>Hypothesis evidence match score</h2><div class="ops-chart" id="ops-hyp-chart"></div></div></div><p class="ops-note">Charts reflect the selected synthetic investigation. Hypothesis scores are heuristic ranking scores, not calibrated probabilities. Node durations are summed, not end-to-end wall-clock latency.</p>';
+  opsChart("ops-agent-chart",Object.entries(totals).sort((a,b)=>b[1]-a[1]).map(([k,v])=>[label(k),Number(v.toFixed(2))]));
+  opsChart("ops-hyp-chart",(data.hypotheses||[]).slice(0,8).map(h=>[h.hypothesis_id,Math.round(h.confidence*100)]));
+}
+function opsRenderEvidence(){
+  const data=opsLastResult,pane=opsContainer("ops-evidence");if(!data)return;
+  let toolbar=$("ops-evidence-toolbar");
+  if(!toolbar){toolbar=document.createElement("div");toolbar.id="ops-evidence-toolbar";toolbar.className="ops-toolbar";toolbar.innerHTML='<input id="ops-evidence-query" placeholder="Search evidence, sources, observations..." aria-label="Search evidence"><select id="ops-evidence-type" aria-label="Filter evidence type"><option value="">All evidence types</option></select><span id="ops-evidence-count" class="ops-note"></span>';pane.prepend(toolbar);$("ops-evidence-query").addEventListener("input",opsFilterEvidence);$("ops-evidence-type").addEventListener("change",opsFilterEvidence)}
+  const types=[...new Set((data.evidence||[]).map(e=>e.evidence_type))].sort();const select=$("ops-evidence-type"),prior=select.value;
+  select.innerHTML='<option value="">All evidence types</option>'+types.map(t=>'<option value="'+esc(t)+'">'+esc(label(t))+'</option>').join("");select.value=types.includes(prior)?prior:"";
+  opsFilterEvidence();
+}
+function opsFilterEvidence(){
+  if(!opsLastResult)return;
+  const q=($("ops-evidence-query")?.value||"").toLowerCase(),type=$("ops-evidence-type")?.value||"";
+  const filtered=(opsLastResult.evidence||[]).filter(e=>(!type||e.evidence_type===type)&&(!q||[e.source,e.observation,e.agent,e.evidence_type].join(" ").toLowerCase().includes(q)));
+  $("ops-evidence-count").textContent=filtered.length+" / "+opsLastResult.evidence.length+" items";
+  $("evidence").innerHTML=filtered.length?filtered.map(e=>'<div class="evidence-item"><div class="evidence-top"><span class="type">'+esc(e.evidence_type)+'</span><span class="source">'+esc(e.source)+'</span></div><div class="observation">'+esc(e.observation)+'</div><div class="time">'+esc(e.timestamp||"No timestamp")+'</div></div>').join(""):'<div class="ops-empty">No matching evidence.</div>';
+}
+
+async function opsRenderApprovals(){
+  const pane=opsContainer("ops-approvals");
+  let queue=$("ops-approval-queue");if(!queue){queue=document.createElement("div");queue.id="ops-approval-queue";pane.prepend(queue)}
+  let incidents=opsIncidents;
+  try{const response=await fetch("/api/v1/incidents");if(response.ok)incidents=await response.json()}catch{}
+  const pending=incidents.filter(x=>x.status==="awaiting_human_approval"&&x.approval_required);
+  const count=$("ops-approval-count");if(count)count.textContent=pending.length?String(pending.length):"";
+  queue.innerHTML='<div class="ops-banner">Approval decisions authorize a proposed recovery plan only. SentinelOps never performs production changes.</div><h2>Pending human decisions ('+pending.length+')</h2>'+(pending.length?pending.map(x=>'<div class="incident-card" style="margin-bottom:10px"><div class="incident-meta"><b>'+esc(x.incident_id)+'</b><span class="severity">REVIEW REQUIRED</span></div><h3>'+esc(x.title)+'</h3><p>'+esc(x.description)+'</p><button type="button" data-approval-open="'+esc(x.incident_id)+'">Review proposal →</button></div>').join(""):'<div class="ops-empty">No pending approvals. Investigate RS-002 to demonstrate the human approval workflow.</div>');
+  const approval=$("approval-card");
+  if(approval)approval.hidden=!(opsLastResult?.status==="awaiting_human_approval"&&opsLastResult?.approval_required);
+}
+
+function opsResultHeader(data){
+  return '<div class="ops-banner"><b>'+esc(data.incident_id)+'</b> · '+esc(label(data.status))+' · '+esc(data.root_cause?.display_name||"No adjudicated root cause")+'<div class="ops-note">Investigation findings are based on synthetic evidence. Recovery remains human-controlled.</div></div>';
+}
+function opsRenderLLMFindings(){
+  const pane=opsContainer("ops-results");
+  let section=$("ops-llm-findings");
+  if(!section){section=document.createElement("section");section.id="ops-llm-findings";pane.appendChild(section)}
+  const findings=opsLastResult?.llm_findings||[];
+  section.innerHTML='<div class="card"><h2>AI analysis & independent review</h2><p class="ops-note">Advisory model output. Expand a section to read the saved response; safety decisions and scoring are deterministic.</p>'+
+    (findings.length ? findings.map((f,i)=>'<details class="ops-ai-card"><summary>'+esc(f.agent==="root_cause_llm"?"Root cause analysis":"Critic review")+'</summary><p>'+esc(f.summary)+'</p><small>Saved model output · not independently verified</small></details>').join("") :
+    '<p class="ops-note">No AI analysis is saved for this investigation. Run a new investigation with the configured LLM enabled to generate one.</p>')+
+    '</div>';
+}
+function opsRenderResultSummary(){
+  const pane=opsContainer("ops-results");
+  let header=$("ops-results-header");if(!header){header=document.createElement("div");header.id="ops-results-header";pane.prepend(header)}
+  if(!opsLastResult){header.innerHTML='<div class="ops-empty">Open an investigated incident to view its results.</div>';return}
+  const data=opsLastResult,root=data.root_cause||{},safety=data.safety_decision||{};
+  const match=(data.hypotheses||[]).find(h=>h.hypothesis_id===root.hypothesis_id)||{};
+  const name=root.display_name||match.display_name||"No adjudicated root cause";
+  const explanation=data.supervisor_summary||root.brief_explanation||root.rationale||match.statement||"No investigation summary available.";
+  const state=label(safety.risk_level||"unknown")+" risk";
+  header.innerHTML='<div class="ops-report-hero"><div class="ops-report-top"><div><div class="ops-report-id">'+esc(data.incident_id)+' · '+esc(label(data.status))+'</div><h2 class="ops-report-title">'+esc(name)+'</h2></div><span class="ops-report-state">Recovery: '+esc(state)+'</span></div>'+
+    '<div class="ops-report-metrics"><div class="ops-report-metric"><b>'+pct(root.confidence)+'%</b><span>Evidence match</span></div><div class="ops-report-metric"><b>'+(data.evidence||[]).length+'</b><span>Evidence items</span></div><div class="ops-report-metric"><b>'+esc(root.hypothesis_id||"—")+'</b><span>Leading hypothesis</span></div></div>'+
+    '<div class="ops-report-id">Supervisor Agent · Investigation summary (LLM Critic)</div><p class="ops-report-summary">'+esc(explanation)+'</p><div class="ops-report-actions"><button type="button" data-ops-go="agents">Agent execution</button><button type="button" data-ops-go="evidence">Evidence explorer</button><button type="button" data-ops-go="recovery">Recovery & safety</button></div><div class="ops-report-footnote">Synthetic incident · Heuristic ranking, not a calibrated probability · No production remediation</div></div>';
+}
+async function opsLoadSaved(id,target="results"){
+  try{
+    const response=await fetch("/api/v1/incidents/"+encodeURIComponent(id));
+    const data=await response.json();
+    if(!response.ok)throw Error(data.detail||"Could not load saved investigation");
+    render(data);opsSwitch(target);
+  }catch(error){$("error").textContent=error.message;opsSwitch("incidents")}
+}
+function opsRenderRecoverySelector(){
+  const pane=opsContainer("ops-recovery");
+  let toolbar=$("ops-recovery-selector");
+  if(!toolbar){
+    toolbar=document.createElement("div");toolbar.id="ops-recovery-selector";toolbar.className="ops-toolbar";
+    toolbar.innerHTML='<label for="ops-recovery-incident" class="ops-note" style="align-self:center">Investigated incident</label><select id="ops-recovery-incident" aria-label="Select investigated incident"><option value="">Choose an incident</option></select><button type="button" id="ops-recovery-open">Load recovery result</button>';
+    pane.prepend(toolbar);
+    $("ops-recovery-open").addEventListener("click",()=>{const id=$("ops-recovery-incident").value;if(id)opsLoadSaved(id,"recovery")});
+    $("ops-recovery-incident").addEventListener("change",()=>{const id=$("ops-recovery-incident").value;if(id)opsLoadSaved(id,"recovery")});
+  }
+  const options=opsIncidents.filter(item=>item.has_investigation);
+  const selector=$("ops-recovery-incident");
+  const selected=opsLastResult?.incident_id||selector.value;
+  selector.innerHTML='<option value="">Choose an investigated incident</option>'+options.map(item=>'<option value="'+esc(item.incident_id)+'">'+esc(item.incident_id+" · "+item.title+" · "+label(item.status))+'</option>').join("");
+  selector.value=options.some(item=>item.incident_id===selected)?selected:"";
+  $("ops-recovery-open").disabled=!selector.value;
+  let info=$("ops-recovery-current");if(!info){info=document.createElement("div");info.id="ops-recovery-current";toolbar.after(info)}
+  info.innerHTML=opsLastResult?opsResultHeader(opsLastResult):'<div class="ops-empty">Select an investigated incident to review its recovery plan and risk warnings.</div>';
+  // Never display a recovery plan from another incident as the selected one.
+  const showing=!!opsLastResult&&selector.value===opsLastResult.incident_id;
+  pane.querySelectorAll(".card").forEach(card=>card.hidden=!showing||(card.id==="approval-card"&&!(opsLastResult?.status==="awaiting_human_approval"&&opsLastResult?.approval_required)));
+}
+function opsAnswer(question){
+  const d=opsLastResult;if(!d)return "No investigation is loaded. Select an incident and run the investigation first.";
+  const q=question.toLowerCase(),r=d.root_cause,s=d.safety_decision;
+  if(q.includes("why")||q.includes("cause"))return r?("Leading hypothesis: "+r.hypothesis_id+". "+(r.brief_explanation||r.rationale||"")+". Temporal support: "+r.temporal_support+"; causal support: "+r.causal_support+"; recovery support: "+r.recovery_support+"."):"No adjudicated root cause is available.";
+  if(q.includes("missing")||q.includes("gap"))return (r?.alternative_gaps||s?.evidence_gaps||[]).join("; ")||"No evidence gaps are recorded in this result.";
+  if(q.includes("safe")||q.includes("block")||q.includes("approval"))return s?("Safety decision: "+label(s.decision)+". "+s.rationale+" Approval required: "+d.approval_required+". No production action is executed."):"No safety decision is available.";
+  if(q.includes("evidence"))return "There are "+(d.evidence||[]).length+" evidence items. Open Evidence Explorer to search and filter by type or source.";
+  if(q.includes("agent")||q.includes("flow"))return "The saved investigation includes "+(d.observability_events||[]).length+" recorded agent events. Open Agent Studio to replay them.";
+  return "I can explain the selected root cause, missing evidence, safety decision, or agent flow using the loaded investigation. This is a deterministic, result-grounded assistant—not a connected LLM.";
+}
+async function opsAsk(question){
+  const log=$("ops-chat-log");if(!log)return;
+  log.insertAdjacentHTML("beforeend",'<div class="ops-bubble user">'+esc(question)+'</div>');
+  const bubble=document.createElement("div");bubble.className="ops-bubble";bubble.textContent="Asking local LLM…";log.appendChild(bubble);
+  if(!opsLastResult){bubble.textContent="Select and investigate an incident first.";return}
+  try{
+    const response=await fetch("/api/v1/incidents/"+encodeURIComponent(opsLastResult.incident_id)+"/copilot",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question})});
+    const result=await response.json();
+    if(!response.ok)throw Error(result.detail||"Copilot request failed");
+    bubble.textContent=result.mode==="disabled" ? opsAnswer(question)+" (Deterministic fallback; enable Ollama for LLM answers.)" : result.answer;
+  }catch(error){bubble.textContent=opsAnswer(question)+" (Fallback: "+error.message+")"}
+  log.scrollTop=log.scrollHeight;
+}
+function opsSetupCopilot(){
+  const pane=opsContainer("ops-copilot");
+  pane.innerHTML='<div class="card"><h2>Investigation Copilot · Result-grounded Q&A</h2><p class="ops-note">Uses local Ollama when enabled, grounded in saved incident evidence. Falls back to deterministic answers. Never executes AWS changes.</p><div class="ops-questions"><button data-ops-question="Why was this root cause selected?">Why this root cause?</button><button data-ops-question="What evidence is missing?">Missing evidence</button><button data-ops-question="Why is recovery blocked?">Recovery safety</button><button data-ops-question="Explain the agent flow">Agent flow</button></div><div class="ops-copilot-messages" id="ops-chat-log"><div class="ops-bubble">Select an incident to explore its evidence and safety decisions.</div></div><form id="ops-chat-form" class="ops-toolbar"><input id="ops-chat-input" aria-label="Ask about investigation" placeholder="Ask about this investigation..." required><button type="submit">Ask</button></form></div>';
+  pane.querySelectorAll("[data-ops-question]").forEach(b=>b.addEventListener("click",()=>opsAsk(b.dataset.opsQuestion)));
+  $("ops-chat-form").addEventListener("submit",e=>{e.preventDefault();const input=$("ops-chat-input"),q=input.value.trim();if(q)opsAsk(q);input.value=""});
+}
+function opsOnResult(data){
+  opsLastResult=data;
+  $("result").hidden=true;
+  document.querySelectorAll(".ops-no-result").forEach(el=>el.hidden=true);
+  opsRenderAnalytics();opsRenderEvidence();opsRenderResultSummary();opsRenderLLMFindings();
+  opsSwitch("incidents");
+  // Expand the selected incident's report immediately beneath its card.
+  const report=$("ops-results");
+  const card=Array.from($("incident-list").querySelectorAll(".incident-card")).find(
+    el=>el.querySelector('[data-id]')?.dataset.id===data.incident_id
+  );
+  if(report&&card){
+    let slot=$("ops-inline-report");
+    if(!slot){slot=document.createElement("div");slot.id="ops-inline-report";slot.style.gridColumn="1 / -1"}
+    card.after(slot);
+    slot.appendChild(report);
+    report.hidden=false;
+    card.scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  opsRefreshOverview();
+  opsRenderApprovals();
+  opsRenderRecoverySelector();
+}
+document.querySelectorAll(".ops-nav").forEach(button=>button.addEventListener("click",()=>opsSwitch(button.dataset.opsTab)));
+$("ops-open-incidents").addEventListener("click",()=>opsSwitch("incidents"));
+document.addEventListener("click",e=>{if(e.target.closest("[data-open-incidents]"))opsSwitch("incidents");const go=e.target.closest("[data-ops-go]");if(go)opsSwitch(go.dataset.opsGo);const review=e.target.closest("[data-approval-open]");if(review)opsLoadSaved(review.dataset.approvalOpen,"approvals")});
+opsPlaceCards();opsSetupCopilot();
+// Keep incident selection and the investigation report in one workspace.
+const combinedResults=opsContainer("ops-results");
+$("home").appendChild(combinedResults);
+combinedResults.hidden=true;
+const originalOpsSwitch=opsSwitch;
+opsSwitch=function(tab){
+  if(tab==="results")tab="incidents";
+  originalOpsSwitch(tab);
+  combinedResults.hidden=tab!=="incidents"||!opsLastResult;
+};
+
+const originalRender=render;
+render=function(data){originalRender(data);opsOnResult(data)};
+const originalLoadIncidents=loadIncidents;
+loadIncidents=async function(){await originalLoadIncidents();await opsRefreshOverview()};
+const originalSubmitApproval=submitApproval;
+submitApproval=async function(approved){await originalSubmitApproval(approved);await opsRenderApprovals()};
+const originalBack=$("back-home");
+originalBack.addEventListener("click",()=>opsSwitch("incidents"));
+opsSwitch("overview");opsRefreshOverview();opsRenderApprovals();opsRenderRecoverySelector();
 </script></body></html>

@@ -9,7 +9,7 @@ from agents.knowledge import run_knowledge_agent
 from agents.root_cause import run_root_cause_agent
 from agents.recovery import run_recovery_agent
 from agents.safety import run_safety_agent
-from agents.supervisor import run_supervisor
+from agents.supervisor import run_supervisor, run_supervisor_summary
 from agents.telemetry import run_telemetry_agent
 from graph.state import InvestigationState
 from memory.retrieval import retrieve_historical_incidents
@@ -82,6 +82,7 @@ def build_investigation_graph(
     graph.add_node("adjudication", traced_node("adjudication", run_adjudication_agent))
     graph.add_node("recovery", traced_node("recovery", run_recovery_agent))
     graph.add_node("safety", traced_node("safety", run_safety_agent))
+    graph.add_node("supervisor_summary", traced_node("supervisor_summary", run_supervisor_summary))
     graph.add_node(
         "human_approval",
         run_human_approval_checkpoint if checkpointer is not None else _skip_human_approval_checkpoint,
@@ -111,12 +112,14 @@ def build_investigation_graph(
     graph.add_edge("critic", "supervisor")
     graph.add_edge("adjudication", "supervisor")
     graph.add_edge("recovery", "supervisor")
-    graph.add_edge("safety", "human_approval")
+    graph.add_edge("safety", "supervisor_summary")
+    graph.add_edge("supervisor_summary", "human_approval")
     graph.add_conditional_edges(
         "human_approval",
         _route_after_human_approval,
         {
             "approved_for_execution": END,
+            "approved_for_handoff": END,
             "blocked": END,
             "complete": END,
             "awaiting_human_approval": END,

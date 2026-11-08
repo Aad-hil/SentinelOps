@@ -15,4 +15,4 @@ class SafetyDecision:
 
     @property
     def human_approval_required(self) -> bool:
-        return self.approval_required and self.decision == "review_required"
+        return self.approval_required

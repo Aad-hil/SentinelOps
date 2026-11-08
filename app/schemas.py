@@ -26,6 +26,7 @@ class EvidenceResponse(BaseModel):
 
 class HypothesisResponse(BaseModel):
     hypothesis_id: str
+    display_name: str
     statement: str
     supporting_evidence: list[str] = Field(default_factory=list)
     contradicting_evidence: list[str] = Field(default_factory=list)
@@ -38,6 +39,10 @@ class HypothesisResponse(BaseModel):
 
 class AdjudicationResponse(BaseModel):
     hypothesis_id: str
+    display_name: str | None = None
+    statement: str | None = None
+    brief_explanation: str | None = None
+    full_explanation: str | None = None
     rationale: str
     temporal_support: bool
     causal_support: bool
@@ -86,6 +91,7 @@ class ObservabilityEventResponse(BaseModel):
     timestamp: datetime
     duration_ms: float
     output_keys: list[str] = Field(default_factory=list)
+    llm_usage: list[dict[str, object]] = Field(default_factory=list)
     error: str | None = None
 
 
@@ -97,11 +103,13 @@ class InvestigationResponse(BaseModel):
     approval_status: str = "not_required"
     approval_required: bool = False
     root_cause: AdjudicationResponse | None = None
+    supervisor_summary: str | None = None
     hypotheses: list[HypothesisResponse] = Field(default_factory=list)
     evidence: list[EvidenceResponse] = Field(default_factory=list)
     recovery_plan: RecoveryPlanResponse | None = None
     safety_decision: SafetyDecisionResponse | None = None
     messages: list[str] = Field(default_factory=list)
+    llm_findings: list[dict[str, object]] = Field(default_factory=list)
     observability_events: list[ObservabilityEventResponse] = Field(default_factory=list)
     trace_id: str | None = None
 

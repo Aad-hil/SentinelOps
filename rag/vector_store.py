@@ -13,6 +13,14 @@ from rag.chunking import DocumentChunk
 DEFAULT_COLLECTION = "sentinelops_knowledge"
 
 
+def default_collection_for_embedding(provider_name: str, dimension: int) -> str:
+    """Keep collections with incompatible embedding spaces/dimensions separate."""
+    normalized = provider_name.strip().lower().replace("-", "_")
+    if not normalized or dimension <= 0:
+        raise ValueError("provider_name and a positive dimension are required")
+    return f"sentinelops_knowledge_{normalized}_{dimension}"
+
+
 def stable_point_id(chunk_id: str) -> str:
     """Return a deterministic UUID-like identifier accepted by Qdrant."""
     digest = hashlib.md5(chunk_id.encode("utf-8"), usedforsecurity=False).hexdigest()

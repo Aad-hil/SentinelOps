@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import argparse
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
 from rag.chunking import DocumentChunk, chunk_documents
-from rag.embeddings import BedrockEmbeddingProvider, EmbeddingProvider
+from rag.embeddings import EmbeddingProvider, create_embedding_provider_from_env
 from rag.ingestion import load_markdown_documents
 from rag.models import Document
-from rag.vector_store import DEFAULT_COLLECTION, QdrantVectorStore
+from rag.vector_store import QdrantVectorStore, default_collection_for_embedding
 
 
 @dataclass(frozen=True)
@@ -26,13 +28,7 @@ def _normalize_document_sources(
     documents: list[Document],
     knowledge_root: str | Path,
 ) -> list[Document]:
-    """Make stored source paths relative to the knowledge corpus root.
-
-    Ingestion may receive an absolute temporary or local filesystem path. Such
-    paths are useful while reading files but are not stable retrieval metadata.
-    The vector store should instead expose portable paths such as
-    ``runbooks/database.md``.
-    """
+    """Make stored source paths relative to the knowledge corpus root."""
     root = Path(knowledge_root).resolve()
     normalized: list[Document] = []
 
@@ -76,9 +72,14 @@ def index_knowledge(
         chunk_overlap=chunk_overlap,
     )
 
-    provider = embedding_provider or BedrockEmbeddingProvider()
+    provider = embedding_provider or create_embedding_provider_from_env()
+    provider_name = os.getenv("SENTINELOPS_EMBEDDING_PROVIDER", "local").strip().lower()
+    collection_name = os.getenv("QDRANT_COLLECTION") or default_collection_for_embedding(
+        provider_name, provider.dimension
+    )
     store = vector_store or QdrantVectorStore(
-        collection_name=DEFAULT_COLLECTION,
+        url=os.getenv("QDRANT_URL", "http://localhost:6333"),
+        collection_name=collection_name,
         dimension=provider.dimension,
     )
 
@@ -91,3 +92,19 @@ def index_knowledge(
         vectors=vectors,
         collection=store.collection_name,
     )
+
+
+def main() -> None:
+    """Index the local knowledge corpus into the configured vector store."""
+    parser = argparse.ArgumentParser(description="Index SentinelOps knowledge documents.")
+    parser.add_argument("--knowledge-root", default="knowledge")
+    args = parser.parse_args()
+    result = index_knowledge(knowledge_root=args.knowledge_root)
+    print(
+        f"Indexed {result.documents} documents into {result.chunks} chunks "
+        f"({result.vectors} vectors) in collection '{result.collection}'."
+    )
+
+
+if __name__ == "__main__":
+    main()

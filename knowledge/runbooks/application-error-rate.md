@@ -1,19 +1,20 @@
-# Application Error Rate Runbook
+# Redshift Workload Impact Runbook
 
 ## Purpose
-Investigate elevated request failures without assuming the application itself is the source of the problem.
+
+Investigate service or pipeline errors that may originate in an Amazon Redshift workload or one of its direct dependencies.
 
 ## Initial checks
-- Identify which endpoint or request class is affected.
-- Compare error rate and latency with healthy services.
-- Inspect dependency calls in traces.
-- Correlate application errors with database, cache, network, and deployment telemetry.
+
+- Identify the affected Redshift cluster/namespace, database, workload group, query, COPY/UNLOAD job, Spectrum table, or data share.
+- Correlate client errors with Redshift query/load history and cluster events.
+- Distinguish Redshift query failures from client connection, IAM/KMS, S3, or Glue dependency failures.
+- Compare first abnormal timestamps across logs, metrics, and traces.
 
 ## Dependency failures
-A dependency can cause application requests to fail even when application processes remain healthy. Increasing dependency latency often appears before timeout or error-rate increases.
 
-## Correlation
-Use timestamps to determine whether dependency degradation precedes application failures. Check whether the same pattern occurs across unrelated endpoints and services.
+S3, Glue, IAM, KMS, and VPC evidence is in scope only when tied to a specific Redshift operation. An application error or generic timeout alone is insufficient to diagnose a Redshift cause.
 
 ## Escalation
-If the affected dependency is a production database, use the database investigation runbooks before restarting application instances or changing application capacity.
+
+If evidence does not establish a Redshift-specific cause, classify the incident as unknown/compound (RSH12) and request targeted diagnostics rather than forcing a diagnosis.

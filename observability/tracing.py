@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import os
 from datetime import datetime, timezone
+from inspect import signature
 from time import perf_counter
 from typing import Any, Callable
 from uuid import uuid4
 
 from opentelemetry import trace
+from langchain_core.runnables import RunnableConfig
 from opentelemetry.trace import (
     NonRecordingSpan,
     SpanContext,
@@ -138,16 +140,20 @@ def _append_trace(
 
 def traced_node(
     node_name: str,
-    node: Callable[[InvestigationState], dict[str, Any]],
+    node: Callable[..., dict[str, Any]],
     *,
     tracer=None,
-) -> Callable[[InvestigationState], dict[str, Any]]:
+) -> Callable[..., dict[str, Any]]:
     """Wrap a graph node with structured events and a propagated OTel parent."""
     node_tracer = tracer or get_tracer()
 
-    def run(state: InvestigationState) -> dict[str, Any]:
+    accepts_config = "config" in signature(node).parameters
+
+    def run(state: InvestigationState, config: RunnableConfig = None) -> dict[str, Any]:
         parent_context, trace_id, parent_span_id = _span_context_from_state(state)
         started = perf_counter()
+        from agents.llm import begin_usage_capture, end_usage_capture
+        usage_token = begin_usage_capture()
 
         with node_tracer.start_as_current_span(
             f"sentinelops.node.{node_name}",
@@ -160,8 +166,9 @@ def traced_node(
             span.set_attribute("sentinelops.parent_span_id", parent_span_id)
 
             try:
-                result = node(state)
+                result = node(state, config=config) if accepts_config else node(state)
             except Exception as exc:
+                end_usage_capture(usage_token)
                 duration_ms = (perf_counter() - started) * 1000
                 span.set_status(Status(StatusCode.ERROR, str(exc)))
                 span.record_exception(exc)
@@ -179,23 +186,24 @@ def traced_node(
                 )
                 raise
 
+            llm_usage = end_usage_capture(usage_token)
             duration_ms = (perf_counter() - started) * 1000
             span.set_status(Status(StatusCode.OK))
             span.set_attribute("sentinelops.duration_ms", duration_ms)
+            span.set_attribute("sentinelops.llm_total_tokens", sum(u["total_tokens"] for u in llm_usage))
             span.set_attribute("sentinelops.output_key_count", len(result))
 
+            events = _append_trace(
+                state, trace_id=actual_trace_id, node=node_name, status="ok",
+                duration_ms=duration_ms, output_keys=tuple(sorted(result.keys())),
+            )
+            events[-1]["llm_usage"] = llm_usage
             return {
                 **result,
                 "otel_trace_id": actual_trace_id,
                 "otel_parent_span_id": parent_span_id,
-                "observability_events": _append_trace(
-                    state,
-                    trace_id=actual_trace_id,
-                    node=node_name,
-                    status="ok",
-                    duration_ms=duration_ms,
-                    output_keys=tuple(sorted(result.keys())),
-                ),
+                "observability_events": events,
+
             }
 
     return run

@@ -1,20 +1,9 @@
-# Deployment Rollback Runbook
+# Redshift Change and Configuration Review
 
-## Purpose
-Safely restore service behavior when a recent deployment is strongly correlated with production degradation.
+Changes relevant to Redshift investigations include WLM configuration, workload priorities, SQL/query revisions, cluster resize or maintenance, table design, statistics/maintenance operations, IAM role associations, KMS policies, external schemas, S3 data paths, VPC routes and security groups.
 
-## Preconditions
-- Confirm the affected service and deployment version.
-- Capture relevant logs, metrics, traces, and deployment metadata before rollback when possible.
-- Check whether rollback is supported and whether database or schema changes make rollback unsafe.
-- Determine whether approval is required by the production change policy.
+## Investigation use
 
-## Procedure
-1. Confirm the suspected deployment window.
-2. Compare the current version with the previous known-good version.
-3. Record the reason and evidence supporting rollback.
-4. Execute the approved rollback procedure.
-5. Monitor request errors, latency, dependency health, and database load.
+Compare the change timestamp with the first abnormal Redshift query, WLM, load, cluster, or dependency signal. Inspect the exact changed setting and affected workload.
 
-## Verification
-A rollback is not considered successful until affected service indicators return toward the pre-incident baseline and the suspected failure signal stops worsening.
+Change timing is correlation evidence, not proof of causation. Require telemetry or system-view evidence showing the expected mechanism and impact. Synthetic simulator change records are explicitly labeled and are not actual AWS change events.

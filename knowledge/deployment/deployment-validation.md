@@ -1,10 +1,13 @@
-# Deployment Validation
+# Redshift Change Validation
 
-## Before rollout
-Validate application behavior, database compatibility, query performance, and expected resource usage in a representative environment.
+## Before change
 
-## After rollout
-Monitor request latency and errors alongside dependency metrics. For database-backed services, monitor query execution time, query volume, CPU, locks, connection pressure, and storage latency.
+Validate SQL and EXPLAIN plans, WLM behavior, workload concurrency, table design/statistics, COPY/UNLOAD options, external schema access, IAM/KMS permissions, and network reachability in a representative non-production environment.
+
+## After change
+
+Monitor query execution and queue time, WLM queue depth, compute utilization, spill, load errors, cluster events, and relevant S3/Glue/IAM/KMS/VPC signals.
 
 ## Regression detection
-A regression may be visible as a new or unusually expensive query fingerprint, a change in query execution characteristics, or a resource increase that begins shortly after the rollout. Preserve telemetry around the change window so investigators can compare before and after behavior.
+
+Preserve before/after evidence around the change window. A temporal association is not sufficient: establish the Redshift-specific mechanism and workload impact before attributing root cause.

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import timezone
 
 from graph.evidence import EvidenceItem
 from graph.state import AgentFinding, InvestigationState, append_finding
@@ -10,6 +11,10 @@ class Adjudication:
     """Final evidence-quality assessment of competing root-cause hypotheses."""
 
     hypothesis_id: str
+    display_name: str
+    statement: str
+    brief_explanation: str
+    full_explanation: str
     rationale: str
     temporal_support: bool
     causal_support: bool
@@ -55,36 +60,79 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
     if not hypotheses:
         return [], None
 
-    temporal = _has(items, "deployment", "web-2025.01.09.3") and _has(items, "deployment", "query")
-    causal = _has(items, "query_fingerprint") and _has(items, "query_path") and _has(items, "database")
-    recovery = _has_any(items, "rollback") and _has_any(items, "error rate", "baseline", "returned toward baseline")
-    traffic_direct = (
-        _has(items, "traffic")
-        or _has(items, "request volume")
-        or _has(items, "request rate")
-        or _has(items, "request_rate")
-        or _has(items, "requests per second")
-    )
-    network_direct = _has(items, "network") or _has(items, "downstream") or _has(items, "connection timeout")
+    evidence_by_source = {item.source: item for item in items}
+    def _utc_timestamp(item: EvidenceItem):
+        timestamp = item.timestamp
+        if timestamp is None:
+            return None
+        return timestamp.replace(tzinfo=timezone.utc) if timestamp.tzinfo is None else timestamp.astimezone(timezone.utc)
+
+    def _support_for_hypothesis(hypothesis: Hypothesis) -> tuple[bool, bool, bool]:
+        """Evaluate causal, temporal, and recovery support for this candidate only."""
+        role_evidence = {
+            role: [
+                evidence_by_source[relationship.source]
+                for relationship in hypothesis.causal_relationships
+                if relationship.role == role and relationship.source in evidence_by_source
+            ]
+            for role in ("trigger", "mechanism", "impact")
+        }
+        causal_support = all(
+            role_evidence[role] for role in ("trigger", "mechanism", "impact")
+        )
+        if not causal_support:
+            return False, False, False
+
+        trigger_times = [
+            timestamp for item in role_evidence["trigger"]
+            if (timestamp := _utc_timestamp(item)) is not None
+        ]
+        mechanism_times = [
+            timestamp for item in role_evidence["mechanism"]
+            if (timestamp := _utc_timestamp(item)) is not None
+        ]
+        impact_times = [
+            timestamp for item in role_evidence["impact"]
+            if (timestamp := _utc_timestamp(item)) is not None
+        ]
+        if not (trigger_times and mechanism_times and impact_times):
+            return causal_support, False, False
+
+        first_trigger = min(trigger_times)
+        later_mechanisms = [timestamp for timestamp in mechanism_times if timestamp >= first_trigger]
+        if not later_mechanisms:
+            return causal_support, False, False
+
+        first_mechanism = min(later_mechanisms)
+        later_impacts = [timestamp for timestamp in impact_times if timestamp >= first_mechanism]
+        if not later_impacts:
+            return causal_support, False, False
+
+        first_impact = min(later_impacts)
+        recovery_support = any(
+            item.evidence_type == "recovery"
+            and (timestamp := _utc_timestamp(item)) is not None
+            and timestamp >= first_impact
+            for item in items
+        )
+        return causal_support, True, recovery_support
+
+    support_by_hypothesis = {
+        hypothesis.hypothesis_id: _support_for_hypothesis(hypothesis)
+        for hypothesis in hypotheses
+    }
 
     adjudicated: list[Hypothesis] = []
     for hypothesis in hypotheses:
         confidence = hypothesis.confidence
         status = hypothesis.status
-        relationship_roles = {relationship.role for relationship in hypothesis.causal_relationships}
 
-        if hypothesis.hypothesis_id == "H1":
-            confidence = min(1.0, confidence * 0.55 + (0.15 if temporal else 0.0) + (0.15 if causal else 0.0) + (0.10 if recovery else 0.0))
-            status = "strong_candidate" if confidence >= 0.75 else "supported"
-        elif hypothesis.hypothesis_id == "H2":
-            confidence = min(1.0, confidence * 0.55 + (0.25 if traffic_direct else 0.0))
-            status = "supported" if traffic_direct and confidence >= 0.6 else "insufficient_evidence"
-        elif hypothesis.hypothesis_id == "H3":
-            confidence = min(1.0, confidence * 0.55 + (0.25 if network_direct else 0.0))
-            status = "supported" if network_direct and confidence >= 0.6 else "insufficient_evidence"
+        # Redshift candidate scores are produced by the Redshift hypothesis engine.
+        # Adjudication adds no legacy-domain bonuses or ID-specific score overrides.
         adjudicated.append(
             Hypothesis(
                 hypothesis_id=hypothesis.hypothesis_id,
+                display_name=hypothesis.display_name,
                 statement=hypothesis.statement,
                 supporting_evidence=hypothesis.supporting_evidence,
                 contradicting_evidence=hypothesis.contradicting_evidence,
@@ -98,26 +146,65 @@ def adjudicate_hypotheses(state: InvestigationState) -> tuple[list[Hypothesis], 
 
     adjudicated.sort(key=lambda h: h.confidence, reverse=True)
     leading = adjudicated[0]
+    causal, temporal, recovery = support_by_hypothesis.get(
+        leading.hypothesis_id, (False, False, False)
+    )
     leading_relationship_roles = {
         relationship.role for relationship in leading.causal_relationships
     }
     gaps: list[str] = []
-    if leading.hypothesis_id == "H1" and not recovery:
-        gaps.append("post-rollback recovery evidence")
-    if leading.hypothesis_id == "H2" and not traffic_direct:
-        gaps.append("direct request-volume evidence")
-    if leading.hypothesis_id == "H3" and not network_direct:
-        gaps.append("direct network or downstream evidence")
+    if not recovery:
+        gaps.append("post-impact recovery evidence")
     if len(leading_relationship_roles.intersection({"trigger", "mechanism", "impact"})) < 3:
         gaps.append("complete trigger-mechanism-impact relationship")
 
+    evidence_by_source = {item.source: item for item in items}
+    role_lines: list[str] = []
+    for role in ("trigger", "mechanism", "impact"):
+        role_relationships = [
+            relationship for relationship in leading.causal_relationships
+            if relationship.role == role
+        ]
+        observations = []
+        for relationship in role_relationships:
+            item = evidence_by_source.get(relationship.source)
+            if item and item.observation not in observations:
+                observations.append(item.observation)
+        if observations:
+            role_lines.append(f"{role.title()}: " + " ".join(observations[:2]))
+
+    if role_lines:
+        brief_explanation = (
+            f"{leading.display_name} is the best-supported explanation because the evidence "
+            "forms this incident-specific chain: " + " ".join(role_lines[:3])
+        )
+    else:
+        brief_explanation = (
+            f"{leading.display_name} currently ranks highest, but the available evidence does "
+            "not yet establish a complete trigger-to-impact chain."
+        )
+
+    full_lines = [
+        f"Selected hypothesis: {leading.display_name} ({leading.hypothesis_id}).",
+        f"Proposed mechanism: {leading.statement}",
+        "Evidence chain:",
+        *(role_lines or ["The evidence does not yet provide clear trigger, mechanism, and impact observations."]),
+        f"Temporal support: {'Found' if temporal else 'Not established by the current adjudication checks'}.",
+        f"Causal support: {'Found' if causal else 'Not established by the current adjudication checks'}.",
+        f"Recovery correlation: {'Found' if recovery else 'Not established by the current adjudication checks'}.",
+        "Evidence gaps: " + (", ".join(gaps) if gaps else "No specific gap was flagged by the current adjudication checks."),
+        "The evidence score is a heuristic ranking score, not a calibrated probability or proof of root cause.",
+    ]
     rationale = (
-        f"{leading.hypothesis_id} has the strongest evidence after checking temporal order, "
-        "causal linkage, recovery correlation, alternative-hypothesis evidence, and explicit "
-        "causal relationship roles."
+        f"{leading.hypothesis_id} ranked highest after comparing evidence strength, causal roles, "
+        "temporal order, recovery correlation, and competing hypotheses."
     )
     adjudication = Adjudication(
         hypothesis_id=leading.hypothesis_id,
+        display_name=leading.display_name,
+        statement=leading.statement,
+        brief_explanation=brief_explanation,
+        full_explanation="\\n".join(full_lines),
         rationale=rationale,
         temporal_support=temporal,
         causal_support=causal,

@@ -21,8 +21,9 @@ def test_rs001_graph_respects_insufficient_evidence():
     }, config={"configurable": {"thread_id": "fresh-rs001-safety"}})
     assert state["adjudication"].hypothesis_id == "RSH1"
     assert state["safety_decision"].decision == "blocked"
-    assert state["investigation_status"] == "complete"
-    assert state["approval_required"] is False
+    assert state["investigation_status"] == "awaiting_human_approval"
+    assert state["approval_required"] is True
+    assert graph.get_state({"configurable": {"thread_id": "fresh-rs001-safety"}}).interrupts
 
 
 def _approval_graph_and_state():
@@ -55,7 +56,7 @@ def test_approval_interrupt_and_resume():
     assert graph.get_state(config).interrupts
     approved = graph.invoke(Command(resume={"approved": True, "reviewer": "operator"}), config=config)
     assert approved["approval_status"] == "approved"
-    assert approved["investigation_status"] == "approved_for_execution"
+    assert approved["investigation_status"] == "approved_for_handoff"
 
 
 def test_rejection_interrupt_and_resume():

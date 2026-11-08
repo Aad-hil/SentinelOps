@@ -119,6 +119,7 @@ def build_investigation_graph(
         _route_after_human_approval,
         {
             "approved_for_execution": END,
+            "approved_for_handoff": END,
             "blocked": END,
             "complete": END,
             "awaiting_human_approval": END,

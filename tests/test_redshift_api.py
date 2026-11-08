@@ -27,10 +27,13 @@ def test_investigation_persistence_and_deletion(api):
     result = api.investigate(request)
     assert result.root_cause.hypothesis_id == "RSH1"
     assert result.safety_decision.decision == "blocked"
-    assert result.approval_required is False
+    assert result.approval_required is True
+    assert result.status == "awaiting_human_approval"
     assert result.evidence and result.hypotheses
     assert api.get_incident("RS-001").incident_id == "RS-001"
-    assert api.investigate(request).status == result.status
+    with pytest.raises(HTTPException) as exc:
+        api.investigate(request)
+    assert exc.value.status_code == 409
     assert api.delete_incident("RS-001")["status"] == "deleted"
     with pytest.raises(HTTPException) as exc:
         api.get_incident("RS-001")
@@ -41,6 +44,8 @@ def test_invalid_incident_and_approval_guard(api):
         api.investigate(api.InvestigationRequest(incident_id="INC-001"))
     assert exc.value.status_code == 404
     api.investigate(api.InvestigationRequest(incident_id="RS-001"))
+    approved = api.approve_investigation("RS-001", api.ApprovalRequest(approved=True, reviewer="operator"))
+    assert approved.status == "approved_for_handoff"
     with pytest.raises(HTTPException) as exc:
         api.approve_investigation("RS-001", api.ApprovalRequest(approved=True, reviewer="operator"))
     assert exc.value.status_code == 409
@@ -58,12 +63,12 @@ def test_rs002_requires_human_approval(api):
     approved = api.approve_investigation(
         "RS-002", api.ApprovalRequest(approved=True, reviewer="demo-operator")
     )
-    assert approved.status == "approved_for_execution"
+    assert approved.status == "approved_for_handoff"
     assert approved.approval_status == "approved"
     assert approved.approval_required is False
 
 
-def test_rs006_low_risk_recovered_without_approval(api):
+def test_rs006_low_risk_still_requires_approval(api):
     result = api.investigate(api.InvestigationRequest(incident_id="RS-006"))
     assert result.root_cause.hypothesis_id == "RSH6"
     assert result.root_cause.temporal_support
@@ -72,6 +77,7 @@ def test_rs006_low_risk_recovered_without_approval(api):
     assert result.recovery_plan.readiness == "ready_for_review"
     assert all(step.risk == "low" and not step.requires_approval for step in result.recovery_plan.steps)
     assert result.safety_decision.decision == "no_approval_needed"
-    assert result.status == "complete"
-    assert result.approval_required is False
+    assert result.status == "awaiting_human_approval"
+    assert result.approval_required is True
+    assert result.approval_status == "pending"
     assert any(item.evidence_type == "recovery" for item in result.evidence)

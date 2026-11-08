@@ -39,7 +39,7 @@ def record_human_approval(
         "approval_status": result_status,
         "approval_required": False,
         "investigation_status": (
-            "approved_for_execution" if approved else "blocked"
+            "approved_for_handoff" if approved else "blocked"
         ),
         "messages": list(state.get("messages", []))
         + [f"Human reviewer {reviewer} marked recovery as {result_status}."],

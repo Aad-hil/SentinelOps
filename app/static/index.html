@@ -105,7 +105,7 @@ body{background:radial-gradient(circle at 72% -20%,#192b49,#080d18 48%)}header{p
 
 </style></head>
 <body>
-<aside class="ops-sidebar" aria-label="Operations navigation"><div class="ops-logo">◈ SENTINELOPS<small>AI INCIDENT COMMAND</small></div><button class="ops-nav active" data-ops-tab="overview"><span>▦</span>Overview</button><button class="ops-nav" data-ops-tab="incidents"><span>⚑</span>Incidents</button><button class="ops-nav" data-ops-tab="results"><span>▤</span>Investigation Results</button><button class="ops-nav" data-ops-tab="agents"><span>◇</span>Agent Studio</button><button class="ops-nav" data-ops-tab="evidence"><span>⌕</span>Evidence Explorer</button><button class="ops-nav" data-ops-tab="analytics"><span>▥</span>Analytics</button><button class="ops-nav" data-ops-tab="recovery"><span>⬡</span>Recovery Center</button><button class="ops-nav" data-ops-tab="approvals"><span>✓</span>Approval Queue <b id="ops-approval-count" style="font-size:10px;color:#f4c95d"></b></button><button class="ops-nav" data-ops-tab="copilot"><span>✧</span>RCA Copilot</button><div class="ops-footer">● Local simulation<br>Amazon Redshift · 12 synthetic scenarios<br>No production remediation</div></aside>
+<aside class="ops-sidebar" aria-label="Operations navigation"><div class="ops-logo">◈ SENTINELOPS<small>AI INCIDENT COMMAND</small></div><button class="ops-nav active" data-ops-tab="overview"><span>▦</span>Overview</button><button class="ops-nav" data-ops-tab="incidents"><span>⚑</span>Investigations & Results</button><button class="ops-nav" data-ops-tab="agents"><span>◇</span>Agent Studio</button><button class="ops-nav" data-ops-tab="evidence"><span>⌕</span>Evidence Explorer</button><button class="ops-nav" data-ops-tab="analytics"><span>▥</span>Analytics</button><button class="ops-nav" data-ops-tab="recovery"><span>⬡</span>Recovery Center</button><button class="ops-nav" data-ops-tab="approvals"><span>✓</span>Approval Queue <b id="ops-approval-count" style="font-size:10px;color:#f4c95d"></b></button><button class="ops-nav" data-ops-tab="copilot"><span>✧</span>RCA Copilot</button><div class="ops-footer">● Local simulation<br>Amazon Redshift · 12 synthetic scenarios<br>No production remediation</div></aside>
 <header><div><div class="brand">SENTINELOPS</div><div class="sub">Amazon Redshift incident investigation & safe recovery</div></div><div id="health" class="sub">Checking API…</div></header>
 <main><div class="ops-top"><div><div class="ops-kicker">Operations workspace</div><h1 id="ops-page-title">Overview</h1><div class="muted" style="font-size:12px" id="ops-page-subtitle">Redshift incident investigation and safety-first operations</div></div><span class="badge">SYNTHETIC DATA · LOCAL DEMO</span></div><section id="ops-overview" class="ops-view"><div class="ops-metrics" id="ops-metrics"></div><div class="ops-split"><div class="card"><h2>Incident distribution</h2><div id="ops-severity-chart" class="ops-chart"></div></div><div class="card"><h2>Investigation activity</h2><div id="ops-status-chart" class="ops-chart"></div></div></div><div class="card" style="margin-top:18px"><h2>Quick start</h2><p class="muted">Explore 12 synthetic Amazon Redshift incidents, run the agent investigation, and inspect evidence-backed decisions.</p><button id="ops-open-incidents">Browse incidents →</button></div></section><section id="home" class="home-panel"><div class="home-title">Redshift Incident Command Center</div><div class="home-description">Select a synthetic Redshift incident to investigate, reopen its saved results, or remove its saved investigation.</div><div id="incident-list" class="incident-grid"><div class="empty-state">Loading incidents…</div></div></section><button id="back-home" class="back-btn" hidden>← All incidents</button><div class="toolbar" hidden><input id="incident" value="RS-001" aria-label="Incident ID"><button id="run">Investigate</button></div><div id="error" class="error"></div>
 <section id="result" hidden><div class="card incident-head"><div><div class="eyebrow">Incident</div><div id="incident-id" class="incident-id"></div><div class="muted">Evidence-backed investigation</div></div><div id="status" class="status"></div></div>
@@ -498,7 +498,8 @@ function opsOnResult(data){
   $("result").hidden=true;
   document.querySelectorAll(".ops-no-result").forEach(el=>el.hidden=true);
   opsRenderAnalytics();opsRenderEvidence();opsRenderResultSummary();opsRenderLLMFindings();
-  opsSwitch("results");
+  opsSwitch("incidents");
+  const report=$("ops-results");if(report)report.scrollIntoView({behavior:"smooth",block:"start"});
   opsRefreshOverview();
   opsRenderApprovals();
   opsRenderRecoverySelector();
@@ -507,6 +508,17 @@ document.querySelectorAll(".ops-nav").forEach(button=>button.addEventListener("c
 $("ops-open-incidents").addEventListener("click",()=>opsSwitch("incidents"));
 document.addEventListener("click",e=>{if(e.target.closest("[data-open-incidents]"))opsSwitch("incidents");const go=e.target.closest("[data-ops-go]");if(go)opsSwitch(go.dataset.opsGo);const review=e.target.closest("[data-approval-open]");if(review)opsLoadSaved(review.dataset.approvalOpen,"approvals")});
 opsPlaceCards();opsSetupCopilot();
+// Keep incident selection and the investigation report in one workspace.
+const combinedResults=opsContainer("ops-results");
+$("home").appendChild(combinedResults);
+combinedResults.hidden=true;
+const originalOpsSwitch=opsSwitch;
+opsSwitch=function(tab){
+  if(tab==="results")tab="incidents";
+  originalOpsSwitch(tab);
+  combinedResults.hidden=tab!=="incidents"||!opsLastResult;
+};
+
 const originalRender=render;
 render=function(data){originalRender(data);opsOnResult(data)};
 const originalLoadIncidents=loadIncidents;

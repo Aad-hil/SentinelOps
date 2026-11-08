@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 from graph.state import AgentFinding, InvestigationState, append_finding
 from safety.policy import evaluate_recovery_safety
 
@@ -5,6 +7,8 @@ from safety.policy import evaluate_recovery_safety
 def run_safety_agent(state: InvestigationState) -> dict:
     """Review a recovery plan against deterministic safety guardrails."""
     decision = evaluate_recovery_safety(state.get("recovery_plan"))
+    # Risk assessment remains deterministic; every plan requires operator review.
+    decision = replace(decision, approval_required=True)
     finding = AgentFinding(
         agent="safety",
         category="safety_review",
@@ -13,19 +17,15 @@ def run_safety_agent(state: InvestigationState) -> dict:
         confidence=1.0,
     )
     result = append_finding(state, finding)
-    approval_status = "pending" if decision.human_approval_required else "not_required"
+    approval_status = "pending"
     result.update(
         {
             "safety_decision": decision,
-            "approval_required": decision.human_approval_required,
+            "approval_required": True,
             "approval_status": approval_status,
             "messages": list(state.get("messages", []))
             + [f"Safety Agent marked recovery as {decision.decision}."],
-            "investigation_status": (
-                "awaiting_human_approval"
-                if decision.human_approval_required
-                else "complete"
-            ),
+            "investigation_status": "awaiting_human_approval",
         }
     )
     return result

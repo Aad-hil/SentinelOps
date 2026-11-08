@@ -281,7 +281,7 @@ async function loadIncidents(){
     $("incident-list").innerHTML=incidents.map(item=>{
       const status=item.has_investigation?label(item.status):"Not started";
       const statusColor=item.status==="awaiting_human_approval"?"var(--warn)":(["complete","approved_for_execution"].includes(item.status)?"var(--good)":"var(--muted)");
-      return '<article class="incident-card"><div class="incident-meta"><span>'+esc(item.incident_id)+'</span><span class="severity">'+esc(item.severity)+'</span></div><h3>'+esc(item.title)+'</h3><div class="incident-meta"><span class="category">'+esc((item.category||"other").replaceAll("_"," "))+'</span></div><p>'+esc(item.description)+'</p><div class="incident-meta"><span>'+esc(item.service)+'</span><b style="color:'+statusColor+'">'+esc(status)+'</b></div><div class="incident-actions"><button data-action="investigate" data-id="'+esc(item.incident_id)+'">'+(item.has_investigation?"Open result":"Investigate")+'</button>'+(item.has_investigation?'<button class="delete-btn" data-action="delete" data-id="'+esc(item.incident_id)+'">Delete</button>':"")+'</div></article>';
+      return '<article class="incident-card"><div class="incident-meta"><span>'+esc(item.incident_id)+'</span><span class="severity">'+esc(item.severity)+'</span></div><h3>'+esc(item.title)+'</h3><div class="incident-meta"><span class="category">'+esc((item.category||"other").replaceAll("_"," "))+'</span></div><p>'+esc(item.description)+'</p><div class="incident-meta"><span>'+esc(item.service)+'</span><b style="color:'+statusColor+'">'+esc(status)+'</b></div><div class="incident-actions"><button data-action="'+(item.has_investigation?"open":"investigate")+'" data-id="'+esc(item.incident_id)+'">'+(item.has_investigation?"View result":"Investigate")+'</button>'+(item.has_investigation?'<button class="delete-btn" data-action="delete" data-id="'+esc(item.incident_id)+'">Delete</button>':"")+'</div></article>';
     }).join("");
   }catch(e){$("incident-list").innerHTML='<div class="empty-state">'+esc(e.message)+'</div>'}
 }
@@ -302,6 +302,7 @@ $("incident-list").addEventListener("click",e=>{
   const button=e.target.closest("button[data-action]");if(!button)return;
   const id=button.dataset.id;
   if(button.dataset.action==="investigate")investigate(id);
+  if(button.dataset.action==="open")opsLoadSaved(id,"incidents");
   if(button.dataset.action==="delete")deleteIncident(id);
 });
 $("back-home").addEventListener("click",()=>{$("result").hidden=true;$("home").hidden=false;$("back-home").hidden=true;$("error").textContent="";loadIncidents()});
@@ -499,7 +500,19 @@ function opsOnResult(data){
   document.querySelectorAll(".ops-no-result").forEach(el=>el.hidden=true);
   opsRenderAnalytics();opsRenderEvidence();opsRenderResultSummary();opsRenderLLMFindings();
   opsSwitch("incidents");
-  const report=$("ops-results");if(report)report.scrollIntoView({behavior:"smooth",block:"start"});
+  // Expand the selected incident's report immediately beneath its card.
+  const report=$("ops-results");
+  const card=Array.from($("incident-list").querySelectorAll(".incident-card")).find(
+    el=>el.querySelector('[data-id]')?.dataset.id===data.incident_id
+  );
+  if(report&&card){
+    let slot=$("ops-inline-report");
+    if(!slot){slot=document.createElement("div");slot.id="ops-inline-report";slot.style.gridColumn="1 / -1"}
+    card.after(slot);
+    slot.appendChild(report);
+    report.hidden=false;
+    card.scrollIntoView({behavior:"smooth",block:"start"});
+  }
   opsRefreshOverview();
   opsRenderApprovals();
   opsRenderRecoverySelector();
